@@ -33,7 +33,7 @@ func NewGffRecord(seqname string, source string, feature string, start int32, en
 }
 
 type GffParser struct {
-	gffrecords []GffRecord
+	Records []GffRecord
 }
 
 func NewGffParser() *GffParser {
@@ -41,11 +41,16 @@ func NewGffParser() *GffParser {
 }
 
 func (p *GffParser) ConsumeLine(line string) error {
+	if strings.HasPrefix(line, "#") {
+		return nil
+	}
+
 	line = strings.TrimSpace(line)
+
 	recs := strings.Split(line, "\t")
 
 	if len(recs) != 9 {
-		return fmt.Errorf("Incorrect line: %v", line)
+		return fmt.Errorf("Incorrect line, expected 9 records but %d records: %v", len(recs), line)
 	}
 
 	seqname := recs[0]
@@ -54,21 +59,22 @@ func (p *GffParser) ConsumeLine(line string) error {
 	start, err := strconv.Atoi(recs[3])
 
 	if err != nil {
-		return fmt.Errorf("Incorrect line: %v", line)
+		return fmt.Errorf("Incorrect line, start should be integer: %v", line)
 	}
 
 	end, err := strconv.Atoi(recs[4])
 
 	if err != nil {
-		return fmt.Errorf("Incorrect line: %v", line)
+		return fmt.Errorf("Incorrect line, end should be integer: %v", line)
 	}
 
 	score := recs[5]
 	strand := recs[6]
 
-	if strand == "-" || strand == "+" {
-		return fmt.Errorf("Incorrect line: %v", line)
+	if !(strand == "-" || strand == "+") {
+		return fmt.Errorf("Incorrect line, strand must be - or + but %v: %v", strand, line)
 	}
+
 	frame := recs[7]
 	attrs := map[string]string{}
 
@@ -78,7 +84,9 @@ func (p *GffParser) ConsumeLine(line string) error {
 		attrs[kv[0]] = kv[1]
 	}
 
-	p.gffrecords = append(p.gffrecords, *NewGffRecord(seqname, source, feature, int32(start), int32(end), score, strand, frame, attrs))
+	gffRecord := NewGffRecord(seqname, source, feature, int32(start), int32(end), score, strand, frame, attrs)
+	fmt.Println(gffRecord)
+	p.Records = append(p.Records, *gffRecord)
 
 	return nil
 }
