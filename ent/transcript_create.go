@@ -19,6 +19,12 @@ type TranscriptCreate struct {
 	hooks    []Hook
 }
 
+// SetTranscriptId sets the "transcriptId" field.
+func (tc *TranscriptCreate) SetTranscriptId(s string) *TranscriptCreate {
+	tc.mutation.SetTranscriptId(s)
+	return tc
+}
+
 // SetGene sets the "gene" field.
 func (tc *TranscriptCreate) SetGene(s string) *TranscriptCreate {
 	tc.mutation.SetGene(s)
@@ -40,12 +46,6 @@ func (tc *TranscriptCreate) SetCds(s string) *TranscriptCreate {
 // SetProtein sets the "protein" field.
 func (tc *TranscriptCreate) SetProtein(s string) *TranscriptCreate {
 	tc.mutation.SetProtein(s)
-	return tc
-}
-
-// SetID sets the "id" field.
-func (tc *TranscriptCreate) SetID(s string) *TranscriptCreate {
-	tc.mutation.SetID(s)
 	return tc
 }
 
@@ -125,6 +125,9 @@ func (tc *TranscriptCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (tc *TranscriptCreate) check() error {
+	if _, ok := tc.mutation.TranscriptId(); !ok {
+		return &ValidationError{Name: "transcriptId", err: errors.New(`ent: missing required field "Transcript.transcriptId"`)}
+	}
 	if _, ok := tc.mutation.Gene(); !ok {
 		return &ValidationError{Name: "gene", err: errors.New(`ent: missing required field "Transcript.gene"`)}
 	}
@@ -148,13 +151,8 @@ func (tc *TranscriptCreate) sqlSave(ctx context.Context) (*Transcript, error) {
 		}
 		return nil, err
 	}
-	if _spec.ID.Value != nil {
-		if id, ok := _spec.ID.Value.(string); ok {
-			_node.ID = id
-		} else {
-			return nil, fmt.Errorf("unexpected Transcript.ID type: %T", _spec.ID.Value)
-		}
-	}
+	id := _spec.ID.Value.(int64)
+	_node.ID = int(id)
 	return _node, nil
 }
 
@@ -164,14 +162,14 @@ func (tc *TranscriptCreate) createSpec() (*Transcript, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: transcript.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
+				Type:   field.TypeInt,
 				Column: transcript.FieldID,
 			},
 		}
 	)
-	if id, ok := tc.mutation.ID(); ok {
-		_node.ID = id
-		_spec.ID.Value = id
+	if value, ok := tc.mutation.TranscriptId(); ok {
+		_spec.SetField(transcript.FieldTranscriptId, field.TypeString, value)
+		_node.TranscriptId = value
 	}
 	if value, ok := tc.mutation.Gene(); ok {
 		_spec.SetField(transcript.FieldGene, field.TypeString, value)
@@ -232,6 +230,10 @@ func (tcb *TranscriptCreateBulk) Save(ctx context.Context) ([]*Transcript, error
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
+				if specs[i].ID.Value != nil {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int(id)
+				}
 				mutation.done = true
 				return nodes[i], nil
 			})

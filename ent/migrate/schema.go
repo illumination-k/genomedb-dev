@@ -10,8 +10,9 @@ import (
 var (
 	// TranscriptsColumns holds the columns for the "transcripts" table.
 	TranscriptsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeString, Unique: true},
-		{Name: "gene", Type: field.TypeString},
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "transcript_id", Type: field.TypeString, Unique: true},
+		{Name: "gene", Type: field.TypeString, Size: 2147483647},
 		{Name: "mrna", Type: field.TypeString, Size: 2147483647},
 		{Name: "cds", Type: field.TypeString, Size: 2147483647},
 		{Name: "protein", Type: field.TypeString, Size: 2147483647},
@@ -22,9 +23,26 @@ var (
 		Columns:    TranscriptsColumns,
 		PrimaryKey: []*schema.Column{TranscriptsColumns[0]},
 	}
+	// TrasnscriptStructuresColumns holds the columns for the "trasnscript_structures" table.
+	TrasnscriptStructuresColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "transcript_id", Type: field.TypeString},
+		{Name: "feature", Type: field.TypeString},
+		{Name: "seqname", Type: field.TypeString},
+		{Name: "start", Type: field.TypeInt32},
+		{Name: "end", Type: field.TypeInt32},
+		{Name: "strand", Type: field.TypeString},
+	}
+	// TrasnscriptStructuresTable holds the schema information for the "trasnscript_structures" table.
+	TrasnscriptStructuresTable = &schema.Table{
+		Name:       "trasnscript_structures",
+		Columns:    TrasnscriptStructuresColumns,
+		PrimaryKey: []*schema.Column{TrasnscriptStructuresColumns[0]},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		TranscriptsTable,
+		TrasnscriptStructuresTable,
 	}
 )
 

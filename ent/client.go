@@ -11,6 +11,7 @@ import (
 	"genomedb/ent/migrate"
 
 	"genomedb/ent/transcript"
+	"genomedb/ent/trasnscriptstructure"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
@@ -23,6 +24,8 @@ type Client struct {
 	Schema *migrate.Schema
 	// Transcript is the client for interacting with the Transcript builders.
 	Transcript *TranscriptClient
+	// TrasnscriptStructure is the client for interacting with the TrasnscriptStructure builders.
+	TrasnscriptStructure *TrasnscriptStructureClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -37,6 +40,7 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Transcript = NewTranscriptClient(c.config)
+	c.TrasnscriptStructure = NewTrasnscriptStructureClient(c.config)
 }
 
 // Open opens a database/sql.DB specified by the driver name and
@@ -68,9 +72,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:        ctx,
-		config:     cfg,
-		Transcript: NewTranscriptClient(cfg),
+		ctx:                  ctx,
+		config:               cfg,
+		Transcript:           NewTranscriptClient(cfg),
+		TrasnscriptStructure: NewTrasnscriptStructureClient(cfg),
 	}, nil
 }
 
@@ -88,9 +93,10 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:        ctx,
-		config:     cfg,
-		Transcript: NewTranscriptClient(cfg),
+		ctx:                  ctx,
+		config:               cfg,
+		Transcript:           NewTranscriptClient(cfg),
+		TrasnscriptStructure: NewTrasnscriptStructureClient(cfg),
 	}, nil
 }
 
@@ -120,6 +126,7 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.Transcript.Use(hooks...)
+	c.TrasnscriptStructure.Use(hooks...)
 }
 
 // TranscriptClient is a client for the Transcript schema.
@@ -162,7 +169,7 @@ func (c *TranscriptClient) UpdateOne(t *Transcript) *TranscriptUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *TranscriptClient) UpdateOneID(id string) *TranscriptUpdateOne {
+func (c *TranscriptClient) UpdateOneID(id int) *TranscriptUpdateOne {
 	mutation := newTranscriptMutation(c.config, OpUpdateOne, withTranscriptID(id))
 	return &TranscriptUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -179,7 +186,7 @@ func (c *TranscriptClient) DeleteOne(t *Transcript) *TranscriptDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *TranscriptClient) DeleteOneID(id string) *TranscriptDeleteOne {
+func (c *TranscriptClient) DeleteOneID(id int) *TranscriptDeleteOne {
 	builder := c.Delete().Where(transcript.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -194,12 +201,12 @@ func (c *TranscriptClient) Query() *TranscriptQuery {
 }
 
 // Get returns a Transcript entity by its id.
-func (c *TranscriptClient) Get(ctx context.Context, id string) (*Transcript, error) {
+func (c *TranscriptClient) Get(ctx context.Context, id int) (*Transcript, error) {
 	return c.Query().Where(transcript.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *TranscriptClient) GetX(ctx context.Context, id string) *Transcript {
+func (c *TranscriptClient) GetX(ctx context.Context, id int) *Transcript {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -210,4 +217,94 @@ func (c *TranscriptClient) GetX(ctx context.Context, id string) *Transcript {
 // Hooks returns the client hooks.
 func (c *TranscriptClient) Hooks() []Hook {
 	return c.hooks.Transcript
+}
+
+// TrasnscriptStructureClient is a client for the TrasnscriptStructure schema.
+type TrasnscriptStructureClient struct {
+	config
+}
+
+// NewTrasnscriptStructureClient returns a client for the TrasnscriptStructure from the given config.
+func NewTrasnscriptStructureClient(c config) *TrasnscriptStructureClient {
+	return &TrasnscriptStructureClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `trasnscriptstructure.Hooks(f(g(h())))`.
+func (c *TrasnscriptStructureClient) Use(hooks ...Hook) {
+	c.hooks.TrasnscriptStructure = append(c.hooks.TrasnscriptStructure, hooks...)
+}
+
+// Create returns a builder for creating a TrasnscriptStructure entity.
+func (c *TrasnscriptStructureClient) Create() *TrasnscriptStructureCreate {
+	mutation := newTrasnscriptStructureMutation(c.config, OpCreate)
+	return &TrasnscriptStructureCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TrasnscriptStructure entities.
+func (c *TrasnscriptStructureClient) CreateBulk(builders ...*TrasnscriptStructureCreate) *TrasnscriptStructureCreateBulk {
+	return &TrasnscriptStructureCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TrasnscriptStructure.
+func (c *TrasnscriptStructureClient) Update() *TrasnscriptStructureUpdate {
+	mutation := newTrasnscriptStructureMutation(c.config, OpUpdate)
+	return &TrasnscriptStructureUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TrasnscriptStructureClient) UpdateOne(ts *TrasnscriptStructure) *TrasnscriptStructureUpdateOne {
+	mutation := newTrasnscriptStructureMutation(c.config, OpUpdateOne, withTrasnscriptStructure(ts))
+	return &TrasnscriptStructureUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TrasnscriptStructureClient) UpdateOneID(id int) *TrasnscriptStructureUpdateOne {
+	mutation := newTrasnscriptStructureMutation(c.config, OpUpdateOne, withTrasnscriptStructureID(id))
+	return &TrasnscriptStructureUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TrasnscriptStructure.
+func (c *TrasnscriptStructureClient) Delete() *TrasnscriptStructureDelete {
+	mutation := newTrasnscriptStructureMutation(c.config, OpDelete)
+	return &TrasnscriptStructureDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TrasnscriptStructureClient) DeleteOne(ts *TrasnscriptStructure) *TrasnscriptStructureDeleteOne {
+	return c.DeleteOneID(ts.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TrasnscriptStructureClient) DeleteOneID(id int) *TrasnscriptStructureDeleteOne {
+	builder := c.Delete().Where(trasnscriptstructure.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TrasnscriptStructureDeleteOne{builder}
+}
+
+// Query returns a query builder for TrasnscriptStructure.
+func (c *TrasnscriptStructureClient) Query() *TrasnscriptStructureQuery {
+	return &TrasnscriptStructureQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a TrasnscriptStructure entity by its id.
+func (c *TrasnscriptStructureClient) Get(ctx context.Context, id int) (*TrasnscriptStructure, error) {
+	return c.Query().Where(trasnscriptstructure.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TrasnscriptStructureClient) GetX(ctx context.Context, id int) *TrasnscriptStructure {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *TrasnscriptStructureClient) Hooks() []Hook {
+	return c.hooks.TrasnscriptStructure
 }

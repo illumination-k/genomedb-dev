@@ -14,7 +14,9 @@ import (
 type Transcript struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID string `json:"id,omitempty"`
+	ID int `json:"id,omitempty"`
+	// TranscriptId holds the value of the "transcriptId" field.
+	TranscriptId string `json:"transcriptId,omitempty"`
 	// Gene holds the value of the "gene" field.
 	Gene string `json:"gene,omitempty"`
 	// Mrna holds the value of the "mrna" field.
@@ -30,7 +32,9 @@ func (*Transcript) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case transcript.FieldID, transcript.FieldGene, transcript.FieldMrna, transcript.FieldCds, transcript.FieldProtein:
+		case transcript.FieldID:
+			values[i] = new(sql.NullInt64)
+		case transcript.FieldTranscriptId, transcript.FieldGene, transcript.FieldMrna, transcript.FieldCds, transcript.FieldProtein:
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Transcript", columns[i])
@@ -48,10 +52,16 @@ func (t *Transcript) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case transcript.FieldID:
+			value, ok := values[i].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
+			}
+			t.ID = int(value.Int64)
+		case transcript.FieldTranscriptId:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field id", values[i])
+				return fmt.Errorf("unexpected type %T for field transcriptId", values[i])
 			} else if value.Valid {
-				t.ID = value.String
+				t.TranscriptId = value.String
 			}
 		case transcript.FieldGene:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -105,6 +115,9 @@ func (t *Transcript) String() string {
 	var builder strings.Builder
 	builder.WriteString("Transcript(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", t.ID))
+	builder.WriteString("transcriptId=")
+	builder.WriteString(t.TranscriptId)
+	builder.WriteString(", ")
 	builder.WriteString("gene=")
 	builder.WriteString(t.Gene)
 	builder.WriteString(", ")

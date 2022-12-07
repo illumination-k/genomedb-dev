@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"genomedb/ent/transcript"
+	"genomedb/ent/trasnscriptstructure"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -31,7 +32,8 @@ type OrderFunc func(*sql.Selector)
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
-		transcript.Table: transcript.ValidColumn,
+		transcript.Table:           transcript.ValidColumn,
+		trasnscriptstructure.Table: trasnscriptstructure.ValidColumn,
 	}
 	check, ok := checks[table]
 	if !ok {

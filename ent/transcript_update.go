@@ -27,6 +27,12 @@ func (tu *TranscriptUpdate) Where(ps ...predicate.Transcript) *TranscriptUpdate 
 	return tu
 }
 
+// SetTranscriptId sets the "transcriptId" field.
+func (tu *TranscriptUpdate) SetTranscriptId(s string) *TranscriptUpdate {
+	tu.mutation.SetTranscriptId(s)
+	return tu
+}
+
 // SetGene sets the "gene" field.
 func (tu *TranscriptUpdate) SetGene(s string) *TranscriptUpdate {
 	tu.mutation.SetGene(s)
@@ -116,7 +122,7 @@ func (tu *TranscriptUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Table:   transcript.Table,
 			Columns: transcript.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
+				Type:   field.TypeInt,
 				Column: transcript.FieldID,
 			},
 		},
@@ -127,6 +133,9 @@ func (tu *TranscriptUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := tu.mutation.TranscriptId(); ok {
+		_spec.SetField(transcript.FieldTranscriptId, field.TypeString, value)
 	}
 	if value, ok := tu.mutation.Gene(); ok {
 		_spec.SetField(transcript.FieldGene, field.TypeString, value)
@@ -157,6 +166,12 @@ type TranscriptUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *TranscriptMutation
+}
+
+// SetTranscriptId sets the "transcriptId" field.
+func (tuo *TranscriptUpdateOne) SetTranscriptId(s string) *TranscriptUpdateOne {
+	tuo.mutation.SetTranscriptId(s)
+	return tuo
 }
 
 // SetGene sets the "gene" field.
@@ -261,7 +276,7 @@ func (tuo *TranscriptUpdateOne) sqlSave(ctx context.Context) (_node *Transcript,
 			Table:   transcript.Table,
 			Columns: transcript.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
+				Type:   field.TypeInt,
 				Column: transcript.FieldID,
 			},
 		},
@@ -289,6 +304,9 @@ func (tuo *TranscriptUpdateOne) sqlSave(ctx context.Context) (_node *Transcript,
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := tuo.mutation.TranscriptId(); ok {
+		_spec.SetField(transcript.FieldTranscriptId, field.TypeString, value)
 	}
 	if value, ok := tuo.mutation.Gene(); ok {
 		_spec.SetField(transcript.FieldGene, field.TypeString, value)

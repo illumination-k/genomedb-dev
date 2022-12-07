@@ -9,28 +9,28 @@ import (
 )
 
 // ID filters vertices based on their ID field.
-func ID(id string) predicate.Transcript {
+func ID(id int) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
 	})
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id string) predicate.Transcript {
+func IDEQ(id int) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
 	})
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id string) predicate.Transcript {
+func IDNEQ(id int) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldID), id))
 	})
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...string) predicate.Transcript {
+func IDIn(ids ...int) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
 		v := make([]any, len(ids))
 		for i := range v {
@@ -41,7 +41,7 @@ func IDIn(ids ...string) predicate.Transcript {
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...string) predicate.Transcript {
+func IDNotIn(ids ...int) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
 		v := make([]any, len(ids))
 		for i := range v {
@@ -52,30 +52,37 @@ func IDNotIn(ids ...string) predicate.Transcript {
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id string) predicate.Transcript {
+func IDGT(id int) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldID), id))
 	})
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id string) predicate.Transcript {
+func IDGTE(id int) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldID), id))
 	})
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id string) predicate.Transcript {
+func IDLT(id int) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldID), id))
 	})
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id string) predicate.Transcript {
+func IDLTE(id int) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldID), id))
+	})
+}
+
+// TranscriptId applies equality check predicate on the "transcriptId" field. It's identical to TranscriptIdEQ.
+func TranscriptId(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldTranscriptId), v))
 	})
 }
 
@@ -104,6 +111,105 @@ func Cds(v string) predicate.Transcript {
 func Protein(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldProtein), v))
+	})
+}
+
+// TranscriptIdEQ applies the EQ predicate on the "transcriptId" field.
+func TranscriptIdEQ(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldTranscriptId), v))
+	})
+}
+
+// TranscriptIdNEQ applies the NEQ predicate on the "transcriptId" field.
+func TranscriptIdNEQ(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldTranscriptId), v))
+	})
+}
+
+// TranscriptIdIn applies the In predicate on the "transcriptId" field.
+func TranscriptIdIn(vs ...string) predicate.Transcript {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.In(s.C(FieldTranscriptId), v...))
+	})
+}
+
+// TranscriptIdNotIn applies the NotIn predicate on the "transcriptId" field.
+func TranscriptIdNotIn(vs ...string) predicate.Transcript {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.NotIn(s.C(FieldTranscriptId), v...))
+	})
+}
+
+// TranscriptIdGT applies the GT predicate on the "transcriptId" field.
+func TranscriptIdGT(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldTranscriptId), v))
+	})
+}
+
+// TranscriptIdGTE applies the GTE predicate on the "transcriptId" field.
+func TranscriptIdGTE(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldTranscriptId), v))
+	})
+}
+
+// TranscriptIdLT applies the LT predicate on the "transcriptId" field.
+func TranscriptIdLT(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldTranscriptId), v))
+	})
+}
+
+// TranscriptIdLTE applies the LTE predicate on the "transcriptId" field.
+func TranscriptIdLTE(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldTranscriptId), v))
+	})
+}
+
+// TranscriptIdContains applies the Contains predicate on the "transcriptId" field.
+func TranscriptIdContains(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldTranscriptId), v))
+	})
+}
+
+// TranscriptIdHasPrefix applies the HasPrefix predicate on the "transcriptId" field.
+func TranscriptIdHasPrefix(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldTranscriptId), v))
+	})
+}
+
+// TranscriptIdHasSuffix applies the HasSuffix predicate on the "transcriptId" field.
+func TranscriptIdHasSuffix(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldTranscriptId), v))
+	})
+}
+
+// TranscriptIdEqualFold applies the EqualFold predicate on the "transcriptId" field.
+func TranscriptIdEqualFold(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldTranscriptId), v))
+	})
+}
+
+// TranscriptIdContainsFold applies the ContainsFold predicate on the "transcriptId" field.
+func TranscriptIdContainsFold(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldTranscriptId), v))
 	})
 }
 

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"genomedb/ent/predicate"
 	"genomedb/ent/transcript"
+	"genomedb/ent/trasnscriptstructure"
 	"sync"
 
 	"entgo.io/ent"
@@ -22,7 +23,8 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeTranscript = "Transcript"
+	TypeTranscript           = "Transcript"
+	TypeTrasnscriptStructure = "TrasnscriptStructure"
 )
 
 // TranscriptMutation represents an operation that mutates the Transcript nodes in the graph.
@@ -30,7 +32,8 @@ type TranscriptMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *string
+	id            *int
+	transcriptId  *string
 	gene          *string
 	mrna          *string
 	cds           *string
@@ -61,7 +64,7 @@ func newTranscriptMutation(c config, op Op, opts ...transcriptOption) *Transcrip
 }
 
 // withTranscriptID sets the ID field of the mutation.
-func withTranscriptID(id string) transcriptOption {
+func withTranscriptID(id int) transcriptOption {
 	return func(m *TranscriptMutation) {
 		var (
 			err   error
@@ -111,15 +114,9 @@ func (m TranscriptMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
-// SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of Transcript entities.
-func (m *TranscriptMutation) SetID(id string) {
-	m.id = &id
-}
-
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *TranscriptMutation) ID() (id string, exists bool) {
+func (m *TranscriptMutation) ID() (id int, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -130,12 +127,12 @@ func (m *TranscriptMutation) ID() (id string, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *TranscriptMutation) IDs(ctx context.Context) ([]string, error) {
+func (m *TranscriptMutation) IDs(ctx context.Context) ([]int, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []string{id}, nil
+			return []int{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -143,6 +140,42 @@ func (m *TranscriptMutation) IDs(ctx context.Context) ([]string, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
+}
+
+// SetTranscriptId sets the "transcriptId" field.
+func (m *TranscriptMutation) SetTranscriptId(s string) {
+	m.transcriptId = &s
+}
+
+// TranscriptId returns the value of the "transcriptId" field in the mutation.
+func (m *TranscriptMutation) TranscriptId() (r string, exists bool) {
+	v := m.transcriptId
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTranscriptId returns the old "transcriptId" field's value of the Transcript entity.
+// If the Transcript object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TranscriptMutation) OldTranscriptId(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTranscriptId is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTranscriptId requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTranscriptId: %w", err)
+	}
+	return oldValue.TranscriptId, nil
+}
+
+// ResetTranscriptId resets all changes to the "transcriptId" field.
+func (m *TranscriptMutation) ResetTranscriptId() {
+	m.transcriptId = nil
 }
 
 // SetGene sets the "gene" field.
@@ -308,7 +341,10 @@ func (m *TranscriptMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TranscriptMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 5)
+	if m.transcriptId != nil {
+		fields = append(fields, transcript.FieldTranscriptId)
+	}
 	if m.gene != nil {
 		fields = append(fields, transcript.FieldGene)
 	}
@@ -329,6 +365,8 @@ func (m *TranscriptMutation) Fields() []string {
 // schema.
 func (m *TranscriptMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case transcript.FieldTranscriptId:
+		return m.TranscriptId()
 	case transcript.FieldGene:
 		return m.Gene()
 	case transcript.FieldMrna:
@@ -346,6 +384,8 @@ func (m *TranscriptMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *TranscriptMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case transcript.FieldTranscriptId:
+		return m.OldTranscriptId(ctx)
 	case transcript.FieldGene:
 		return m.OldGene(ctx)
 	case transcript.FieldMrna:
@@ -363,6 +403,13 @@ func (m *TranscriptMutation) OldField(ctx context.Context, name string) (ent.Val
 // type.
 func (m *TranscriptMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case transcript.FieldTranscriptId:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTranscriptId(v)
+		return nil
 	case transcript.FieldGene:
 		v, ok := value.(string)
 		if !ok {
@@ -440,6 +487,9 @@ func (m *TranscriptMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *TranscriptMutation) ResetField(name string) error {
 	switch name {
+	case transcript.FieldTranscriptId:
+		m.ResetTranscriptId()
+		return nil
 	case transcript.FieldGene:
 		m.ResetGene()
 		return nil
@@ -502,4 +552,654 @@ func (m *TranscriptMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *TranscriptMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Transcript edge %s", name)
+}
+
+// TrasnscriptStructureMutation represents an operation that mutates the TrasnscriptStructure nodes in the graph.
+type TrasnscriptStructureMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	transcriptId  *string
+	feature       *string
+	seqname       *string
+	start         *int32
+	addstart      *int32
+	end           *int32
+	addend        *int32
+	strand        *string
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*TrasnscriptStructure, error)
+	predicates    []predicate.TrasnscriptStructure
+}
+
+var _ ent.Mutation = (*TrasnscriptStructureMutation)(nil)
+
+// trasnscriptstructureOption allows management of the mutation configuration using functional options.
+type trasnscriptstructureOption func(*TrasnscriptStructureMutation)
+
+// newTrasnscriptStructureMutation creates new mutation for the TrasnscriptStructure entity.
+func newTrasnscriptStructureMutation(c config, op Op, opts ...trasnscriptstructureOption) *TrasnscriptStructureMutation {
+	m := &TrasnscriptStructureMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeTrasnscriptStructure,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withTrasnscriptStructureID sets the ID field of the mutation.
+func withTrasnscriptStructureID(id int) trasnscriptstructureOption {
+	return func(m *TrasnscriptStructureMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *TrasnscriptStructure
+		)
+		m.oldValue = func(ctx context.Context) (*TrasnscriptStructure, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().TrasnscriptStructure.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withTrasnscriptStructure sets the old TrasnscriptStructure of the mutation.
+func withTrasnscriptStructure(node *TrasnscriptStructure) trasnscriptstructureOption {
+	return func(m *TrasnscriptStructureMutation) {
+		m.oldValue = func(context.Context) (*TrasnscriptStructure, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m TrasnscriptStructureMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m TrasnscriptStructureMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *TrasnscriptStructureMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *TrasnscriptStructureMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().TrasnscriptStructure.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetTranscriptId sets the "transcriptId" field.
+func (m *TrasnscriptStructureMutation) SetTranscriptId(s string) {
+	m.transcriptId = &s
+}
+
+// TranscriptId returns the value of the "transcriptId" field in the mutation.
+func (m *TrasnscriptStructureMutation) TranscriptId() (r string, exists bool) {
+	v := m.transcriptId
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTranscriptId returns the old "transcriptId" field's value of the TrasnscriptStructure entity.
+// If the TrasnscriptStructure object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrasnscriptStructureMutation) OldTranscriptId(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTranscriptId is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTranscriptId requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTranscriptId: %w", err)
+	}
+	return oldValue.TranscriptId, nil
+}
+
+// ResetTranscriptId resets all changes to the "transcriptId" field.
+func (m *TrasnscriptStructureMutation) ResetTranscriptId() {
+	m.transcriptId = nil
+}
+
+// SetFeature sets the "feature" field.
+func (m *TrasnscriptStructureMutation) SetFeature(s string) {
+	m.feature = &s
+}
+
+// Feature returns the value of the "feature" field in the mutation.
+func (m *TrasnscriptStructureMutation) Feature() (r string, exists bool) {
+	v := m.feature
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFeature returns the old "feature" field's value of the TrasnscriptStructure entity.
+// If the TrasnscriptStructure object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrasnscriptStructureMutation) OldFeature(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFeature is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFeature requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFeature: %w", err)
+	}
+	return oldValue.Feature, nil
+}
+
+// ResetFeature resets all changes to the "feature" field.
+func (m *TrasnscriptStructureMutation) ResetFeature() {
+	m.feature = nil
+}
+
+// SetSeqname sets the "seqname" field.
+func (m *TrasnscriptStructureMutation) SetSeqname(s string) {
+	m.seqname = &s
+}
+
+// Seqname returns the value of the "seqname" field in the mutation.
+func (m *TrasnscriptStructureMutation) Seqname() (r string, exists bool) {
+	v := m.seqname
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSeqname returns the old "seqname" field's value of the TrasnscriptStructure entity.
+// If the TrasnscriptStructure object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrasnscriptStructureMutation) OldSeqname(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSeqname is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSeqname requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSeqname: %w", err)
+	}
+	return oldValue.Seqname, nil
+}
+
+// ResetSeqname resets all changes to the "seqname" field.
+func (m *TrasnscriptStructureMutation) ResetSeqname() {
+	m.seqname = nil
+}
+
+// SetStart sets the "start" field.
+func (m *TrasnscriptStructureMutation) SetStart(i int32) {
+	m.start = &i
+	m.addstart = nil
+}
+
+// Start returns the value of the "start" field in the mutation.
+func (m *TrasnscriptStructureMutation) Start() (r int32, exists bool) {
+	v := m.start
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStart returns the old "start" field's value of the TrasnscriptStructure entity.
+// If the TrasnscriptStructure object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrasnscriptStructureMutation) OldStart(ctx context.Context) (v int32, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStart is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStart requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStart: %w", err)
+	}
+	return oldValue.Start, nil
+}
+
+// AddStart adds i to the "start" field.
+func (m *TrasnscriptStructureMutation) AddStart(i int32) {
+	if m.addstart != nil {
+		*m.addstart += i
+	} else {
+		m.addstart = &i
+	}
+}
+
+// AddedStart returns the value that was added to the "start" field in this mutation.
+func (m *TrasnscriptStructureMutation) AddedStart() (r int32, exists bool) {
+	v := m.addstart
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetStart resets all changes to the "start" field.
+func (m *TrasnscriptStructureMutation) ResetStart() {
+	m.start = nil
+	m.addstart = nil
+}
+
+// SetEnd sets the "end" field.
+func (m *TrasnscriptStructureMutation) SetEnd(i int32) {
+	m.end = &i
+	m.addend = nil
+}
+
+// End returns the value of the "end" field in the mutation.
+func (m *TrasnscriptStructureMutation) End() (r int32, exists bool) {
+	v := m.end
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnd returns the old "end" field's value of the TrasnscriptStructure entity.
+// If the TrasnscriptStructure object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrasnscriptStructureMutation) OldEnd(ctx context.Context) (v int32, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnd is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnd requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnd: %w", err)
+	}
+	return oldValue.End, nil
+}
+
+// AddEnd adds i to the "end" field.
+func (m *TrasnscriptStructureMutation) AddEnd(i int32) {
+	if m.addend != nil {
+		*m.addend += i
+	} else {
+		m.addend = &i
+	}
+}
+
+// AddedEnd returns the value that was added to the "end" field in this mutation.
+func (m *TrasnscriptStructureMutation) AddedEnd() (r int32, exists bool) {
+	v := m.addend
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetEnd resets all changes to the "end" field.
+func (m *TrasnscriptStructureMutation) ResetEnd() {
+	m.end = nil
+	m.addend = nil
+}
+
+// SetStrand sets the "strand" field.
+func (m *TrasnscriptStructureMutation) SetStrand(s string) {
+	m.strand = &s
+}
+
+// Strand returns the value of the "strand" field in the mutation.
+func (m *TrasnscriptStructureMutation) Strand() (r string, exists bool) {
+	v := m.strand
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStrand returns the old "strand" field's value of the TrasnscriptStructure entity.
+// If the TrasnscriptStructure object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrasnscriptStructureMutation) OldStrand(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStrand is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStrand requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStrand: %w", err)
+	}
+	return oldValue.Strand, nil
+}
+
+// ResetStrand resets all changes to the "strand" field.
+func (m *TrasnscriptStructureMutation) ResetStrand() {
+	m.strand = nil
+}
+
+// Where appends a list predicates to the TrasnscriptStructureMutation builder.
+func (m *TrasnscriptStructureMutation) Where(ps ...predicate.TrasnscriptStructure) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *TrasnscriptStructureMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (TrasnscriptStructure).
+func (m *TrasnscriptStructureMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *TrasnscriptStructureMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.transcriptId != nil {
+		fields = append(fields, trasnscriptstructure.FieldTranscriptId)
+	}
+	if m.feature != nil {
+		fields = append(fields, trasnscriptstructure.FieldFeature)
+	}
+	if m.seqname != nil {
+		fields = append(fields, trasnscriptstructure.FieldSeqname)
+	}
+	if m.start != nil {
+		fields = append(fields, trasnscriptstructure.FieldStart)
+	}
+	if m.end != nil {
+		fields = append(fields, trasnscriptstructure.FieldEnd)
+	}
+	if m.strand != nil {
+		fields = append(fields, trasnscriptstructure.FieldStrand)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *TrasnscriptStructureMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case trasnscriptstructure.FieldTranscriptId:
+		return m.TranscriptId()
+	case trasnscriptstructure.FieldFeature:
+		return m.Feature()
+	case trasnscriptstructure.FieldSeqname:
+		return m.Seqname()
+	case trasnscriptstructure.FieldStart:
+		return m.Start()
+	case trasnscriptstructure.FieldEnd:
+		return m.End()
+	case trasnscriptstructure.FieldStrand:
+		return m.Strand()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *TrasnscriptStructureMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case trasnscriptstructure.FieldTranscriptId:
+		return m.OldTranscriptId(ctx)
+	case trasnscriptstructure.FieldFeature:
+		return m.OldFeature(ctx)
+	case trasnscriptstructure.FieldSeqname:
+		return m.OldSeqname(ctx)
+	case trasnscriptstructure.FieldStart:
+		return m.OldStart(ctx)
+	case trasnscriptstructure.FieldEnd:
+		return m.OldEnd(ctx)
+	case trasnscriptstructure.FieldStrand:
+		return m.OldStrand(ctx)
+	}
+	return nil, fmt.Errorf("unknown TrasnscriptStructure field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TrasnscriptStructureMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case trasnscriptstructure.FieldTranscriptId:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTranscriptId(v)
+		return nil
+	case trasnscriptstructure.FieldFeature:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFeature(v)
+		return nil
+	case trasnscriptstructure.FieldSeqname:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSeqname(v)
+		return nil
+	case trasnscriptstructure.FieldStart:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStart(v)
+		return nil
+	case trasnscriptstructure.FieldEnd:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnd(v)
+		return nil
+	case trasnscriptstructure.FieldStrand:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStrand(v)
+		return nil
+	}
+	return fmt.Errorf("unknown TrasnscriptStructure field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *TrasnscriptStructureMutation) AddedFields() []string {
+	var fields []string
+	if m.addstart != nil {
+		fields = append(fields, trasnscriptstructure.FieldStart)
+	}
+	if m.addend != nil {
+		fields = append(fields, trasnscriptstructure.FieldEnd)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *TrasnscriptStructureMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case trasnscriptstructure.FieldStart:
+		return m.AddedStart()
+	case trasnscriptstructure.FieldEnd:
+		return m.AddedEnd()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TrasnscriptStructureMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case trasnscriptstructure.FieldStart:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddStart(v)
+		return nil
+	case trasnscriptstructure.FieldEnd:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEnd(v)
+		return nil
+	}
+	return fmt.Errorf("unknown TrasnscriptStructure numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *TrasnscriptStructureMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *TrasnscriptStructureMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *TrasnscriptStructureMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown TrasnscriptStructure nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *TrasnscriptStructureMutation) ResetField(name string) error {
+	switch name {
+	case trasnscriptstructure.FieldTranscriptId:
+		m.ResetTranscriptId()
+		return nil
+	case trasnscriptstructure.FieldFeature:
+		m.ResetFeature()
+		return nil
+	case trasnscriptstructure.FieldSeqname:
+		m.ResetSeqname()
+		return nil
+	case trasnscriptstructure.FieldStart:
+		m.ResetStart()
+		return nil
+	case trasnscriptstructure.FieldEnd:
+		m.ResetEnd()
+		return nil
+	case trasnscriptstructure.FieldStrand:
+		m.ResetStrand()
+		return nil
+	}
+	return fmt.Errorf("unknown TrasnscriptStructure field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *TrasnscriptStructureMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *TrasnscriptStructureMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *TrasnscriptStructureMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *TrasnscriptStructureMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *TrasnscriptStructureMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *TrasnscriptStructureMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *TrasnscriptStructureMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown TrasnscriptStructure unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *TrasnscriptStructureMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown TrasnscriptStructure edge %s", name)
 }

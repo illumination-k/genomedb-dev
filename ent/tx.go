@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// Transcript is the client for interacting with the Transcript builders.
 	Transcript *TranscriptClient
+	// TrasnscriptStructure is the client for interacting with the TrasnscriptStructure builders.
+	TrasnscriptStructure *TrasnscriptStructureClient
 
 	// lazily loaded.
 	client     *Client
@@ -146,6 +148,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Transcript = NewTranscriptClient(tx.config)
+	tx.TrasnscriptStructure = NewTrasnscriptStructureClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.
