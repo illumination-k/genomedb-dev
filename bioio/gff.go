@@ -41,11 +41,14 @@ func NewGffParser() *GffParser {
 }
 
 func (p *GffParser) ConsumeLine(line string) error {
+	line = strings.TrimSpace(line)
 	if strings.HasPrefix(line, "#") {
 		return nil
 	}
 
-	line = strings.TrimSpace(line)
+	if line == "" {
+		return nil
+	}
 
 	recs := strings.Split(line, "\t")
 

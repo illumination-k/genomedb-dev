@@ -6,14 +6,22 @@ import (
 	"testing"
 )
 
-func TestGffParserConsumeLine(t *testing.T) {
+func TestBasicGffParserConsumeLine(t *testing.T) {
+	commentLine := "##gff-version 3"
 	gffLine := "chr1\tfeature\trRNA\t1\t1967\t.\t-\t.\tID=Mp1g00005a.1;geneID=Mp1g00005a"
 
 	gffRecordParser := bioio.NewGffParser()
 
+	commentParseErr := gffRecordParser.ConsumeLine(commentLine)
+	t.Run("Check Comment Parsing", func(t *testing.T) {
+		if commentParseErr != nil {
+			t.Errorf("Error: %v", commentParseErr)
+		}
+	})
+
 	err := gffRecordParser.ConsumeLine(gffLine)
 
-	t.Run("Check Parsing Error", func(t *testing.T) {
+	t.Run("Check Line Parsing", func(t *testing.T) {
 		if err != nil {
 			t.Errorf("Error: %v", err)
 		}
