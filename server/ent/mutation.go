@@ -34,7 +34,8 @@ type TranscriptMutation struct {
 	typ           string
 	id            *int
 	transcriptId  *string
-	gene          *string
+	geneId        *string
+	genome        *string
 	mrna          *string
 	cds           *string
 	protein       *string
@@ -178,40 +179,76 @@ func (m *TranscriptMutation) ResetTranscriptId() {
 	m.transcriptId = nil
 }
 
-// SetGene sets the "gene" field.
-func (m *TranscriptMutation) SetGene(s string) {
-	m.gene = &s
+// SetGeneId sets the "geneId" field.
+func (m *TranscriptMutation) SetGeneId(s string) {
+	m.geneId = &s
 }
 
-// Gene returns the value of the "gene" field in the mutation.
-func (m *TranscriptMutation) Gene() (r string, exists bool) {
-	v := m.gene
+// GeneId returns the value of the "geneId" field in the mutation.
+func (m *TranscriptMutation) GeneId() (r string, exists bool) {
+	v := m.geneId
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldGene returns the old "gene" field's value of the Transcript entity.
+// OldGeneId returns the old "geneId" field's value of the Transcript entity.
 // If the Transcript object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TranscriptMutation) OldGene(ctx context.Context) (v string, err error) {
+func (m *TranscriptMutation) OldGeneId(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldGene is only allowed on UpdateOne operations")
+		return v, errors.New("OldGeneId is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldGene requires an ID field in the mutation")
+		return v, errors.New("OldGeneId requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldGene: %w", err)
+		return v, fmt.Errorf("querying old value for OldGeneId: %w", err)
 	}
-	return oldValue.Gene, nil
+	return oldValue.GeneId, nil
 }
 
-// ResetGene resets all changes to the "gene" field.
-func (m *TranscriptMutation) ResetGene() {
-	m.gene = nil
+// ResetGeneId resets all changes to the "geneId" field.
+func (m *TranscriptMutation) ResetGeneId() {
+	m.geneId = nil
+}
+
+// SetGenome sets the "genome" field.
+func (m *TranscriptMutation) SetGenome(s string) {
+	m.genome = &s
+}
+
+// Genome returns the value of the "genome" field in the mutation.
+func (m *TranscriptMutation) Genome() (r string, exists bool) {
+	v := m.genome
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGenome returns the old "genome" field's value of the Transcript entity.
+// If the Transcript object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TranscriptMutation) OldGenome(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGenome is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGenome requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGenome: %w", err)
+	}
+	return oldValue.Genome, nil
+}
+
+// ResetGenome resets all changes to the "genome" field.
+func (m *TranscriptMutation) ResetGenome() {
+	m.genome = nil
 }
 
 // SetMrna sets the "mrna" field.
@@ -341,12 +378,15 @@ func (m *TranscriptMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TranscriptMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.transcriptId != nil {
 		fields = append(fields, transcript.FieldTranscriptId)
 	}
-	if m.gene != nil {
-		fields = append(fields, transcript.FieldGene)
+	if m.geneId != nil {
+		fields = append(fields, transcript.FieldGeneId)
+	}
+	if m.genome != nil {
+		fields = append(fields, transcript.FieldGenome)
 	}
 	if m.mrna != nil {
 		fields = append(fields, transcript.FieldMrna)
@@ -367,8 +407,10 @@ func (m *TranscriptMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case transcript.FieldTranscriptId:
 		return m.TranscriptId()
-	case transcript.FieldGene:
-		return m.Gene()
+	case transcript.FieldGeneId:
+		return m.GeneId()
+	case transcript.FieldGenome:
+		return m.Genome()
 	case transcript.FieldMrna:
 		return m.Mrna()
 	case transcript.FieldCds:
@@ -386,8 +428,10 @@ func (m *TranscriptMutation) OldField(ctx context.Context, name string) (ent.Val
 	switch name {
 	case transcript.FieldTranscriptId:
 		return m.OldTranscriptId(ctx)
-	case transcript.FieldGene:
-		return m.OldGene(ctx)
+	case transcript.FieldGeneId:
+		return m.OldGeneId(ctx)
+	case transcript.FieldGenome:
+		return m.OldGenome(ctx)
 	case transcript.FieldMrna:
 		return m.OldMrna(ctx)
 	case transcript.FieldCds:
@@ -410,12 +454,19 @@ func (m *TranscriptMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetTranscriptId(v)
 		return nil
-	case transcript.FieldGene:
+	case transcript.FieldGeneId:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetGene(v)
+		m.SetGeneId(v)
+		return nil
+	case transcript.FieldGenome:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGenome(v)
 		return nil
 	case transcript.FieldMrna:
 		v, ok := value.(string)
@@ -490,8 +541,11 @@ func (m *TranscriptMutation) ResetField(name string) error {
 	case transcript.FieldTranscriptId:
 		m.ResetTranscriptId()
 		return nil
-	case transcript.FieldGene:
-		m.ResetGene()
+	case transcript.FieldGeneId:
+		m.ResetGeneId()
+		return nil
+	case transcript.FieldGenome:
+		m.ResetGenome()
 		return nil
 	case transcript.FieldMrna:
 		m.ResetMrna()

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"genomedb/ent/transcript"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 )
@@ -17,6 +18,7 @@ type TranscriptCreate struct {
 	config
 	mutation *TranscriptMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetTranscriptId sets the "transcriptId" field.
@@ -25,9 +27,15 @@ func (tc *TranscriptCreate) SetTranscriptId(s string) *TranscriptCreate {
 	return tc
 }
 
-// SetGene sets the "gene" field.
-func (tc *TranscriptCreate) SetGene(s string) *TranscriptCreate {
-	tc.mutation.SetGene(s)
+// SetGeneId sets the "geneId" field.
+func (tc *TranscriptCreate) SetGeneId(s string) *TranscriptCreate {
+	tc.mutation.SetGeneId(s)
+	return tc
+}
+
+// SetGenome sets the "genome" field.
+func (tc *TranscriptCreate) SetGenome(s string) *TranscriptCreate {
+	tc.mutation.SetGenome(s)
 	return tc
 }
 
@@ -128,8 +136,11 @@ func (tc *TranscriptCreate) check() error {
 	if _, ok := tc.mutation.TranscriptId(); !ok {
 		return &ValidationError{Name: "transcriptId", err: errors.New(`ent: missing required field "Transcript.transcriptId"`)}
 	}
-	if _, ok := tc.mutation.Gene(); !ok {
-		return &ValidationError{Name: "gene", err: errors.New(`ent: missing required field "Transcript.gene"`)}
+	if _, ok := tc.mutation.GeneId(); !ok {
+		return &ValidationError{Name: "geneId", err: errors.New(`ent: missing required field "Transcript.geneId"`)}
+	}
+	if _, ok := tc.mutation.Genome(); !ok {
+		return &ValidationError{Name: "genome", err: errors.New(`ent: missing required field "Transcript.genome"`)}
 	}
 	if _, ok := tc.mutation.Mrna(); !ok {
 		return &ValidationError{Name: "mrna", err: errors.New(`ent: missing required field "Transcript.mrna"`)}
@@ -167,13 +178,18 @@ func (tc *TranscriptCreate) createSpec() (*Transcript, *sqlgraph.CreateSpec) {
 			},
 		}
 	)
+	_spec.OnConflict = tc.conflict
 	if value, ok := tc.mutation.TranscriptId(); ok {
 		_spec.SetField(transcript.FieldTranscriptId, field.TypeString, value)
 		_node.TranscriptId = value
 	}
-	if value, ok := tc.mutation.Gene(); ok {
-		_spec.SetField(transcript.FieldGene, field.TypeString, value)
-		_node.Gene = value
+	if value, ok := tc.mutation.GeneId(); ok {
+		_spec.SetField(transcript.FieldGeneId, field.TypeString, value)
+		_node.GeneId = value
+	}
+	if value, ok := tc.mutation.Genome(); ok {
+		_spec.SetField(transcript.FieldGenome, field.TypeString, value)
+		_node.Genome = value
 	}
 	if value, ok := tc.mutation.Mrna(); ok {
 		_spec.SetField(transcript.FieldMrna, field.TypeString, value)
@@ -190,10 +206,289 @@ func (tc *TranscriptCreate) createSpec() (*Transcript, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Transcript.Create().
+//		SetTranscriptId(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.TranscriptUpsert) {
+//			SetTranscriptId(v+v).
+//		}).
+//		Exec(ctx)
+func (tc *TranscriptCreate) OnConflict(opts ...sql.ConflictOption) *TranscriptUpsertOne {
+	tc.conflict = opts
+	return &TranscriptUpsertOne{
+		create: tc,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Transcript.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (tc *TranscriptCreate) OnConflictColumns(columns ...string) *TranscriptUpsertOne {
+	tc.conflict = append(tc.conflict, sql.ConflictColumns(columns...))
+	return &TranscriptUpsertOne{
+		create: tc,
+	}
+}
+
+type (
+	// TranscriptUpsertOne is the builder for "upsert"-ing
+	//  one Transcript node.
+	TranscriptUpsertOne struct {
+		create *TranscriptCreate
+	}
+
+	// TranscriptUpsert is the "OnConflict" setter.
+	TranscriptUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetTranscriptId sets the "transcriptId" field.
+func (u *TranscriptUpsert) SetTranscriptId(v string) *TranscriptUpsert {
+	u.Set(transcript.FieldTranscriptId, v)
+	return u
+}
+
+// UpdateTranscriptId sets the "transcriptId" field to the value that was provided on create.
+func (u *TranscriptUpsert) UpdateTranscriptId() *TranscriptUpsert {
+	u.SetExcluded(transcript.FieldTranscriptId)
+	return u
+}
+
+// SetGeneId sets the "geneId" field.
+func (u *TranscriptUpsert) SetGeneId(v string) *TranscriptUpsert {
+	u.Set(transcript.FieldGeneId, v)
+	return u
+}
+
+// UpdateGeneId sets the "geneId" field to the value that was provided on create.
+func (u *TranscriptUpsert) UpdateGeneId() *TranscriptUpsert {
+	u.SetExcluded(transcript.FieldGeneId)
+	return u
+}
+
+// SetGenome sets the "genome" field.
+func (u *TranscriptUpsert) SetGenome(v string) *TranscriptUpsert {
+	u.Set(transcript.FieldGenome, v)
+	return u
+}
+
+// UpdateGenome sets the "genome" field to the value that was provided on create.
+func (u *TranscriptUpsert) UpdateGenome() *TranscriptUpsert {
+	u.SetExcluded(transcript.FieldGenome)
+	return u
+}
+
+// SetMrna sets the "mrna" field.
+func (u *TranscriptUpsert) SetMrna(v string) *TranscriptUpsert {
+	u.Set(transcript.FieldMrna, v)
+	return u
+}
+
+// UpdateMrna sets the "mrna" field to the value that was provided on create.
+func (u *TranscriptUpsert) UpdateMrna() *TranscriptUpsert {
+	u.SetExcluded(transcript.FieldMrna)
+	return u
+}
+
+// SetCds sets the "cds" field.
+func (u *TranscriptUpsert) SetCds(v string) *TranscriptUpsert {
+	u.Set(transcript.FieldCds, v)
+	return u
+}
+
+// UpdateCds sets the "cds" field to the value that was provided on create.
+func (u *TranscriptUpsert) UpdateCds() *TranscriptUpsert {
+	u.SetExcluded(transcript.FieldCds)
+	return u
+}
+
+// SetProtein sets the "protein" field.
+func (u *TranscriptUpsert) SetProtein(v string) *TranscriptUpsert {
+	u.Set(transcript.FieldProtein, v)
+	return u
+}
+
+// UpdateProtein sets the "protein" field to the value that was provided on create.
+func (u *TranscriptUpsert) UpdateProtein() *TranscriptUpsert {
+	u.SetExcluded(transcript.FieldProtein)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create.
+// Using this option is equivalent to using:
+//
+//	client.Transcript.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
+func (u *TranscriptUpsertOne) UpdateNewValues() *TranscriptUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Transcript.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *TranscriptUpsertOne) Ignore() *TranscriptUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *TranscriptUpsertOne) DoNothing() *TranscriptUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the TranscriptCreate.OnConflict
+// documentation for more info.
+func (u *TranscriptUpsertOne) Update(set func(*TranscriptUpsert)) *TranscriptUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&TranscriptUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetTranscriptId sets the "transcriptId" field.
+func (u *TranscriptUpsertOne) SetTranscriptId(v string) *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetTranscriptId(v)
+	})
+}
+
+// UpdateTranscriptId sets the "transcriptId" field to the value that was provided on create.
+func (u *TranscriptUpsertOne) UpdateTranscriptId() *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateTranscriptId()
+	})
+}
+
+// SetGeneId sets the "geneId" field.
+func (u *TranscriptUpsertOne) SetGeneId(v string) *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetGeneId(v)
+	})
+}
+
+// UpdateGeneId sets the "geneId" field to the value that was provided on create.
+func (u *TranscriptUpsertOne) UpdateGeneId() *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateGeneId()
+	})
+}
+
+// SetGenome sets the "genome" field.
+func (u *TranscriptUpsertOne) SetGenome(v string) *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetGenome(v)
+	})
+}
+
+// UpdateGenome sets the "genome" field to the value that was provided on create.
+func (u *TranscriptUpsertOne) UpdateGenome() *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateGenome()
+	})
+}
+
+// SetMrna sets the "mrna" field.
+func (u *TranscriptUpsertOne) SetMrna(v string) *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetMrna(v)
+	})
+}
+
+// UpdateMrna sets the "mrna" field to the value that was provided on create.
+func (u *TranscriptUpsertOne) UpdateMrna() *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateMrna()
+	})
+}
+
+// SetCds sets the "cds" field.
+func (u *TranscriptUpsertOne) SetCds(v string) *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetCds(v)
+	})
+}
+
+// UpdateCds sets the "cds" field to the value that was provided on create.
+func (u *TranscriptUpsertOne) UpdateCds() *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateCds()
+	})
+}
+
+// SetProtein sets the "protein" field.
+func (u *TranscriptUpsertOne) SetProtein(v string) *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetProtein(v)
+	})
+}
+
+// UpdateProtein sets the "protein" field to the value that was provided on create.
+func (u *TranscriptUpsertOne) UpdateProtein() *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateProtein()
+	})
+}
+
+// Exec executes the query.
+func (u *TranscriptUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for TranscriptCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *TranscriptUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *TranscriptUpsertOne) ID(ctx context.Context) (id int, err error) {
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *TranscriptUpsertOne) IDX(ctx context.Context) int {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // TranscriptCreateBulk is the builder for creating many Transcript entities in bulk.
 type TranscriptCreateBulk struct {
 	config
 	builders []*TranscriptCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the Transcript entities in the database.
@@ -219,6 +514,7 @@ func (tcb *TranscriptCreateBulk) Save(ctx context.Context) ([]*Transcript, error
 					_, err = mutators[i+1].Mutate(root, tcb.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = tcb.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, tcb.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -269,6 +565,191 @@ func (tcb *TranscriptCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (tcb *TranscriptCreateBulk) ExecX(ctx context.Context) {
 	if err := tcb.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Transcript.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.TranscriptUpsert) {
+//			SetTranscriptId(v+v).
+//		}).
+//		Exec(ctx)
+func (tcb *TranscriptCreateBulk) OnConflict(opts ...sql.ConflictOption) *TranscriptUpsertBulk {
+	tcb.conflict = opts
+	return &TranscriptUpsertBulk{
+		create: tcb,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Transcript.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (tcb *TranscriptCreateBulk) OnConflictColumns(columns ...string) *TranscriptUpsertBulk {
+	tcb.conflict = append(tcb.conflict, sql.ConflictColumns(columns...))
+	return &TranscriptUpsertBulk{
+		create: tcb,
+	}
+}
+
+// TranscriptUpsertBulk is the builder for "upsert"-ing
+// a bulk of Transcript nodes.
+type TranscriptUpsertBulk struct {
+	create *TranscriptCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.Transcript.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
+func (u *TranscriptUpsertBulk) UpdateNewValues() *TranscriptUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Transcript.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *TranscriptUpsertBulk) Ignore() *TranscriptUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *TranscriptUpsertBulk) DoNothing() *TranscriptUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the TranscriptCreateBulk.OnConflict
+// documentation for more info.
+func (u *TranscriptUpsertBulk) Update(set func(*TranscriptUpsert)) *TranscriptUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&TranscriptUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetTranscriptId sets the "transcriptId" field.
+func (u *TranscriptUpsertBulk) SetTranscriptId(v string) *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetTranscriptId(v)
+	})
+}
+
+// UpdateTranscriptId sets the "transcriptId" field to the value that was provided on create.
+func (u *TranscriptUpsertBulk) UpdateTranscriptId() *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateTranscriptId()
+	})
+}
+
+// SetGeneId sets the "geneId" field.
+func (u *TranscriptUpsertBulk) SetGeneId(v string) *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetGeneId(v)
+	})
+}
+
+// UpdateGeneId sets the "geneId" field to the value that was provided on create.
+func (u *TranscriptUpsertBulk) UpdateGeneId() *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateGeneId()
+	})
+}
+
+// SetGenome sets the "genome" field.
+func (u *TranscriptUpsertBulk) SetGenome(v string) *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetGenome(v)
+	})
+}
+
+// UpdateGenome sets the "genome" field to the value that was provided on create.
+func (u *TranscriptUpsertBulk) UpdateGenome() *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateGenome()
+	})
+}
+
+// SetMrna sets the "mrna" field.
+func (u *TranscriptUpsertBulk) SetMrna(v string) *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetMrna(v)
+	})
+}
+
+// UpdateMrna sets the "mrna" field to the value that was provided on create.
+func (u *TranscriptUpsertBulk) UpdateMrna() *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateMrna()
+	})
+}
+
+// SetCds sets the "cds" field.
+func (u *TranscriptUpsertBulk) SetCds(v string) *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetCds(v)
+	})
+}
+
+// UpdateCds sets the "cds" field to the value that was provided on create.
+func (u *TranscriptUpsertBulk) UpdateCds() *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateCds()
+	})
+}
+
+// SetProtein sets the "protein" field.
+func (u *TranscriptUpsertBulk) SetProtein(v string) *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetProtein(v)
+	})
+}
+
+// UpdateProtein sets the "protein" field to the value that was provided on create.
+func (u *TranscriptUpsertBulk) UpdateProtein() *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateProtein()
+	})
+}
+
+// Exec executes the query.
+func (u *TranscriptUpsertBulk) Exec(ctx context.Context) error {
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the TranscriptCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for TranscriptCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *TranscriptUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

@@ -5,10 +5,14 @@ package cmd
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"genomedb/bioio"
+	"genomedb/ent"
 	"os"
+	"strings"
 
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/spf13/cobra"
 )
 
@@ -21,12 +25,15 @@ var importGenomeCmd = &cobra.Command{
 	Use:   "importGenome",
 	Short: "Import genome information",
 	Long:  `Import genomic features from a genomic fasta file and a genomic gtf file into the database.`,
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		databaseUri = os.Getenv("DATABASE_URI")
-		fmt.Println(databaseUri)
-		return nil
-	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if databaseUri == "" {
+			databaseUri = os.Getenv("DATABASE_URI")
+		}
+
+		if databaseUri == "" {
+			return fmt.Errorf("You should specify DATABASE URI by enviroment variables or flag")
+		}
+
 		fmt.Printf("fasta: %v\n gtf : %v\n", genomeFasta, genomeGtf)
 
 		seqname2seq, fastaReadError := readGenomeFasta(genomeFasta)
@@ -43,6 +50,20 @@ var importGenomeCmd = &cobra.Command{
 			return gtfReadError
 		}
 
+		// import into database
+		client, err := ent.Open("sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
+		if err != nil {
+			return err
+		}
+		defer client.Close()
+
+		// Run the auto migration tool.
+		ctx := context.Background()
+		if err := client.Schema.Create(ctx); err != nil {
+			return fmt.Errorf("failed creating schema resources: %v", err)
+		}
+
+		transcriptDtos := []*ent.TranscriptCreate{}
 		for transcriptId, recs := range transcriptId2recs {
 			scaffoldSeq, ok := seqname2seq[recs.SeqName]
 
@@ -50,9 +71,44 @@ var importGenomeCmd = &cobra.Command{
 				return fmt.Errorf("seqname=%v does not exist in %v", recs.SeqName, genomeFasta)
 			}
 
+			var genome string
+			var mrna strings.Builder
+			var cds strings.Builder
+
 			for _, rec := range recs.Records {
 				seq := scaffoldSeq[rec.Start-1 : rec.End-1]
-				fmt.Printf(">%v %v %v:%d:%d\n%v\n", transcriptId, rec.Feature, rec.Seqname, rec.Start, rec.End, seq)
+
+				if rec.Feature == "mRNA" || rec.Feature == "rRNA" {
+					genome = seq
+				} else if rec.Feature == "exon" {
+					mrna.WriteString(seq)
+				} else if rec.Feature == "CDS" {
+					cds.WriteString(seq)
+				} else {
+					// unknown feature
+				}
+			}
+
+			transcriptDtos = append(
+				transcriptDtos,
+				client.Transcript.
+					Create().
+					SetTranscriptId(transcriptId).
+					SetGeneId(recs.GeneId).
+					SetCds(cds.String()).
+					SetGenome(genome).
+					SetMrna(mrna.String()).
+					SetProtein(""),
+			)
+
+			if len(transcriptDtos) == 10 {
+				err = client.Transcript.CreateBulk(transcriptDtos...).OnConflict().UpdateNewValues().Exec(ctx)
+
+				if err != nil {
+					return err
+				}
+
+				transcriptDtos = []*ent.TranscriptCreate{}
 			}
 		}
 
@@ -116,6 +172,7 @@ func readGtfFile(gtfPath string) (map[string]GffRecords, error) {
 
 	id2rec := map[string]GffRecords{}
 	for _, rec := range parser.Records {
+		// check transcript id
 		transcriptId := ""
 
 		v, ok := rec.Attributes["ID"]
@@ -161,6 +218,7 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	importGenomeCmd.Flags().StringVarP(&genomeFasta, "fasta", "f", "", "Path to the genomic fasta file")
 	importGenomeCmd.Flags().StringVarP(&genomeGtf, "gtf", "g", "", "Path to the genomic gtf file")
+	importGenomeCmd.Flags().StringVarP(&databaseUri, "database-uri", "d", "", "Database Uri")
 
 	importGenomeCmd.MarkFlagRequired("fasta")
 	importGenomeCmd.MarkFlagRequired("gtf")

@@ -12,7 +12,8 @@ var (
 	TranscriptsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "transcript_id", Type: field.TypeString, Unique: true},
-		{Name: "gene", Type: field.TypeString, Size: 2147483647},
+		{Name: "gene_id", Type: field.TypeString},
+		{Name: "genome", Type: field.TypeString, Size: 2147483647},
 		{Name: "mrna", Type: field.TypeString, Size: 2147483647},
 		{Name: "cds", Type: field.TypeString, Size: 2147483647},
 		{Name: "protein", Type: field.TypeString, Size: 2147483647},

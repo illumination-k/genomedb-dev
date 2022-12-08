@@ -9,8 +9,10 @@ const (
 	FieldID = "id"
 	// FieldTranscriptId holds the string denoting the transcriptid field in the database.
 	FieldTranscriptId = "transcript_id"
-	// FieldGene holds the string denoting the gene field in the database.
-	FieldGene = "gene"
+	// FieldGeneId holds the string denoting the geneid field in the database.
+	FieldGeneId = "gene_id"
+	// FieldGenome holds the string denoting the genome field in the database.
+	FieldGenome = "genome"
 	// FieldMrna holds the string denoting the mrna field in the database.
 	FieldMrna = "mrna"
 	// FieldCds holds the string denoting the cds field in the database.
@@ -25,7 +27,8 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldTranscriptId,
-	FieldGene,
+	FieldGeneId,
+	FieldGenome,
 	FieldMrna,
 	FieldCds,
 	FieldProtein,

@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	entgo.io/ent v0.11.4
+	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/spf13/cobra v1.6.1
 )
 

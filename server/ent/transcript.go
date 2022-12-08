@@ -17,8 +17,10 @@ type Transcript struct {
 	ID int `json:"id,omitempty"`
 	// TranscriptId holds the value of the "transcriptId" field.
 	TranscriptId string `json:"transcriptId,omitempty"`
-	// Gene holds the value of the "gene" field.
-	Gene string `json:"gene,omitempty"`
+	// GeneId holds the value of the "geneId" field.
+	GeneId string `json:"geneId,omitempty"`
+	// Genome holds the value of the "genome" field.
+	Genome string `json:"genome,omitempty"`
 	// Mrna holds the value of the "mrna" field.
 	Mrna string `json:"mrna,omitempty"`
 	// Cds holds the value of the "cds" field.
@@ -34,7 +36,7 @@ func (*Transcript) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case transcript.FieldID:
 			values[i] = new(sql.NullInt64)
-		case transcript.FieldTranscriptId, transcript.FieldGene, transcript.FieldMrna, transcript.FieldCds, transcript.FieldProtein:
+		case transcript.FieldTranscriptId, transcript.FieldGeneId, transcript.FieldGenome, transcript.FieldMrna, transcript.FieldCds, transcript.FieldProtein:
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Transcript", columns[i])
@@ -63,11 +65,17 @@ func (t *Transcript) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				t.TranscriptId = value.String
 			}
-		case transcript.FieldGene:
+		case transcript.FieldGeneId:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field gene", values[i])
+				return fmt.Errorf("unexpected type %T for field geneId", values[i])
 			} else if value.Valid {
-				t.Gene = value.String
+				t.GeneId = value.String
+			}
+		case transcript.FieldGenome:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field genome", values[i])
+			} else if value.Valid {
+				t.Genome = value.String
 			}
 		case transcript.FieldMrna:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -118,8 +126,11 @@ func (t *Transcript) String() string {
 	builder.WriteString("transcriptId=")
 	builder.WriteString(t.TranscriptId)
 	builder.WriteString(", ")
-	builder.WriteString("gene=")
-	builder.WriteString(t.Gene)
+	builder.WriteString("geneId=")
+	builder.WriteString(t.GeneId)
+	builder.WriteString(", ")
+	builder.WriteString("genome=")
+	builder.WriteString(t.Genome)
 	builder.WriteString(", ")
 	builder.WriteString("mrna=")
 	builder.WriteString(t.Mrna)

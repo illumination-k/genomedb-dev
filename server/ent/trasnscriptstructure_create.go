@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"genomedb/ent/trasnscriptstructure"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 )
@@ -17,6 +18,7 @@ type TrasnscriptStructureCreate struct {
 	config
 	mutation *TrasnscriptStructureMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetTranscriptId sets the "transcriptId" field.
@@ -176,6 +178,7 @@ func (tsc *TrasnscriptStructureCreate) createSpec() (*TrasnscriptStructure, *sql
 			},
 		}
 	)
+	_spec.OnConflict = tsc.conflict
 	if value, ok := tsc.mutation.TranscriptId(); ok {
 		_spec.SetField(trasnscriptstructure.FieldTranscriptId, field.TypeString, value)
 		_node.TranscriptId = value
@@ -203,10 +206,315 @@ func (tsc *TrasnscriptStructureCreate) createSpec() (*TrasnscriptStructure, *sql
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.TrasnscriptStructure.Create().
+//		SetTranscriptId(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.TrasnscriptStructureUpsert) {
+//			SetTranscriptId(v+v).
+//		}).
+//		Exec(ctx)
+func (tsc *TrasnscriptStructureCreate) OnConflict(opts ...sql.ConflictOption) *TrasnscriptStructureUpsertOne {
+	tsc.conflict = opts
+	return &TrasnscriptStructureUpsertOne{
+		create: tsc,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.TrasnscriptStructure.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (tsc *TrasnscriptStructureCreate) OnConflictColumns(columns ...string) *TrasnscriptStructureUpsertOne {
+	tsc.conflict = append(tsc.conflict, sql.ConflictColumns(columns...))
+	return &TrasnscriptStructureUpsertOne{
+		create: tsc,
+	}
+}
+
+type (
+	// TrasnscriptStructureUpsertOne is the builder for "upsert"-ing
+	//  one TrasnscriptStructure node.
+	TrasnscriptStructureUpsertOne struct {
+		create *TrasnscriptStructureCreate
+	}
+
+	// TrasnscriptStructureUpsert is the "OnConflict" setter.
+	TrasnscriptStructureUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetTranscriptId sets the "transcriptId" field.
+func (u *TrasnscriptStructureUpsert) SetTranscriptId(v string) *TrasnscriptStructureUpsert {
+	u.Set(trasnscriptstructure.FieldTranscriptId, v)
+	return u
+}
+
+// UpdateTranscriptId sets the "transcriptId" field to the value that was provided on create.
+func (u *TrasnscriptStructureUpsert) UpdateTranscriptId() *TrasnscriptStructureUpsert {
+	u.SetExcluded(trasnscriptstructure.FieldTranscriptId)
+	return u
+}
+
+// SetFeature sets the "feature" field.
+func (u *TrasnscriptStructureUpsert) SetFeature(v string) *TrasnscriptStructureUpsert {
+	u.Set(trasnscriptstructure.FieldFeature, v)
+	return u
+}
+
+// UpdateFeature sets the "feature" field to the value that was provided on create.
+func (u *TrasnscriptStructureUpsert) UpdateFeature() *TrasnscriptStructureUpsert {
+	u.SetExcluded(trasnscriptstructure.FieldFeature)
+	return u
+}
+
+// SetSeqname sets the "seqname" field.
+func (u *TrasnscriptStructureUpsert) SetSeqname(v string) *TrasnscriptStructureUpsert {
+	u.Set(trasnscriptstructure.FieldSeqname, v)
+	return u
+}
+
+// UpdateSeqname sets the "seqname" field to the value that was provided on create.
+func (u *TrasnscriptStructureUpsert) UpdateSeqname() *TrasnscriptStructureUpsert {
+	u.SetExcluded(trasnscriptstructure.FieldSeqname)
+	return u
+}
+
+// SetStart sets the "start" field.
+func (u *TrasnscriptStructureUpsert) SetStart(v int32) *TrasnscriptStructureUpsert {
+	u.Set(trasnscriptstructure.FieldStart, v)
+	return u
+}
+
+// UpdateStart sets the "start" field to the value that was provided on create.
+func (u *TrasnscriptStructureUpsert) UpdateStart() *TrasnscriptStructureUpsert {
+	u.SetExcluded(trasnscriptstructure.FieldStart)
+	return u
+}
+
+// AddStart adds v to the "start" field.
+func (u *TrasnscriptStructureUpsert) AddStart(v int32) *TrasnscriptStructureUpsert {
+	u.Add(trasnscriptstructure.FieldStart, v)
+	return u
+}
+
+// SetEnd sets the "end" field.
+func (u *TrasnscriptStructureUpsert) SetEnd(v int32) *TrasnscriptStructureUpsert {
+	u.Set(trasnscriptstructure.FieldEnd, v)
+	return u
+}
+
+// UpdateEnd sets the "end" field to the value that was provided on create.
+func (u *TrasnscriptStructureUpsert) UpdateEnd() *TrasnscriptStructureUpsert {
+	u.SetExcluded(trasnscriptstructure.FieldEnd)
+	return u
+}
+
+// AddEnd adds v to the "end" field.
+func (u *TrasnscriptStructureUpsert) AddEnd(v int32) *TrasnscriptStructureUpsert {
+	u.Add(trasnscriptstructure.FieldEnd, v)
+	return u
+}
+
+// SetStrand sets the "strand" field.
+func (u *TrasnscriptStructureUpsert) SetStrand(v string) *TrasnscriptStructureUpsert {
+	u.Set(trasnscriptstructure.FieldStrand, v)
+	return u
+}
+
+// UpdateStrand sets the "strand" field to the value that was provided on create.
+func (u *TrasnscriptStructureUpsert) UpdateStrand() *TrasnscriptStructureUpsert {
+	u.SetExcluded(trasnscriptstructure.FieldStrand)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create.
+// Using this option is equivalent to using:
+//
+//	client.TrasnscriptStructure.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
+func (u *TrasnscriptStructureUpsertOne) UpdateNewValues() *TrasnscriptStructureUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.TrasnscriptStructure.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *TrasnscriptStructureUpsertOne) Ignore() *TrasnscriptStructureUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *TrasnscriptStructureUpsertOne) DoNothing() *TrasnscriptStructureUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the TrasnscriptStructureCreate.OnConflict
+// documentation for more info.
+func (u *TrasnscriptStructureUpsertOne) Update(set func(*TrasnscriptStructureUpsert)) *TrasnscriptStructureUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&TrasnscriptStructureUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetTranscriptId sets the "transcriptId" field.
+func (u *TrasnscriptStructureUpsertOne) SetTranscriptId(v string) *TrasnscriptStructureUpsertOne {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.SetTranscriptId(v)
+	})
+}
+
+// UpdateTranscriptId sets the "transcriptId" field to the value that was provided on create.
+func (u *TrasnscriptStructureUpsertOne) UpdateTranscriptId() *TrasnscriptStructureUpsertOne {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.UpdateTranscriptId()
+	})
+}
+
+// SetFeature sets the "feature" field.
+func (u *TrasnscriptStructureUpsertOne) SetFeature(v string) *TrasnscriptStructureUpsertOne {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.SetFeature(v)
+	})
+}
+
+// UpdateFeature sets the "feature" field to the value that was provided on create.
+func (u *TrasnscriptStructureUpsertOne) UpdateFeature() *TrasnscriptStructureUpsertOne {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.UpdateFeature()
+	})
+}
+
+// SetSeqname sets the "seqname" field.
+func (u *TrasnscriptStructureUpsertOne) SetSeqname(v string) *TrasnscriptStructureUpsertOne {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.SetSeqname(v)
+	})
+}
+
+// UpdateSeqname sets the "seqname" field to the value that was provided on create.
+func (u *TrasnscriptStructureUpsertOne) UpdateSeqname() *TrasnscriptStructureUpsertOne {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.UpdateSeqname()
+	})
+}
+
+// SetStart sets the "start" field.
+func (u *TrasnscriptStructureUpsertOne) SetStart(v int32) *TrasnscriptStructureUpsertOne {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.SetStart(v)
+	})
+}
+
+// AddStart adds v to the "start" field.
+func (u *TrasnscriptStructureUpsertOne) AddStart(v int32) *TrasnscriptStructureUpsertOne {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.AddStart(v)
+	})
+}
+
+// UpdateStart sets the "start" field to the value that was provided on create.
+func (u *TrasnscriptStructureUpsertOne) UpdateStart() *TrasnscriptStructureUpsertOne {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.UpdateStart()
+	})
+}
+
+// SetEnd sets the "end" field.
+func (u *TrasnscriptStructureUpsertOne) SetEnd(v int32) *TrasnscriptStructureUpsertOne {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.SetEnd(v)
+	})
+}
+
+// AddEnd adds v to the "end" field.
+func (u *TrasnscriptStructureUpsertOne) AddEnd(v int32) *TrasnscriptStructureUpsertOne {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.AddEnd(v)
+	})
+}
+
+// UpdateEnd sets the "end" field to the value that was provided on create.
+func (u *TrasnscriptStructureUpsertOne) UpdateEnd() *TrasnscriptStructureUpsertOne {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.UpdateEnd()
+	})
+}
+
+// SetStrand sets the "strand" field.
+func (u *TrasnscriptStructureUpsertOne) SetStrand(v string) *TrasnscriptStructureUpsertOne {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.SetStrand(v)
+	})
+}
+
+// UpdateStrand sets the "strand" field to the value that was provided on create.
+func (u *TrasnscriptStructureUpsertOne) UpdateStrand() *TrasnscriptStructureUpsertOne {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.UpdateStrand()
+	})
+}
+
+// Exec executes the query.
+func (u *TrasnscriptStructureUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for TrasnscriptStructureCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *TrasnscriptStructureUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *TrasnscriptStructureUpsertOne) ID(ctx context.Context) (id int, err error) {
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *TrasnscriptStructureUpsertOne) IDX(ctx context.Context) int {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // TrasnscriptStructureCreateBulk is the builder for creating many TrasnscriptStructure entities in bulk.
 type TrasnscriptStructureCreateBulk struct {
 	config
 	builders []*TrasnscriptStructureCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the TrasnscriptStructure entities in the database.
@@ -232,6 +540,7 @@ func (tscb *TrasnscriptStructureCreateBulk) Save(ctx context.Context) ([]*Trasns
 					_, err = mutators[i+1].Mutate(root, tscb.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = tscb.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, tscb.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -282,6 +591,205 @@ func (tscb *TrasnscriptStructureCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (tscb *TrasnscriptStructureCreateBulk) ExecX(ctx context.Context) {
 	if err := tscb.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.TrasnscriptStructure.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.TrasnscriptStructureUpsert) {
+//			SetTranscriptId(v+v).
+//		}).
+//		Exec(ctx)
+func (tscb *TrasnscriptStructureCreateBulk) OnConflict(opts ...sql.ConflictOption) *TrasnscriptStructureUpsertBulk {
+	tscb.conflict = opts
+	return &TrasnscriptStructureUpsertBulk{
+		create: tscb,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.TrasnscriptStructure.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (tscb *TrasnscriptStructureCreateBulk) OnConflictColumns(columns ...string) *TrasnscriptStructureUpsertBulk {
+	tscb.conflict = append(tscb.conflict, sql.ConflictColumns(columns...))
+	return &TrasnscriptStructureUpsertBulk{
+		create: tscb,
+	}
+}
+
+// TrasnscriptStructureUpsertBulk is the builder for "upsert"-ing
+// a bulk of TrasnscriptStructure nodes.
+type TrasnscriptStructureUpsertBulk struct {
+	create *TrasnscriptStructureCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.TrasnscriptStructure.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
+func (u *TrasnscriptStructureUpsertBulk) UpdateNewValues() *TrasnscriptStructureUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.TrasnscriptStructure.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *TrasnscriptStructureUpsertBulk) Ignore() *TrasnscriptStructureUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *TrasnscriptStructureUpsertBulk) DoNothing() *TrasnscriptStructureUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the TrasnscriptStructureCreateBulk.OnConflict
+// documentation for more info.
+func (u *TrasnscriptStructureUpsertBulk) Update(set func(*TrasnscriptStructureUpsert)) *TrasnscriptStructureUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&TrasnscriptStructureUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetTranscriptId sets the "transcriptId" field.
+func (u *TrasnscriptStructureUpsertBulk) SetTranscriptId(v string) *TrasnscriptStructureUpsertBulk {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.SetTranscriptId(v)
+	})
+}
+
+// UpdateTranscriptId sets the "transcriptId" field to the value that was provided on create.
+func (u *TrasnscriptStructureUpsertBulk) UpdateTranscriptId() *TrasnscriptStructureUpsertBulk {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.UpdateTranscriptId()
+	})
+}
+
+// SetFeature sets the "feature" field.
+func (u *TrasnscriptStructureUpsertBulk) SetFeature(v string) *TrasnscriptStructureUpsertBulk {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.SetFeature(v)
+	})
+}
+
+// UpdateFeature sets the "feature" field to the value that was provided on create.
+func (u *TrasnscriptStructureUpsertBulk) UpdateFeature() *TrasnscriptStructureUpsertBulk {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.UpdateFeature()
+	})
+}
+
+// SetSeqname sets the "seqname" field.
+func (u *TrasnscriptStructureUpsertBulk) SetSeqname(v string) *TrasnscriptStructureUpsertBulk {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.SetSeqname(v)
+	})
+}
+
+// UpdateSeqname sets the "seqname" field to the value that was provided on create.
+func (u *TrasnscriptStructureUpsertBulk) UpdateSeqname() *TrasnscriptStructureUpsertBulk {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.UpdateSeqname()
+	})
+}
+
+// SetStart sets the "start" field.
+func (u *TrasnscriptStructureUpsertBulk) SetStart(v int32) *TrasnscriptStructureUpsertBulk {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.SetStart(v)
+	})
+}
+
+// AddStart adds v to the "start" field.
+func (u *TrasnscriptStructureUpsertBulk) AddStart(v int32) *TrasnscriptStructureUpsertBulk {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.AddStart(v)
+	})
+}
+
+// UpdateStart sets the "start" field to the value that was provided on create.
+func (u *TrasnscriptStructureUpsertBulk) UpdateStart() *TrasnscriptStructureUpsertBulk {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.UpdateStart()
+	})
+}
+
+// SetEnd sets the "end" field.
+func (u *TrasnscriptStructureUpsertBulk) SetEnd(v int32) *TrasnscriptStructureUpsertBulk {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.SetEnd(v)
+	})
+}
+
+// AddEnd adds v to the "end" field.
+func (u *TrasnscriptStructureUpsertBulk) AddEnd(v int32) *TrasnscriptStructureUpsertBulk {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.AddEnd(v)
+	})
+}
+
+// UpdateEnd sets the "end" field to the value that was provided on create.
+func (u *TrasnscriptStructureUpsertBulk) UpdateEnd() *TrasnscriptStructureUpsertBulk {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.UpdateEnd()
+	})
+}
+
+// SetStrand sets the "strand" field.
+func (u *TrasnscriptStructureUpsertBulk) SetStrand(v string) *TrasnscriptStructureUpsertBulk {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.SetStrand(v)
+	})
+}
+
+// UpdateStrand sets the "strand" field to the value that was provided on create.
+func (u *TrasnscriptStructureUpsertBulk) UpdateStrand() *TrasnscriptStructureUpsertBulk {
+	return u.Update(func(s *TrasnscriptStructureUpsert) {
+		s.UpdateStrand()
+	})
+}
+
+// Exec executes the query.
+func (u *TrasnscriptStructureUpsertBulk) Exec(ctx context.Context) error {
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the TrasnscriptStructureCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for TrasnscriptStructureCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *TrasnscriptStructureUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
