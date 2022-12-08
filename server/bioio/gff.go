@@ -7,28 +7,28 @@ import (
 )
 
 type GffRecord struct {
-	seqname    string
-	source     string
-	feature    string
-	start      int32
-	end        int32
-	score      string
-	strand     string
-	frame      string
-	attributes map[string]string
+	Seqname    string
+	Source     string
+	Feature    string
+	Start      int32
+	End        int32
+	Score      string
+	Strand     string
+	Frame      string
+	Attributes map[string]string
 }
 
 func NewGffRecord(seqname string, source string, feature string, start int32, end int32, score string, strand string, frame string, attrs map[string]string) *GffRecord {
 	record := new(GffRecord)
-	record.seqname = seqname
-	record.source = source
-	record.feature = feature
-	record.start = start
-	record.end = end
-	record.score = score
-	record.strand = strand
-	record.frame = frame
-	record.attributes = attrs
+	record.Seqname = seqname
+	record.Source = source
+	record.Feature = feature
+	record.Start = start
+	record.End = end
+	record.Score = score
+	record.Strand = strand
+	record.Frame = frame
+	record.Attributes = attrs
 	return record
 }
 
@@ -88,7 +88,6 @@ func (p *GffParser) ConsumeLine(line string) error {
 	}
 
 	gffRecord := NewGffRecord(seqname, source, feature, int32(start), int32(end), score, strand, frame, attrs)
-	fmt.Println(gffRecord)
 	p.Records = append(p.Records, *gffRecord)
 
 	return nil
