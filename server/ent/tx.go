@@ -12,6 +12,10 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// Gene is the client for interacting with the Gene builders.
+	Gene *GeneClient
+	// Genome is the client for interacting with the Genome builders.
+	Genome *GenomeClient
 	// Transcript is the client for interacting with the Transcript builders.
 	Transcript *TranscriptClient
 	// TrasnscriptStructure is the client for interacting with the TrasnscriptStructure builders.
@@ -147,6 +151,8 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.Gene = NewGeneClient(tx.config)
+	tx.Genome = NewGenomeClient(tx.config)
 	tx.Transcript = NewTranscriptClient(tx.config)
 	tx.TrasnscriptStructure = NewTrasnscriptStructureClient(tx.config)
 }
@@ -158,7 +164,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: Transcript.QueryXXX(), the query will be executed
+// applies a query, for example: Gene.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

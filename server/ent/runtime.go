@@ -2,8 +2,23 @@
 
 package ent
 
+import (
+	"genomedb/ent/schema"
+	"genomedb/ent/trasnscriptstructure"
+)
+
 // The init function reads all schema descriptors with runtime code
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	trasnscriptstructureFields := schema.TrasnscriptStructure{}.Fields()
+	_ = trasnscriptstructureFields
+	// trasnscriptstructureDescStart is the schema descriptor for start field.
+	trasnscriptstructureDescStart := trasnscriptstructureFields[3].Descriptor()
+	// trasnscriptstructure.StartValidator is a validator for the "start" field. It is called by the builders before save.
+	trasnscriptstructure.StartValidator = trasnscriptstructureDescStart.Validators[0].(func(int32) error)
+	// trasnscriptstructureDescEnd is the schema descriptor for end field.
+	trasnscriptstructureDescEnd := trasnscriptstructureFields[4].Descriptor()
+	// trasnscriptstructure.EndValidator is a validator for the "end" field. It is called by the builders before save.
+	trasnscriptstructure.EndValidator = trasnscriptstructureDescEnd.Validators[0].(func(int32) error)
 }

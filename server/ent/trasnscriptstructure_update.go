@@ -89,12 +89,18 @@ func (tsu *TrasnscriptStructureUpdate) Save(ctx context.Context) (int, error) {
 		affected int
 	)
 	if len(tsu.hooks) == 0 {
+		if err = tsu.check(); err != nil {
+			return 0, err
+		}
 		affected, err = tsu.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*TrasnscriptStructureMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = tsu.check(); err != nil {
+				return 0, err
 			}
 			tsu.mutation = mutation
 			affected, err = tsu.sqlSave(ctx)
@@ -134,6 +140,21 @@ func (tsu *TrasnscriptStructureUpdate) ExecX(ctx context.Context) {
 	if err := tsu.Exec(ctx); err != nil {
 		panic(err)
 	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (tsu *TrasnscriptStructureUpdate) check() error {
+	if v, ok := tsu.mutation.Start(); ok {
+		if err := trasnscriptstructure.StartValidator(v); err != nil {
+			return &ValidationError{Name: "start", err: fmt.Errorf(`ent: validator failed for field "TrasnscriptStructure.start": %w`, err)}
+		}
+	}
+	if v, ok := tsu.mutation.End(); ok {
+		if err := trasnscriptstructure.EndValidator(v); err != nil {
+			return &ValidationError{Name: "end", err: fmt.Errorf(`ent: validator failed for field "TrasnscriptStructure.end": %w`, err)}
+		}
+	}
+	return nil
 }
 
 func (tsu *TrasnscriptStructureUpdate) sqlSave(ctx context.Context) (n int, err error) {
@@ -266,12 +287,18 @@ func (tsuo *TrasnscriptStructureUpdateOne) Save(ctx context.Context) (*Trasnscri
 		node *TrasnscriptStructure
 	)
 	if len(tsuo.hooks) == 0 {
+		if err = tsuo.check(); err != nil {
+			return nil, err
+		}
 		node, err = tsuo.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*TrasnscriptStructureMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = tsuo.check(); err != nil {
+				return nil, err
 			}
 			tsuo.mutation = mutation
 			node, err = tsuo.sqlSave(ctx)
@@ -317,6 +344,21 @@ func (tsuo *TrasnscriptStructureUpdateOne) ExecX(ctx context.Context) {
 	if err := tsuo.Exec(ctx); err != nil {
 		panic(err)
 	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (tsuo *TrasnscriptStructureUpdateOne) check() error {
+	if v, ok := tsuo.mutation.Start(); ok {
+		if err := trasnscriptstructure.StartValidator(v); err != nil {
+			return &ValidationError{Name: "start", err: fmt.Errorf(`ent: validator failed for field "TrasnscriptStructure.start": %w`, err)}
+		}
+	}
+	if v, ok := tsuo.mutation.End(); ok {
+		if err := trasnscriptstructure.EndValidator(v); err != nil {
+			return &ValidationError{Name: "end", err: fmt.Errorf(`ent: validator failed for field "TrasnscriptStructure.end": %w`, err)}
+		}
+	}
+	return nil
 }
 
 func (tsuo *TrasnscriptStructureUpdateOne) sqlSave(ctx context.Context) (_node *TrasnscriptStructure, err error) {

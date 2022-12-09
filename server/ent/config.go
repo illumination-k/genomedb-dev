@@ -24,6 +24,8 @@ type config struct {
 
 // hooks per client, for fast access.
 type hooks struct {
+	Gene                 []ent.Hook
+	Genome               []ent.Hook
 	Transcript           []ent.Hook
 	TrasnscriptStructure []ent.Hook
 }

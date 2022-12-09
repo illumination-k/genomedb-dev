@@ -43,3 +43,10 @@ func ValidColumn(column string) bool {
 	}
 	return false
 }
+
+var (
+	// StartValidator is a validator for the "start" field. It is called by the builders before save.
+	StartValidator func(int32) error
+	// EndValidator is a validator for the "end" field. It is called by the builders before save.
+	EndValidator func(int32) error
+)

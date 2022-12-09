@@ -6,6 +6,12 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Gene is the predicate function for gene builders.
+type Gene func(*sql.Selector)
+
+// Genome is the predicate function for genome builders.
+type Genome func(*sql.Selector)
+
 // Transcript is the predicate function for transcript builders.
 type Transcript func(*sql.Selector)
 

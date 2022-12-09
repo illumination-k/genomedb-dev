@@ -14,13 +14,13 @@ import (
 type Transcript struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
-	// TranscriptId holds the value of the "transcriptId" field.
-	TranscriptId string `json:"transcriptId,omitempty"`
+	ID string `json:"id,omitempty"`
 	// GeneId holds the value of the "geneId" field.
 	GeneId string `json:"geneId,omitempty"`
 	// Genome holds the value of the "genome" field.
 	Genome string `json:"genome,omitempty"`
+	// Strand holds the value of the "strand" field.
+	Strand string `json:"strand,omitempty"`
 	// Mrna holds the value of the "mrna" field.
 	Mrna string `json:"mrna,omitempty"`
 	// Cds holds the value of the "cds" field.
@@ -34,9 +34,7 @@ func (*Transcript) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case transcript.FieldID:
-			values[i] = new(sql.NullInt64)
-		case transcript.FieldTranscriptId, transcript.FieldGeneId, transcript.FieldGenome, transcript.FieldMrna, transcript.FieldCds, transcript.FieldProtein:
+		case transcript.FieldID, transcript.FieldGeneId, transcript.FieldGenome, transcript.FieldStrand, transcript.FieldMrna, transcript.FieldCds, transcript.FieldProtein:
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Transcript", columns[i])
@@ -54,16 +52,10 @@ func (t *Transcript) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case transcript.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
-			}
-			t.ID = int(value.Int64)
-		case transcript.FieldTranscriptId:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field transcriptId", values[i])
+				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value.Valid {
-				t.TranscriptId = value.String
+				t.ID = value.String
 			}
 		case transcript.FieldGeneId:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -76,6 +68,12 @@ func (t *Transcript) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field genome", values[i])
 			} else if value.Valid {
 				t.Genome = value.String
+			}
+		case transcript.FieldStrand:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field strand", values[i])
+			} else if value.Valid {
+				t.Strand = value.String
 			}
 		case transcript.FieldMrna:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -123,14 +121,14 @@ func (t *Transcript) String() string {
 	var builder strings.Builder
 	builder.WriteString("Transcript(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", t.ID))
-	builder.WriteString("transcriptId=")
-	builder.WriteString(t.TranscriptId)
-	builder.WriteString(", ")
 	builder.WriteString("geneId=")
 	builder.WriteString(t.GeneId)
 	builder.WriteString(", ")
 	builder.WriteString("genome=")
 	builder.WriteString(t.Genome)
+	builder.WriteString(", ")
+	builder.WriteString("strand=")
+	builder.WriteString(t.Strand)
 	builder.WriteString(", ")
 	builder.WriteString("mrna=")
 	builder.WriteString(t.Mrna)

@@ -8,12 +8,35 @@ import (
 )
 
 var (
+	// GenesColumns holds the columns for the "genes" table.
+	GenesColumns = []*schema.Column{
+		{Name: "geneId", Type: field.TypeString},
+	}
+	// GenesTable holds the schema information for the "genes" table.
+	GenesTable = &schema.Table{
+		Name:       "genes",
+		Columns:    GenesColumns,
+		PrimaryKey: []*schema.Column{GenesColumns[0]},
+	}
+	// GenomesColumns holds the columns for the "genomes" table.
+	GenomesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString, Unique: true},
+		{Name: "codon_table", Type: field.TypeInt32},
+		{Name: "seq", Type: field.TypeString, Size: 2147483647},
+	}
+	// GenomesTable holds the schema information for the "genomes" table.
+	GenomesTable = &schema.Table{
+		Name:       "genomes",
+		Columns:    GenomesColumns,
+		PrimaryKey: []*schema.Column{GenomesColumns[0]},
+	}
 	// TranscriptsColumns holds the columns for the "transcripts" table.
 	TranscriptsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "transcript_id", Type: field.TypeString, Unique: true},
+		{Name: "transcriptId", Type: field.TypeString, Unique: true},
 		{Name: "gene_id", Type: field.TypeString},
 		{Name: "genome", Type: field.TypeString, Size: 2147483647},
+		{Name: "strand", Type: field.TypeString},
 		{Name: "mrna", Type: field.TypeString, Size: 2147483647},
 		{Name: "cds", Type: field.TypeString, Size: 2147483647},
 		{Name: "protein", Type: field.TypeString, Size: 2147483647},
@@ -42,6 +65,8 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		GenesTable,
+		GenomesTable,
 		TranscriptsTable,
 		TrasnscriptStructuresTable,
 	}

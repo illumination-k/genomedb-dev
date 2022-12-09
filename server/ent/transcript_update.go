@@ -27,12 +27,6 @@ func (tu *TranscriptUpdate) Where(ps ...predicate.Transcript) *TranscriptUpdate 
 	return tu
 }
 
-// SetTranscriptId sets the "transcriptId" field.
-func (tu *TranscriptUpdate) SetTranscriptId(s string) *TranscriptUpdate {
-	tu.mutation.SetTranscriptId(s)
-	return tu
-}
-
 // SetGeneId sets the "geneId" field.
 func (tu *TranscriptUpdate) SetGeneId(s string) *TranscriptUpdate {
 	tu.mutation.SetGeneId(s)
@@ -42,6 +36,12 @@ func (tu *TranscriptUpdate) SetGeneId(s string) *TranscriptUpdate {
 // SetGenome sets the "genome" field.
 func (tu *TranscriptUpdate) SetGenome(s string) *TranscriptUpdate {
 	tu.mutation.SetGenome(s)
+	return tu
+}
+
+// SetStrand sets the "strand" field.
+func (tu *TranscriptUpdate) SetStrand(s string) *TranscriptUpdate {
+	tu.mutation.SetStrand(s)
 	return tu
 }
 
@@ -128,7 +128,7 @@ func (tu *TranscriptUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Table:   transcript.Table,
 			Columns: transcript.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: transcript.FieldID,
 			},
 		},
@@ -140,14 +140,14 @@ func (tu *TranscriptUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := tu.mutation.TranscriptId(); ok {
-		_spec.SetField(transcript.FieldTranscriptId, field.TypeString, value)
-	}
 	if value, ok := tu.mutation.GeneId(); ok {
 		_spec.SetField(transcript.FieldGeneId, field.TypeString, value)
 	}
 	if value, ok := tu.mutation.Genome(); ok {
 		_spec.SetField(transcript.FieldGenome, field.TypeString, value)
+	}
+	if value, ok := tu.mutation.Strand(); ok {
+		_spec.SetField(transcript.FieldStrand, field.TypeString, value)
 	}
 	if value, ok := tu.mutation.Mrna(); ok {
 		_spec.SetField(transcript.FieldMrna, field.TypeString, value)
@@ -177,12 +177,6 @@ type TranscriptUpdateOne struct {
 	mutation *TranscriptMutation
 }
 
-// SetTranscriptId sets the "transcriptId" field.
-func (tuo *TranscriptUpdateOne) SetTranscriptId(s string) *TranscriptUpdateOne {
-	tuo.mutation.SetTranscriptId(s)
-	return tuo
-}
-
 // SetGeneId sets the "geneId" field.
 func (tuo *TranscriptUpdateOne) SetGeneId(s string) *TranscriptUpdateOne {
 	tuo.mutation.SetGeneId(s)
@@ -192,6 +186,12 @@ func (tuo *TranscriptUpdateOne) SetGeneId(s string) *TranscriptUpdateOne {
 // SetGenome sets the "genome" field.
 func (tuo *TranscriptUpdateOne) SetGenome(s string) *TranscriptUpdateOne {
 	tuo.mutation.SetGenome(s)
+	return tuo
+}
+
+// SetStrand sets the "strand" field.
+func (tuo *TranscriptUpdateOne) SetStrand(s string) *TranscriptUpdateOne {
+	tuo.mutation.SetStrand(s)
 	return tuo
 }
 
@@ -291,7 +291,7 @@ func (tuo *TranscriptUpdateOne) sqlSave(ctx context.Context) (_node *Transcript,
 			Table:   transcript.Table,
 			Columns: transcript.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: transcript.FieldID,
 			},
 		},
@@ -320,14 +320,14 @@ func (tuo *TranscriptUpdateOne) sqlSave(ctx context.Context) (_node *Transcript,
 			}
 		}
 	}
-	if value, ok := tuo.mutation.TranscriptId(); ok {
-		_spec.SetField(transcript.FieldTranscriptId, field.TypeString, value)
-	}
 	if value, ok := tuo.mutation.GeneId(); ok {
 		_spec.SetField(transcript.FieldGeneId, field.TypeString, value)
 	}
 	if value, ok := tuo.mutation.Genome(); ok {
 		_spec.SetField(transcript.FieldGenome, field.TypeString, value)
+	}
+	if value, ok := tuo.mutation.Strand(); ok {
+		_spec.SetField(transcript.FieldStrand, field.TypeString, value)
 	}
 	if value, ok := tuo.mutation.Mrna(); ok {
 		_spec.SetField(transcript.FieldMrna, field.TypeString, value)

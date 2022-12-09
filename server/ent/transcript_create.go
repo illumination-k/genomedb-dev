@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"genomedb/ent/transcript"
 
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -21,12 +22,6 @@ type TranscriptCreate struct {
 	conflict []sql.ConflictOption
 }
 
-// SetTranscriptId sets the "transcriptId" field.
-func (tc *TranscriptCreate) SetTranscriptId(s string) *TranscriptCreate {
-	tc.mutation.SetTranscriptId(s)
-	return tc
-}
-
 // SetGeneId sets the "geneId" field.
 func (tc *TranscriptCreate) SetGeneId(s string) *TranscriptCreate {
 	tc.mutation.SetGeneId(s)
@@ -36,6 +31,12 @@ func (tc *TranscriptCreate) SetGeneId(s string) *TranscriptCreate {
 // SetGenome sets the "genome" field.
 func (tc *TranscriptCreate) SetGenome(s string) *TranscriptCreate {
 	tc.mutation.SetGenome(s)
+	return tc
+}
+
+// SetStrand sets the "strand" field.
+func (tc *TranscriptCreate) SetStrand(s string) *TranscriptCreate {
+	tc.mutation.SetStrand(s)
 	return tc
 }
 
@@ -54,6 +55,12 @@ func (tc *TranscriptCreate) SetCds(s string) *TranscriptCreate {
 // SetProtein sets the "protein" field.
 func (tc *TranscriptCreate) SetProtein(s string) *TranscriptCreate {
 	tc.mutation.SetProtein(s)
+	return tc
+}
+
+// SetID sets the "id" field.
+func (tc *TranscriptCreate) SetID(s string) *TranscriptCreate {
+	tc.mutation.SetID(s)
 	return tc
 }
 
@@ -133,14 +140,14 @@ func (tc *TranscriptCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (tc *TranscriptCreate) check() error {
-	if _, ok := tc.mutation.TranscriptId(); !ok {
-		return &ValidationError{Name: "transcriptId", err: errors.New(`ent: missing required field "Transcript.transcriptId"`)}
-	}
 	if _, ok := tc.mutation.GeneId(); !ok {
 		return &ValidationError{Name: "geneId", err: errors.New(`ent: missing required field "Transcript.geneId"`)}
 	}
 	if _, ok := tc.mutation.Genome(); !ok {
 		return &ValidationError{Name: "genome", err: errors.New(`ent: missing required field "Transcript.genome"`)}
+	}
+	if _, ok := tc.mutation.Strand(); !ok {
+		return &ValidationError{Name: "strand", err: errors.New(`ent: missing required field "Transcript.strand"`)}
 	}
 	if _, ok := tc.mutation.Mrna(); !ok {
 		return &ValidationError{Name: "mrna", err: errors.New(`ent: missing required field "Transcript.mrna"`)}
@@ -162,8 +169,13 @@ func (tc *TranscriptCreate) sqlSave(ctx context.Context) (*Transcript, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(string); ok {
+			_node.ID = id
+		} else {
+			return nil, fmt.Errorf("unexpected Transcript.ID type: %T", _spec.ID.Value)
+		}
+	}
 	return _node, nil
 }
 
@@ -173,15 +185,15 @@ func (tc *TranscriptCreate) createSpec() (*Transcript, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: transcript.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: transcript.FieldID,
 			},
 		}
 	)
 	_spec.OnConflict = tc.conflict
-	if value, ok := tc.mutation.TranscriptId(); ok {
-		_spec.SetField(transcript.FieldTranscriptId, field.TypeString, value)
-		_node.TranscriptId = value
+	if id, ok := tc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
 	}
 	if value, ok := tc.mutation.GeneId(); ok {
 		_spec.SetField(transcript.FieldGeneId, field.TypeString, value)
@@ -190,6 +202,10 @@ func (tc *TranscriptCreate) createSpec() (*Transcript, *sqlgraph.CreateSpec) {
 	if value, ok := tc.mutation.Genome(); ok {
 		_spec.SetField(transcript.FieldGenome, field.TypeString, value)
 		_node.Genome = value
+	}
+	if value, ok := tc.mutation.Strand(); ok {
+		_spec.SetField(transcript.FieldStrand, field.TypeString, value)
+		_node.Strand = value
 	}
 	if value, ok := tc.mutation.Mrna(); ok {
 		_spec.SetField(transcript.FieldMrna, field.TypeString, value)
@@ -210,7 +226,7 @@ func (tc *TranscriptCreate) createSpec() (*Transcript, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Transcript.Create().
-//		SetTranscriptId(v).
+//		SetGeneId(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -219,7 +235,7 @@ func (tc *TranscriptCreate) createSpec() (*Transcript, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.TranscriptUpsert) {
-//			SetTranscriptId(v+v).
+//			SetGeneId(v+v).
 //		}).
 //		Exec(ctx)
 func (tc *TranscriptCreate) OnConflict(opts ...sql.ConflictOption) *TranscriptUpsertOne {
@@ -255,18 +271,6 @@ type (
 	}
 )
 
-// SetTranscriptId sets the "transcriptId" field.
-func (u *TranscriptUpsert) SetTranscriptId(v string) *TranscriptUpsert {
-	u.Set(transcript.FieldTranscriptId, v)
-	return u
-}
-
-// UpdateTranscriptId sets the "transcriptId" field to the value that was provided on create.
-func (u *TranscriptUpsert) UpdateTranscriptId() *TranscriptUpsert {
-	u.SetExcluded(transcript.FieldTranscriptId)
-	return u
-}
-
 // SetGeneId sets the "geneId" field.
 func (u *TranscriptUpsert) SetGeneId(v string) *TranscriptUpsert {
 	u.Set(transcript.FieldGeneId, v)
@@ -288,6 +292,18 @@ func (u *TranscriptUpsert) SetGenome(v string) *TranscriptUpsert {
 // UpdateGenome sets the "genome" field to the value that was provided on create.
 func (u *TranscriptUpsert) UpdateGenome() *TranscriptUpsert {
 	u.SetExcluded(transcript.FieldGenome)
+	return u
+}
+
+// SetStrand sets the "strand" field.
+func (u *TranscriptUpsert) SetStrand(v string) *TranscriptUpsert {
+	u.Set(transcript.FieldStrand, v)
+	return u
+}
+
+// UpdateStrand sets the "strand" field to the value that was provided on create.
+func (u *TranscriptUpsert) UpdateStrand() *TranscriptUpsert {
+	u.SetExcluded(transcript.FieldStrand)
 	return u
 }
 
@@ -327,16 +343,24 @@ func (u *TranscriptUpsert) UpdateProtein() *TranscriptUpsert {
 	return u
 }
 
-// UpdateNewValues updates the mutable fields using the new values that were set on create.
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
 //	client.Transcript.Create().
 //		OnConflict(
 //			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(transcript.FieldID)
+//			}),
 //		).
 //		Exec(ctx)
 func (u *TranscriptUpsertOne) UpdateNewValues() *TranscriptUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(transcript.FieldID)
+		}
+	}))
 	return u
 }
 
@@ -367,20 +391,6 @@ func (u *TranscriptUpsertOne) Update(set func(*TranscriptUpsert)) *TranscriptUps
 	return u
 }
 
-// SetTranscriptId sets the "transcriptId" field.
-func (u *TranscriptUpsertOne) SetTranscriptId(v string) *TranscriptUpsertOne {
-	return u.Update(func(s *TranscriptUpsert) {
-		s.SetTranscriptId(v)
-	})
-}
-
-// UpdateTranscriptId sets the "transcriptId" field to the value that was provided on create.
-func (u *TranscriptUpsertOne) UpdateTranscriptId() *TranscriptUpsertOne {
-	return u.Update(func(s *TranscriptUpsert) {
-		s.UpdateTranscriptId()
-	})
-}
-
 // SetGeneId sets the "geneId" field.
 func (u *TranscriptUpsertOne) SetGeneId(v string) *TranscriptUpsertOne {
 	return u.Update(func(s *TranscriptUpsert) {
@@ -406,6 +416,20 @@ func (u *TranscriptUpsertOne) SetGenome(v string) *TranscriptUpsertOne {
 func (u *TranscriptUpsertOne) UpdateGenome() *TranscriptUpsertOne {
 	return u.Update(func(s *TranscriptUpsert) {
 		s.UpdateGenome()
+	})
+}
+
+// SetStrand sets the "strand" field.
+func (u *TranscriptUpsertOne) SetStrand(v string) *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetStrand(v)
+	})
+}
+
+// UpdateStrand sets the "strand" field to the value that was provided on create.
+func (u *TranscriptUpsertOne) UpdateStrand() *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateStrand()
 	})
 }
 
@@ -467,7 +491,12 @@ func (u *TranscriptUpsertOne) ExecX(ctx context.Context) {
 }
 
 // Exec executes the UPSERT query and returns the inserted/updated ID.
-func (u *TranscriptUpsertOne) ID(ctx context.Context) (id int, err error) {
+func (u *TranscriptUpsertOne) ID(ctx context.Context) (id string, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: TranscriptUpsertOne.ID is not supported by MySQL driver. Use TranscriptUpsertOne.Exec instead")
+	}
 	node, err := u.create.Save(ctx)
 	if err != nil {
 		return id, err
@@ -476,7 +505,7 @@ func (u *TranscriptUpsertOne) ID(ctx context.Context) (id int, err error) {
 }
 
 // IDX is like ID, but panics if an error occurs.
-func (u *TranscriptUpsertOne) IDX(ctx context.Context) int {
+func (u *TranscriptUpsertOne) IDX(ctx context.Context) string {
 	id, err := u.ID(ctx)
 	if err != nil {
 		panic(err)
@@ -526,10 +555,6 @@ func (tcb *TranscriptCreateBulk) Save(ctx context.Context) ([]*Transcript, error
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})
@@ -581,7 +606,7 @@ func (tcb *TranscriptCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.TranscriptUpsert) {
-//			SetTranscriptId(v+v).
+//			SetGeneId(v+v).
 //		}).
 //		Exec(ctx)
 func (tcb *TranscriptCreateBulk) OnConflict(opts ...sql.ConflictOption) *TranscriptUpsertBulk {
@@ -616,10 +641,20 @@ type TranscriptUpsertBulk struct {
 //	client.Transcript.Create().
 //		OnConflict(
 //			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(transcript.FieldID)
+//			}),
 //		).
 //		Exec(ctx)
 func (u *TranscriptUpsertBulk) UpdateNewValues() *TranscriptUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(transcript.FieldID)
+			}
+		}
+	}))
 	return u
 }
 
@@ -650,20 +685,6 @@ func (u *TranscriptUpsertBulk) Update(set func(*TranscriptUpsert)) *TranscriptUp
 	return u
 }
 
-// SetTranscriptId sets the "transcriptId" field.
-func (u *TranscriptUpsertBulk) SetTranscriptId(v string) *TranscriptUpsertBulk {
-	return u.Update(func(s *TranscriptUpsert) {
-		s.SetTranscriptId(v)
-	})
-}
-
-// UpdateTranscriptId sets the "transcriptId" field to the value that was provided on create.
-func (u *TranscriptUpsertBulk) UpdateTranscriptId() *TranscriptUpsertBulk {
-	return u.Update(func(s *TranscriptUpsert) {
-		s.UpdateTranscriptId()
-	})
-}
-
 // SetGeneId sets the "geneId" field.
 func (u *TranscriptUpsertBulk) SetGeneId(v string) *TranscriptUpsertBulk {
 	return u.Update(func(s *TranscriptUpsert) {
@@ -689,6 +710,20 @@ func (u *TranscriptUpsertBulk) SetGenome(v string) *TranscriptUpsertBulk {
 func (u *TranscriptUpsertBulk) UpdateGenome() *TranscriptUpsertBulk {
 	return u.Update(func(s *TranscriptUpsert) {
 		s.UpdateGenome()
+	})
+}
+
+// SetStrand sets the "strand" field.
+func (u *TranscriptUpsertBulk) SetStrand(v string) *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetStrand(v)
+	})
+}
+
+// UpdateStrand sets the "strand" field to the value that was provided on create.
+func (u *TranscriptUpsertBulk) UpdateStrand() *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateStrand()
 	})
 }
 

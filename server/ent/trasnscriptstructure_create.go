@@ -145,8 +145,18 @@ func (tsc *TrasnscriptStructureCreate) check() error {
 	if _, ok := tsc.mutation.Start(); !ok {
 		return &ValidationError{Name: "start", err: errors.New(`ent: missing required field "TrasnscriptStructure.start"`)}
 	}
+	if v, ok := tsc.mutation.Start(); ok {
+		if err := trasnscriptstructure.StartValidator(v); err != nil {
+			return &ValidationError{Name: "start", err: fmt.Errorf(`ent: validator failed for field "TrasnscriptStructure.start": %w`, err)}
+		}
+	}
 	if _, ok := tsc.mutation.End(); !ok {
 		return &ValidationError{Name: "end", err: errors.New(`ent: missing required field "TrasnscriptStructure.end"`)}
+	}
+	if v, ok := tsc.mutation.End(); ok {
+		if err := trasnscriptstructure.EndValidator(v); err != nil {
+			return &ValidationError{Name: "end", err: fmt.Errorf(`ent: validator failed for field "TrasnscriptStructure.end": %w`, err)}
+		}
 	}
 	if _, ok := tsc.mutation.Strand(); !ok {
 		return &ValidationError{Name: "strand", err: errors.New(`ent: missing required field "TrasnscriptStructure.strand"`)}

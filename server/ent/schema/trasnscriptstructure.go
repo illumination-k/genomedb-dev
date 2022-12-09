@@ -16,8 +16,8 @@ func (TrasnscriptStructure) Fields() []ent.Field {
 		field.String("transcriptId"),
 		field.String("feature"),
 		field.String("seqname"),
-		field.Int32("start"),
-		field.Int32("end"),
+		field.Int32("start").Positive(),
+		field.Int32("end").Positive(),
 		field.String("strand"),
 	}
 }

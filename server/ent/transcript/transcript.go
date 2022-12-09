@@ -6,13 +6,13 @@ const (
 	// Label holds the string label denoting the transcript type in the database.
 	Label = "transcript"
 	// FieldID holds the string denoting the id field in the database.
-	FieldID = "id"
-	// FieldTranscriptId holds the string denoting the transcriptid field in the database.
-	FieldTranscriptId = "transcript_id"
+	FieldID = "transcriptId"
 	// FieldGeneId holds the string denoting the geneid field in the database.
 	FieldGeneId = "gene_id"
 	// FieldGenome holds the string denoting the genome field in the database.
 	FieldGenome = "genome"
+	// FieldStrand holds the string denoting the strand field in the database.
+	FieldStrand = "strand"
 	// FieldMrna holds the string denoting the mrna field in the database.
 	FieldMrna = "mrna"
 	// FieldCds holds the string denoting the cds field in the database.
@@ -26,9 +26,9 @@ const (
 // Columns holds all SQL columns for transcript fields.
 var Columns = []string{
 	FieldID,
-	FieldTranscriptId,
 	FieldGeneId,
 	FieldGenome,
+	FieldStrand,
 	FieldMrna,
 	FieldCds,
 	FieldProtein,

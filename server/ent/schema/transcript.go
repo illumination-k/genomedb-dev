@@ -14,9 +14,12 @@ type Transcript struct {
 // Fields of the Transcript.
 func (Transcript) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("transcriptId").Unique(),
+		field.String("id").
+			StorageKey("transcriptId").
+			Unique(),
 		field.String("geneId"),
 		field.Text("genome"),
+		field.String("strand"),
 		field.Text("mrna"),
 		field.Text("cds"),
 		field.Text("protein"),

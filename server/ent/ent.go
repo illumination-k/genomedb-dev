@@ -6,6 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"genomedb/ent/gene"
+	"genomedb/ent/genome"
 	"genomedb/ent/transcript"
 	"genomedb/ent/trasnscriptstructure"
 
@@ -32,6 +34,8 @@ type OrderFunc func(*sql.Selector)
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
+		gene.Table:                 gene.ValidColumn,
+		genome.Table:               genome.ValidColumn,
 		transcript.Table:           transcript.ValidColumn,
 		trasnscriptstructure.Table: trasnscriptstructure.ValidColumn,
 	}

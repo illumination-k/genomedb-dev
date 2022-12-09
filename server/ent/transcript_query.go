@@ -83,8 +83,8 @@ func (tq *TranscriptQuery) FirstX(ctx context.Context) *Transcript {
 
 // FirstID returns the first Transcript ID from the query.
 // Returns a *NotFoundError when no Transcript ID was found.
-func (tq *TranscriptQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (tq *TranscriptQuery) FirstID(ctx context.Context) (id string, err error) {
+	var ids []string
 	if ids, err = tq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
@@ -96,7 +96,7 @@ func (tq *TranscriptQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (tq *TranscriptQuery) FirstIDX(ctx context.Context) int {
+func (tq *TranscriptQuery) FirstIDX(ctx context.Context) string {
 	id, err := tq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -134,8 +134,8 @@ func (tq *TranscriptQuery) OnlyX(ctx context.Context) *Transcript {
 // OnlyID is like Only, but returns the only Transcript ID in the query.
 // Returns a *NotSingularError when more than one Transcript ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (tq *TranscriptQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (tq *TranscriptQuery) OnlyID(ctx context.Context) (id string, err error) {
+	var ids []string
 	if ids, err = tq.Limit(2).IDs(ctx); err != nil {
 		return
 	}
@@ -151,7 +151,7 @@ func (tq *TranscriptQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (tq *TranscriptQuery) OnlyIDX(ctx context.Context) int {
+func (tq *TranscriptQuery) OnlyIDX(ctx context.Context) string {
 	id, err := tq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -177,8 +177,8 @@ func (tq *TranscriptQuery) AllX(ctx context.Context) []*Transcript {
 }
 
 // IDs executes the query and returns a list of Transcript IDs.
-func (tq *TranscriptQuery) IDs(ctx context.Context) ([]int, error) {
-	var ids []int
+func (tq *TranscriptQuery) IDs(ctx context.Context) ([]string, error) {
+	var ids []string
 	if err := tq.Select(transcript.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -186,7 +186,7 @@ func (tq *TranscriptQuery) IDs(ctx context.Context) ([]int, error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (tq *TranscriptQuery) IDsX(ctx context.Context) []int {
+func (tq *TranscriptQuery) IDsX(ctx context.Context) []string {
 	ids, err := tq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -253,12 +253,12 @@ func (tq *TranscriptQuery) Clone() *TranscriptQuery {
 // Example:
 //
 //	var v []struct {
-//		TranscriptId string `json:"transcriptId,omitempty"`
+//		GeneId string `json:"geneId,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Transcript.Query().
-//		GroupBy(transcript.FieldTranscriptId).
+//		GroupBy(transcript.FieldGeneId).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (tq *TranscriptQuery) GroupBy(field string, fields ...string) *TranscriptGroupBy {
@@ -281,11 +281,11 @@ func (tq *TranscriptQuery) GroupBy(field string, fields ...string) *TranscriptGr
 // Example:
 //
 //	var v []struct {
-//		TranscriptId string `json:"transcriptId,omitempty"`
+//		GeneId string `json:"geneId,omitempty"`
 //	}
 //
 //	client.Transcript.Query().
-//		Select(transcript.FieldTranscriptId).
+//		Select(transcript.FieldGeneId).
 //		Scan(ctx, &v)
 func (tq *TranscriptQuery) Select(fields ...string) *TranscriptSelect {
 	tq.fields = append(tq.fields, fields...)
@@ -367,7 +367,7 @@ func (tq *TranscriptQuery) querySpec() *sqlgraph.QuerySpec {
 			Table:   transcript.Table,
 			Columns: transcript.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: transcript.FieldID,
 			},
 		},

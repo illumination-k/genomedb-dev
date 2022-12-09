@@ -10,6 +10,8 @@ import (
 
 	"genomedb/ent/migrate"
 
+	"genomedb/ent/gene"
+	"genomedb/ent/genome"
 	"genomedb/ent/transcript"
 	"genomedb/ent/trasnscriptstructure"
 
@@ -22,6 +24,10 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Gene is the client for interacting with the Gene builders.
+	Gene *GeneClient
+	// Genome is the client for interacting with the Genome builders.
+	Genome *GenomeClient
 	// Transcript is the client for interacting with the Transcript builders.
 	Transcript *TranscriptClient
 	// TrasnscriptStructure is the client for interacting with the TrasnscriptStructure builders.
@@ -39,6 +45,8 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Gene = NewGeneClient(c.config)
+	c.Genome = NewGenomeClient(c.config)
 	c.Transcript = NewTranscriptClient(c.config)
 	c.TrasnscriptStructure = NewTrasnscriptStructureClient(c.config)
 }
@@ -74,6 +82,8 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:                  ctx,
 		config:               cfg,
+		Gene:                 NewGeneClient(cfg),
+		Genome:               NewGenomeClient(cfg),
 		Transcript:           NewTranscriptClient(cfg),
 		TrasnscriptStructure: NewTrasnscriptStructureClient(cfg),
 	}, nil
@@ -95,6 +105,8 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:                  ctx,
 		config:               cfg,
+		Gene:                 NewGeneClient(cfg),
+		Genome:               NewGenomeClient(cfg),
 		Transcript:           NewTranscriptClient(cfg),
 		TrasnscriptStructure: NewTrasnscriptStructureClient(cfg),
 	}, nil
@@ -103,7 +115,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Transcript.
+//		Gene.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -125,8 +137,190 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.Gene.Use(hooks...)
+	c.Genome.Use(hooks...)
 	c.Transcript.Use(hooks...)
 	c.TrasnscriptStructure.Use(hooks...)
+}
+
+// GeneClient is a client for the Gene schema.
+type GeneClient struct {
+	config
+}
+
+// NewGeneClient returns a client for the Gene from the given config.
+func NewGeneClient(c config) *GeneClient {
+	return &GeneClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `gene.Hooks(f(g(h())))`.
+func (c *GeneClient) Use(hooks ...Hook) {
+	c.hooks.Gene = append(c.hooks.Gene, hooks...)
+}
+
+// Create returns a builder for creating a Gene entity.
+func (c *GeneClient) Create() *GeneCreate {
+	mutation := newGeneMutation(c.config, OpCreate)
+	return &GeneCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Gene entities.
+func (c *GeneClient) CreateBulk(builders ...*GeneCreate) *GeneCreateBulk {
+	return &GeneCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Gene.
+func (c *GeneClient) Update() *GeneUpdate {
+	mutation := newGeneMutation(c.config, OpUpdate)
+	return &GeneUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *GeneClient) UpdateOne(ge *Gene) *GeneUpdateOne {
+	mutation := newGeneMutation(c.config, OpUpdateOne, withGene(ge))
+	return &GeneUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *GeneClient) UpdateOneID(id string) *GeneUpdateOne {
+	mutation := newGeneMutation(c.config, OpUpdateOne, withGeneID(id))
+	return &GeneUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Gene.
+func (c *GeneClient) Delete() *GeneDelete {
+	mutation := newGeneMutation(c.config, OpDelete)
+	return &GeneDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *GeneClient) DeleteOne(ge *Gene) *GeneDeleteOne {
+	return c.DeleteOneID(ge.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *GeneClient) DeleteOneID(id string) *GeneDeleteOne {
+	builder := c.Delete().Where(gene.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &GeneDeleteOne{builder}
+}
+
+// Query returns a query builder for Gene.
+func (c *GeneClient) Query() *GeneQuery {
+	return &GeneQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Gene entity by its id.
+func (c *GeneClient) Get(ctx context.Context, id string) (*Gene, error) {
+	return c.Query().Where(gene.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *GeneClient) GetX(ctx context.Context, id string) *Gene {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *GeneClient) Hooks() []Hook {
+	return c.hooks.Gene
+}
+
+// GenomeClient is a client for the Genome schema.
+type GenomeClient struct {
+	config
+}
+
+// NewGenomeClient returns a client for the Genome from the given config.
+func NewGenomeClient(c config) *GenomeClient {
+	return &GenomeClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `genome.Hooks(f(g(h())))`.
+func (c *GenomeClient) Use(hooks ...Hook) {
+	c.hooks.Genome = append(c.hooks.Genome, hooks...)
+}
+
+// Create returns a builder for creating a Genome entity.
+func (c *GenomeClient) Create() *GenomeCreate {
+	mutation := newGenomeMutation(c.config, OpCreate)
+	return &GenomeCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Genome entities.
+func (c *GenomeClient) CreateBulk(builders ...*GenomeCreate) *GenomeCreateBulk {
+	return &GenomeCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Genome.
+func (c *GenomeClient) Update() *GenomeUpdate {
+	mutation := newGenomeMutation(c.config, OpUpdate)
+	return &GenomeUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *GenomeClient) UpdateOne(ge *Genome) *GenomeUpdateOne {
+	mutation := newGenomeMutation(c.config, OpUpdateOne, withGenome(ge))
+	return &GenomeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *GenomeClient) UpdateOneID(id int) *GenomeUpdateOne {
+	mutation := newGenomeMutation(c.config, OpUpdateOne, withGenomeID(id))
+	return &GenomeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Genome.
+func (c *GenomeClient) Delete() *GenomeDelete {
+	mutation := newGenomeMutation(c.config, OpDelete)
+	return &GenomeDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *GenomeClient) DeleteOne(ge *Genome) *GenomeDeleteOne {
+	return c.DeleteOneID(ge.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *GenomeClient) DeleteOneID(id int) *GenomeDeleteOne {
+	builder := c.Delete().Where(genome.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &GenomeDeleteOne{builder}
+}
+
+// Query returns a query builder for Genome.
+func (c *GenomeClient) Query() *GenomeQuery {
+	return &GenomeQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Genome entity by its id.
+func (c *GenomeClient) Get(ctx context.Context, id int) (*Genome, error) {
+	return c.Query().Where(genome.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *GenomeClient) GetX(ctx context.Context, id int) *Genome {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *GenomeClient) Hooks() []Hook {
+	return c.hooks.Genome
 }
 
 // TranscriptClient is a client for the Transcript schema.
@@ -169,7 +363,7 @@ func (c *TranscriptClient) UpdateOne(t *Transcript) *TranscriptUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *TranscriptClient) UpdateOneID(id int) *TranscriptUpdateOne {
+func (c *TranscriptClient) UpdateOneID(id string) *TranscriptUpdateOne {
 	mutation := newTranscriptMutation(c.config, OpUpdateOne, withTranscriptID(id))
 	return &TranscriptUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -186,7 +380,7 @@ func (c *TranscriptClient) DeleteOne(t *Transcript) *TranscriptDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *TranscriptClient) DeleteOneID(id int) *TranscriptDeleteOne {
+func (c *TranscriptClient) DeleteOneID(id string) *TranscriptDeleteOne {
 	builder := c.Delete().Where(transcript.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -201,12 +395,12 @@ func (c *TranscriptClient) Query() *TranscriptQuery {
 }
 
 // Get returns a Transcript entity by its id.
-func (c *TranscriptClient) Get(ctx context.Context, id int) (*Transcript, error) {
+func (c *TranscriptClient) Get(ctx context.Context, id string) (*Transcript, error) {
 	return c.Query().Where(transcript.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *TranscriptClient) GetX(ctx context.Context, id int) *Transcript {
+func (c *TranscriptClient) GetX(ctx context.Context, id string) *Transcript {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
