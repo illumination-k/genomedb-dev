@@ -84,6 +84,11 @@ func (p *GffParser) ConsumeLine(line string) error {
 	for _, _kv := range strings.Split(recs[8], ";") {
 		_kv = strings.TrimSpace(_kv)
 		kv := strings.Split(_kv, "=")
+
+		if len(kv) != 2 {
+			return fmt.Errorf("Incorrect line, attributes should be key=value format!: %v", attrs)
+		}
+
 		attrs[kv[0]] = kv[1]
 	}
 

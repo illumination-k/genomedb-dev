@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"genomedb/bioio"
 	"genomedb/ent"
+	"genomedb/seq"
 	"os"
 	"strings"
 
@@ -20,6 +21,7 @@ import (
 var genomeFasta string
 var genomeGtf string
 var databaseUri string
+var codonCode int32
 
 var importGenomeCmd = &cobra.Command{
 	Use:   "importGenome",
@@ -50,18 +52,22 @@ var importGenomeCmd = &cobra.Command{
 			return gtfReadError
 		}
 
-		// import into database
+		// # import into database
+		// ## init client
 		client, err := ent.Open("sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 		if err != nil {
 			return err
 		}
 		defer client.Close()
 
-		// Run the auto migration tool.
+		// ## Run the auto migration tool.
 		ctx := context.Background()
 		if err := client.Schema.Create(ctx); err != nil {
 			return fmt.Errorf("failed creating schema resources: %v", err)
 		}
+
+		// ## set codon table for translation
+		codonTable := seq.NewCodonTable(codonCode)
 
 		transcriptDtos := []*ent.TranscriptCreate{}
 		for transcriptId, recs := range transcriptId2recs {
@@ -76,7 +82,7 @@ var importGenomeCmd = &cobra.Command{
 			var cds strings.Builder
 
 			for _, rec := range recs.Records {
-				seq := scaffoldSeq[rec.Start-1 : rec.End-1]
+				seq := scaffoldSeq[rec.Start-1 : rec.End]
 
 				if rec.Feature == "mRNA" || rec.Feature == "rRNA" {
 					genome = seq
@@ -89,16 +95,22 @@ var importGenomeCmd = &cobra.Command{
 				}
 			}
 
+			prot, err := codonTable.Transrate(cds.String())
+
+			if err != nil {
+				fmt.Printf("%v can be invalid CDS, length=%d, length mod 3=%d\n", transcriptId, len(cds.String()), len(cds.String())%3)
+			}
+
 			transcriptDtos = append(
 				transcriptDtos,
 				client.Transcript.
 					Create().
-					SetTranscriptId(transcriptId).
-					SetGeneId(recs.GeneId).
-					SetCds(cds.String()).
+					SetID(transcriptId).
 					SetGenome(genome).
 					SetMrna(mrna.String()).
-					SetProtein(""),
+					SetGeneId(recs.GeneId).
+					SetCds(cds.String()).
+					SetProtein(prot),
 			)
 
 			if len(transcriptDtos) == 10 {
@@ -150,6 +162,7 @@ func readGenomeFasta(fastaPath string) (map[string]string, error) {
 type GffRecords struct {
 	GeneId  string
 	SeqName string
+	Strand  string
 	Records []bioio.GffRecord
 }
 
@@ -179,12 +192,12 @@ func readGtfFile(gtfPath string) (map[string]GffRecords, error) {
 
 		if ok {
 			transcriptId = v
-		}
+		} else {
+			v, ok = rec.Attributes["Parent"]
 
-		v, ok = rec.Attributes["Parent"]
-
-		if ok {
-			transcriptId = v
+			if ok {
+				transcriptId = v
+			}
 		}
 
 		if transcriptId == "" {
@@ -204,7 +217,7 @@ func readGtfFile(gtfPath string) (map[string]GffRecords, error) {
 			recs.Records = append(recs.Records, rec)
 			id2rec[transcriptId] = recs
 		} else {
-			recs = GffRecords{GeneId: geneId, SeqName: rec.Seqname, Records: []bioio.GffRecord{rec}}
+			recs = GffRecords{GeneId: geneId, SeqName: rec.Seqname, Strand: rec.Strand, Records: []bioio.GffRecord{rec}}
 			id2rec[transcriptId] = recs
 		}
 	}
@@ -219,6 +232,7 @@ func init() {
 	importGenomeCmd.Flags().StringVarP(&genomeFasta, "fasta", "f", "", "Path to the genomic fasta file")
 	importGenomeCmd.Flags().StringVarP(&genomeGtf, "gtf", "g", "", "Path to the genomic gtf file")
 	importGenomeCmd.Flags().StringVarP(&databaseUri, "database-uri", "d", "", "Database Uri")
+	importGenomeCmd.Flags().Int32VarP(&codonCode, "codon-code", "c", 1, "Codon Code")
 
 	importGenomeCmd.MarkFlagRequired("fasta")
 	importGenomeCmd.MarkFlagRequired("gtf")
