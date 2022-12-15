@@ -13,6 +13,118 @@ import (
 	"strings"
 )
 
+func Run(genomeName string, genomeFasta string, genomeGff string, databaseUri string, codonCode int32) error {
+	fmt.Printf("fasta: %v\n gtf : %v\n", genomeFasta, genomeGff)
+
+	seqname2seq, fastaReadError := ReadGenomeFasta(genomeFasta)
+	fmt.Println("Finish fasta reading...")
+
+	if fastaReadError != nil {
+		return fastaReadError
+	}
+
+	transcriptId2recs, gtfReadError := ReadGffFile(genomeGff)
+	fmt.Println("Finish gtf reading...")
+
+	if gtfReadError != nil {
+		return gtfReadError
+	}
+
+	// # import into database
+	// ## init client
+	client, err := ent.Open("sqlite3", databaseUri)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	// ## Run the auto migration tool.
+	ctx := context.Background()
+	if err := client.Schema.Create(ctx); err != nil {
+		return fmt.Errorf("failed creating schema resources: %v", err)
+	}
+
+	// ## create genome
+
+	if err := client.Genome.Create().SetID(genomeName).SetCodonTable(codonCode).OnConflict().UpdateNewValues().Exec(ctx); err != nil {
+		return err
+	}
+
+	// ## set codon table for translation
+	codonTable := seq.NewCodonTable(codonCode)
+
+	genes := map[string]struct{}{}
+	transcriptDtos := []*ent.TranscriptCreate{}
+	transcriptDataCreates := TranscriptDataCreates{}
+
+	for transcriptId, rec := range transcriptId2recs {
+		scaffoldSeq, ok := seqname2seq[rec.SeqName]
+
+		genes[rec.GeneId] = struct{}{}
+
+		if !ok {
+			return fmt.Errorf("seqname=%v does not exist in %v\n rec: %v\n", rec.SeqName, genomeFasta, rec)
+		}
+
+		transcriptSeq := rec.ToTranscriptSeq(scaffoldSeq, codonTable)
+		transcriptDtos = append(
+			transcriptDtos,
+			client.Transcript.
+				Create().
+				SetID(transcriptId).
+				SetStrand(rec.Strand).
+				SetType(rec.Type).
+				SetGenomeSeq(transcriptSeq.Genome).
+				SetTranscriptSeq(transcriptSeq.Mrna).
+				SetCdsSeq(transcriptSeq.Cds).
+				SetProteinSeq(transcriptSeq.Protein).
+				SetGeneID(rec.GeneId),
+		)
+
+		for _, gffrec := range rec.Records {
+			transcriptDataCreates.PushGffRecord(client, transcriptId, gffrec)
+		}
+	}
+
+	geneDtos := []*ent.GeneCreate{}
+	for geneId := range genes {
+		geneDtos = append(geneDtos, client.Gene.Create().SetID(geneId).SetGenomeID(genomeName))
+	}
+
+	stepNum := 100
+
+	fmt.Printf("Upsert %d Genes ...\n", len(geneDtos))
+	for i := 0; i < len(geneDtos); i += stepNum {
+		var dtos []*ent.GeneCreate
+		if i+stepNum > len(geneDtos) {
+			dtos = geneDtos[i:]
+		} else {
+			dtos = geneDtos[i : i+stepNum]
+		}
+
+		if err := client.Gene.CreateBulk(dtos...).OnConflict().UpdateNewValues().Exec(ctx); err != nil {
+			return err
+		}
+	}
+
+	fmt.Printf("Upsert %d Transcript ...\n", len(transcriptDtos))
+	for i := 0; i < len(transcriptDtos); i += stepNum {
+		var dtos []*ent.TranscriptCreate
+		if i+stepNum > len(transcriptDtos) {
+			dtos = transcriptDtos[i:]
+		} else {
+			dtos = transcriptDtos[i : i+stepNum]
+		}
+		if err := client.Transcript.CreateBulk(dtos...).OnConflict().UpdateNewValues().Exec(ctx); err != nil {
+			return err
+		}
+	}
+
+	transcriptDataCreates.BulkCreate(client, ctx, stepNum)
+
+	return nil
+}
+
 type TranscriptDataCreates struct {
 	Cds           []*ent.CdsCreate
 	Exon          []*ent.ExonCreate
