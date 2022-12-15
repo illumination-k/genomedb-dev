@@ -1,0 +1,30 @@
+package seq
+
+const Ala = "A"      //	Alanine
+const Asx = "B"      //	Aspartic acid or Asparagine [2]
+const Cys = "C"      //	Cysteine
+const Asp = "D"      //	Aspartic Acid
+const Glu = "E"      //	Glutamic Acid
+const Phe = "F"      //	Phenylalanine
+const Gly = "G"      //	Glycine
+const His = "H"      //	Histidine
+const Ile = "I"      //	Isoleucine
+const IleOrLeu = "J" //	Isoleucine or Leucine [4]
+const Lys = "K"      //	Lysine
+const Leu = "L"      //	Leucine
+const Met = "M"      //	Methionine
+const Asn = "N"      //	Asparagine
+const Pyr = "O"      //	pyrrolysine [6]
+const Pro = "P"      //	Proline
+const Gln = "Q"      //	Glutamine
+const Arg = "R"      //	Arginine
+const Ser = "S"      //	Serine
+const Thr = "T"      //	Threonine
+const Sec = "U"      //	selenocysteine [5,6]
+const Val = "V"      //	Valine
+const Trp = "W"      //	Tryptophan
+const Tyr = "Y"      //	Tyrosine
+const Glx = "Z"      //	Glutamine or Glutamic acid [2]
+const Unknown = "X"  // amino acid
+const Gaps = "."
+const End = "*"
