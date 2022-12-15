@@ -7,7 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"genomedb/ent/gene"
+	"genomedb/ent/genome"
 	"genomedb/ent/predicate"
+	"genomedb/ent/transcript"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -27,9 +29,70 @@ func (gu *GeneUpdate) Where(ps ...predicate.Gene) *GeneUpdate {
 	return gu
 }
 
+// AddTranscriptIDs adds the "transcripts" edge to the Transcript entity by IDs.
+func (gu *GeneUpdate) AddTranscriptIDs(ids ...string) *GeneUpdate {
+	gu.mutation.AddTranscriptIDs(ids...)
+	return gu
+}
+
+// AddTranscripts adds the "transcripts" edges to the Transcript entity.
+func (gu *GeneUpdate) AddTranscripts(t ...*Transcript) *GeneUpdate {
+	ids := make([]string, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return gu.AddTranscriptIDs(ids...)
+}
+
+// SetGenomeID sets the "genome" edge to the Genome entity by ID.
+func (gu *GeneUpdate) SetGenomeID(id string) *GeneUpdate {
+	gu.mutation.SetGenomeID(id)
+	return gu
+}
+
+// SetNillableGenomeID sets the "genome" edge to the Genome entity by ID if the given value is not nil.
+func (gu *GeneUpdate) SetNillableGenomeID(id *string) *GeneUpdate {
+	if id != nil {
+		gu = gu.SetGenomeID(*id)
+	}
+	return gu
+}
+
+// SetGenome sets the "genome" edge to the Genome entity.
+func (gu *GeneUpdate) SetGenome(g *Genome) *GeneUpdate {
+	return gu.SetGenomeID(g.ID)
+}
+
 // Mutation returns the GeneMutation object of the builder.
 func (gu *GeneUpdate) Mutation() *GeneMutation {
 	return gu.mutation
+}
+
+// ClearTranscripts clears all "transcripts" edges to the Transcript entity.
+func (gu *GeneUpdate) ClearTranscripts() *GeneUpdate {
+	gu.mutation.ClearTranscripts()
+	return gu
+}
+
+// RemoveTranscriptIDs removes the "transcripts" edge to Transcript entities by IDs.
+func (gu *GeneUpdate) RemoveTranscriptIDs(ids ...string) *GeneUpdate {
+	gu.mutation.RemoveTranscriptIDs(ids...)
+	return gu
+}
+
+// RemoveTranscripts removes "transcripts" edges to Transcript entities.
+func (gu *GeneUpdate) RemoveTranscripts(t ...*Transcript) *GeneUpdate {
+	ids := make([]string, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return gu.RemoveTranscriptIDs(ids...)
+}
+
+// ClearGenome clears the "genome" edge to the Genome entity.
+func (gu *GeneUpdate) ClearGenome() *GeneUpdate {
+	gu.mutation.ClearGenome()
+	return gu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -104,6 +167,95 @@ func (gu *GeneUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
+	if gu.mutation.TranscriptsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   gene.TranscriptsTable,
+			Columns: []string{gene.TranscriptsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: transcript.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.RemovedTranscriptsIDs(); len(nodes) > 0 && !gu.mutation.TranscriptsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   gene.TranscriptsTable,
+			Columns: []string{gene.TranscriptsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: transcript.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.TranscriptsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   gene.TranscriptsTable,
+			Columns: []string{gene.TranscriptsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: transcript.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if gu.mutation.GenomeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   gene.GenomeTable,
+			Columns: []string{gene.GenomeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: genome.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.GenomeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   gene.GenomeTable,
+			Columns: []string{gene.GenomeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: genome.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, gu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{gene.Label}
@@ -123,9 +275,70 @@ type GeneUpdateOne struct {
 	mutation *GeneMutation
 }
 
+// AddTranscriptIDs adds the "transcripts" edge to the Transcript entity by IDs.
+func (guo *GeneUpdateOne) AddTranscriptIDs(ids ...string) *GeneUpdateOne {
+	guo.mutation.AddTranscriptIDs(ids...)
+	return guo
+}
+
+// AddTranscripts adds the "transcripts" edges to the Transcript entity.
+func (guo *GeneUpdateOne) AddTranscripts(t ...*Transcript) *GeneUpdateOne {
+	ids := make([]string, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return guo.AddTranscriptIDs(ids...)
+}
+
+// SetGenomeID sets the "genome" edge to the Genome entity by ID.
+func (guo *GeneUpdateOne) SetGenomeID(id string) *GeneUpdateOne {
+	guo.mutation.SetGenomeID(id)
+	return guo
+}
+
+// SetNillableGenomeID sets the "genome" edge to the Genome entity by ID if the given value is not nil.
+func (guo *GeneUpdateOne) SetNillableGenomeID(id *string) *GeneUpdateOne {
+	if id != nil {
+		guo = guo.SetGenomeID(*id)
+	}
+	return guo
+}
+
+// SetGenome sets the "genome" edge to the Genome entity.
+func (guo *GeneUpdateOne) SetGenome(g *Genome) *GeneUpdateOne {
+	return guo.SetGenomeID(g.ID)
+}
+
 // Mutation returns the GeneMutation object of the builder.
 func (guo *GeneUpdateOne) Mutation() *GeneMutation {
 	return guo.mutation
+}
+
+// ClearTranscripts clears all "transcripts" edges to the Transcript entity.
+func (guo *GeneUpdateOne) ClearTranscripts() *GeneUpdateOne {
+	guo.mutation.ClearTranscripts()
+	return guo
+}
+
+// RemoveTranscriptIDs removes the "transcripts" edge to Transcript entities by IDs.
+func (guo *GeneUpdateOne) RemoveTranscriptIDs(ids ...string) *GeneUpdateOne {
+	guo.mutation.RemoveTranscriptIDs(ids...)
+	return guo
+}
+
+// RemoveTranscripts removes "transcripts" edges to Transcript entities.
+func (guo *GeneUpdateOne) RemoveTranscripts(t ...*Transcript) *GeneUpdateOne {
+	ids := make([]string, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return guo.RemoveTranscriptIDs(ids...)
+}
+
+// ClearGenome clears the "genome" edge to the Genome entity.
+func (guo *GeneUpdateOne) ClearGenome() *GeneUpdateOne {
+	guo.mutation.ClearGenome()
+	return guo
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -229,6 +442,95 @@ func (guo *GeneUpdateOne) sqlSave(ctx context.Context) (_node *Gene, err error) 
 				ps[i](selector)
 			}
 		}
+	}
+	if guo.mutation.TranscriptsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   gene.TranscriptsTable,
+			Columns: []string{gene.TranscriptsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: transcript.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.RemovedTranscriptsIDs(); len(nodes) > 0 && !guo.mutation.TranscriptsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   gene.TranscriptsTable,
+			Columns: []string{gene.TranscriptsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: transcript.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.TranscriptsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   gene.TranscriptsTable,
+			Columns: []string{gene.TranscriptsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: transcript.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if guo.mutation.GenomeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   gene.GenomeTable,
+			Columns: []string{gene.GenomeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: genome.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.GenomeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   gene.GenomeTable,
+			Columns: []string{gene.GenomeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: genome.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Gene{config: guo.config}
 	_spec.Assign = _node.assignValues

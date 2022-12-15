@@ -6,8 +6,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"genomedb/ent/gene"
 	"genomedb/ent/genome"
 	"genomedb/ent/predicate"
+	"genomedb/ent/scaffold"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -27,12 +29,6 @@ func (gu *GenomeUpdate) Where(ps ...predicate.Genome) *GenomeUpdate {
 	return gu
 }
 
-// SetName sets the "name" field.
-func (gu *GenomeUpdate) SetName(s string) *GenomeUpdate {
-	gu.mutation.SetName(s)
-	return gu
-}
-
 // SetCodonTable sets the "codon_table" field.
 func (gu *GenomeUpdate) SetCodonTable(i int32) *GenomeUpdate {
 	gu.mutation.ResetCodonTable()
@@ -46,15 +42,81 @@ func (gu *GenomeUpdate) AddCodonTable(i int32) *GenomeUpdate {
 	return gu
 }
 
-// SetSeq sets the "seq" field.
-func (gu *GenomeUpdate) SetSeq(s string) *GenomeUpdate {
-	gu.mutation.SetSeq(s)
+// AddGeneIDs adds the "genes" edge to the Gene entity by IDs.
+func (gu *GenomeUpdate) AddGeneIDs(ids ...string) *GenomeUpdate {
+	gu.mutation.AddGeneIDs(ids...)
 	return gu
+}
+
+// AddGenes adds the "genes" edges to the Gene entity.
+func (gu *GenomeUpdate) AddGenes(g ...*Gene) *GenomeUpdate {
+	ids := make([]string, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return gu.AddGeneIDs(ids...)
+}
+
+// AddScaffoldIDs adds the "scaffolds" edge to the Scaffold entity by IDs.
+func (gu *GenomeUpdate) AddScaffoldIDs(ids ...int) *GenomeUpdate {
+	gu.mutation.AddScaffoldIDs(ids...)
+	return gu
+}
+
+// AddScaffolds adds the "scaffolds" edges to the Scaffold entity.
+func (gu *GenomeUpdate) AddScaffolds(s ...*Scaffold) *GenomeUpdate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return gu.AddScaffoldIDs(ids...)
 }
 
 // Mutation returns the GenomeMutation object of the builder.
 func (gu *GenomeUpdate) Mutation() *GenomeMutation {
 	return gu.mutation
+}
+
+// ClearGenes clears all "genes" edges to the Gene entity.
+func (gu *GenomeUpdate) ClearGenes() *GenomeUpdate {
+	gu.mutation.ClearGenes()
+	return gu
+}
+
+// RemoveGeneIDs removes the "genes" edge to Gene entities by IDs.
+func (gu *GenomeUpdate) RemoveGeneIDs(ids ...string) *GenomeUpdate {
+	gu.mutation.RemoveGeneIDs(ids...)
+	return gu
+}
+
+// RemoveGenes removes "genes" edges to Gene entities.
+func (gu *GenomeUpdate) RemoveGenes(g ...*Gene) *GenomeUpdate {
+	ids := make([]string, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return gu.RemoveGeneIDs(ids...)
+}
+
+// ClearScaffolds clears all "scaffolds" edges to the Scaffold entity.
+func (gu *GenomeUpdate) ClearScaffolds() *GenomeUpdate {
+	gu.mutation.ClearScaffolds()
+	return gu
+}
+
+// RemoveScaffoldIDs removes the "scaffolds" edge to Scaffold entities by IDs.
+func (gu *GenomeUpdate) RemoveScaffoldIDs(ids ...int) *GenomeUpdate {
+	gu.mutation.RemoveScaffoldIDs(ids...)
+	return gu
+}
+
+// RemoveScaffolds removes "scaffolds" edges to Scaffold entities.
+func (gu *GenomeUpdate) RemoveScaffolds(s ...*Scaffold) *GenomeUpdate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return gu.RemoveScaffoldIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -64,12 +126,18 @@ func (gu *GenomeUpdate) Save(ctx context.Context) (int, error) {
 		affected int
 	)
 	if len(gu.hooks) == 0 {
+		if err = gu.check(); err != nil {
+			return 0, err
+		}
 		affected, err = gu.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*GenomeMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = gu.check(); err != nil {
+				return 0, err
 			}
 			gu.mutation = mutation
 			affected, err = gu.sqlSave(ctx)
@@ -111,13 +179,23 @@ func (gu *GenomeUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (gu *GenomeUpdate) check() error {
+	if v, ok := gu.mutation.CodonTable(); ok {
+		if err := genome.CodonTableValidator(v); err != nil {
+			return &ValidationError{Name: "codon_table", err: fmt.Errorf(`ent: validator failed for field "Genome.codon_table": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (gu *GenomeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   genome.Table,
 			Columns: genome.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: genome.FieldID,
 			},
 		},
@@ -129,17 +207,119 @@ func (gu *GenomeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := gu.mutation.Name(); ok {
-		_spec.SetField(genome.FieldName, field.TypeString, value)
-	}
 	if value, ok := gu.mutation.CodonTable(); ok {
 		_spec.SetField(genome.FieldCodonTable, field.TypeInt32, value)
 	}
 	if value, ok := gu.mutation.AddedCodonTable(); ok {
 		_spec.AddField(genome.FieldCodonTable, field.TypeInt32, value)
 	}
-	if value, ok := gu.mutation.Seq(); ok {
-		_spec.SetField(genome.FieldSeq, field.TypeString, value)
+	if gu.mutation.GenesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   genome.GenesTable,
+			Columns: []string{genome.GenesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: gene.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.RemovedGenesIDs(); len(nodes) > 0 && !gu.mutation.GenesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   genome.GenesTable,
+			Columns: []string{genome.GenesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: gene.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.GenesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   genome.GenesTable,
+			Columns: []string{genome.GenesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: gene.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if gu.mutation.ScaffoldsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   genome.ScaffoldsTable,
+			Columns: []string{genome.ScaffoldsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: scaffold.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.RemovedScaffoldsIDs(); len(nodes) > 0 && !gu.mutation.ScaffoldsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   genome.ScaffoldsTable,
+			Columns: []string{genome.ScaffoldsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: scaffold.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.ScaffoldsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   genome.ScaffoldsTable,
+			Columns: []string{genome.ScaffoldsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: scaffold.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, gu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -160,12 +340,6 @@ type GenomeUpdateOne struct {
 	mutation *GenomeMutation
 }
 
-// SetName sets the "name" field.
-func (guo *GenomeUpdateOne) SetName(s string) *GenomeUpdateOne {
-	guo.mutation.SetName(s)
-	return guo
-}
-
 // SetCodonTable sets the "codon_table" field.
 func (guo *GenomeUpdateOne) SetCodonTable(i int32) *GenomeUpdateOne {
 	guo.mutation.ResetCodonTable()
@@ -179,15 +353,81 @@ func (guo *GenomeUpdateOne) AddCodonTable(i int32) *GenomeUpdateOne {
 	return guo
 }
 
-// SetSeq sets the "seq" field.
-func (guo *GenomeUpdateOne) SetSeq(s string) *GenomeUpdateOne {
-	guo.mutation.SetSeq(s)
+// AddGeneIDs adds the "genes" edge to the Gene entity by IDs.
+func (guo *GenomeUpdateOne) AddGeneIDs(ids ...string) *GenomeUpdateOne {
+	guo.mutation.AddGeneIDs(ids...)
 	return guo
+}
+
+// AddGenes adds the "genes" edges to the Gene entity.
+func (guo *GenomeUpdateOne) AddGenes(g ...*Gene) *GenomeUpdateOne {
+	ids := make([]string, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return guo.AddGeneIDs(ids...)
+}
+
+// AddScaffoldIDs adds the "scaffolds" edge to the Scaffold entity by IDs.
+func (guo *GenomeUpdateOne) AddScaffoldIDs(ids ...int) *GenomeUpdateOne {
+	guo.mutation.AddScaffoldIDs(ids...)
+	return guo
+}
+
+// AddScaffolds adds the "scaffolds" edges to the Scaffold entity.
+func (guo *GenomeUpdateOne) AddScaffolds(s ...*Scaffold) *GenomeUpdateOne {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return guo.AddScaffoldIDs(ids...)
 }
 
 // Mutation returns the GenomeMutation object of the builder.
 func (guo *GenomeUpdateOne) Mutation() *GenomeMutation {
 	return guo.mutation
+}
+
+// ClearGenes clears all "genes" edges to the Gene entity.
+func (guo *GenomeUpdateOne) ClearGenes() *GenomeUpdateOne {
+	guo.mutation.ClearGenes()
+	return guo
+}
+
+// RemoveGeneIDs removes the "genes" edge to Gene entities by IDs.
+func (guo *GenomeUpdateOne) RemoveGeneIDs(ids ...string) *GenomeUpdateOne {
+	guo.mutation.RemoveGeneIDs(ids...)
+	return guo
+}
+
+// RemoveGenes removes "genes" edges to Gene entities.
+func (guo *GenomeUpdateOne) RemoveGenes(g ...*Gene) *GenomeUpdateOne {
+	ids := make([]string, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return guo.RemoveGeneIDs(ids...)
+}
+
+// ClearScaffolds clears all "scaffolds" edges to the Scaffold entity.
+func (guo *GenomeUpdateOne) ClearScaffolds() *GenomeUpdateOne {
+	guo.mutation.ClearScaffolds()
+	return guo
+}
+
+// RemoveScaffoldIDs removes the "scaffolds" edge to Scaffold entities by IDs.
+func (guo *GenomeUpdateOne) RemoveScaffoldIDs(ids ...int) *GenomeUpdateOne {
+	guo.mutation.RemoveScaffoldIDs(ids...)
+	return guo
+}
+
+// RemoveScaffolds removes "scaffolds" edges to Scaffold entities.
+func (guo *GenomeUpdateOne) RemoveScaffolds(s ...*Scaffold) *GenomeUpdateOne {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return guo.RemoveScaffoldIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -204,12 +444,18 @@ func (guo *GenomeUpdateOne) Save(ctx context.Context) (*Genome, error) {
 		node *Genome
 	)
 	if len(guo.hooks) == 0 {
+		if err = guo.check(); err != nil {
+			return nil, err
+		}
 		node, err = guo.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*GenomeMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = guo.check(); err != nil {
+				return nil, err
 			}
 			guo.mutation = mutation
 			node, err = guo.sqlSave(ctx)
@@ -257,13 +503,23 @@ func (guo *GenomeUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (guo *GenomeUpdateOne) check() error {
+	if v, ok := guo.mutation.CodonTable(); ok {
+		if err := genome.CodonTableValidator(v); err != nil {
+			return &ValidationError{Name: "codon_table", err: fmt.Errorf(`ent: validator failed for field "Genome.codon_table": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (guo *GenomeUpdateOne) sqlSave(ctx context.Context) (_node *Genome, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   genome.Table,
 			Columns: genome.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: genome.FieldID,
 			},
 		},
@@ -292,17 +548,119 @@ func (guo *GenomeUpdateOne) sqlSave(ctx context.Context) (_node *Genome, err err
 			}
 		}
 	}
-	if value, ok := guo.mutation.Name(); ok {
-		_spec.SetField(genome.FieldName, field.TypeString, value)
-	}
 	if value, ok := guo.mutation.CodonTable(); ok {
 		_spec.SetField(genome.FieldCodonTable, field.TypeInt32, value)
 	}
 	if value, ok := guo.mutation.AddedCodonTable(); ok {
 		_spec.AddField(genome.FieldCodonTable, field.TypeInt32, value)
 	}
-	if value, ok := guo.mutation.Seq(); ok {
-		_spec.SetField(genome.FieldSeq, field.TypeString, value)
+	if guo.mutation.GenesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   genome.GenesTable,
+			Columns: []string{genome.GenesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: gene.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.RemovedGenesIDs(); len(nodes) > 0 && !guo.mutation.GenesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   genome.GenesTable,
+			Columns: []string{genome.GenesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: gene.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.GenesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   genome.GenesTable,
+			Columns: []string{genome.GenesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: gene.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if guo.mutation.ScaffoldsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   genome.ScaffoldsTable,
+			Columns: []string{genome.ScaffoldsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: scaffold.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.RemovedScaffoldsIDs(); len(nodes) > 0 && !guo.mutation.ScaffoldsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   genome.ScaffoldsTable,
+			Columns: []string{genome.ScaffoldsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: scaffold.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.ScaffoldsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   genome.ScaffoldsTable,
+			Columns: []string{genome.ScaffoldsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: scaffold.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Genome{config: guo.config}
 	_spec.Assign = _node.assignValues

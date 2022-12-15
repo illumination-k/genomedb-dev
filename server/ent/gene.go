@@ -5,6 +5,7 @@ package ent
 import (
 	"fmt"
 	"genomedb/ent/gene"
+	"genomedb/ent/genome"
 	"strings"
 
 	"entgo.io/ent/dialect/sql"
@@ -15,6 +16,43 @@ type Gene struct {
 	config
 	// ID of the ent.
 	ID string `json:"id,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the GeneQuery when eager-loading is set.
+	Edges        GeneEdges `json:"edges"`
+	genome_genes *string
+}
+
+// GeneEdges holds the relations/edges for other nodes in the graph.
+type GeneEdges struct {
+	// Transcripts holds the value of the transcripts edge.
+	Transcripts []*Transcript `json:"transcripts,omitempty"`
+	// Genome holds the value of the genome edge.
+	Genome *Genome `json:"genome,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [2]bool
+}
+
+// TranscriptsOrErr returns the Transcripts value or an error if the edge
+// was not loaded in eager-loading.
+func (e GeneEdges) TranscriptsOrErr() ([]*Transcript, error) {
+	if e.loadedTypes[0] {
+		return e.Transcripts, nil
+	}
+	return nil, &NotLoadedError{edge: "transcripts"}
+}
+
+// GenomeOrErr returns the Genome value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e GeneEdges) GenomeOrErr() (*Genome, error) {
+	if e.loadedTypes[1] {
+		if e.Genome == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: genome.Label}
+		}
+		return e.Genome, nil
+	}
+	return nil, &NotLoadedError{edge: "genome"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -23,6 +61,8 @@ func (*Gene) scanValues(columns []string) ([]any, error) {
 	for i := range columns {
 		switch columns[i] {
 		case gene.FieldID:
+			values[i] = new(sql.NullString)
+		case gene.ForeignKeys[0]: // genome_genes
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Gene", columns[i])
@@ -45,9 +85,26 @@ func (ge *Gene) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				ge.ID = value.String
 			}
+		case gene.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field genome_genes", values[i])
+			} else if value.Valid {
+				ge.genome_genes = new(string)
+				*ge.genome_genes = value.String
+			}
 		}
 	}
 	return nil
+}
+
+// QueryTranscripts queries the "transcripts" edge of the Gene entity.
+func (ge *Gene) QueryTranscripts() *TranscriptQuery {
+	return (&GeneClient{config: ge.config}).QueryTranscripts(ge)
+}
+
+// QueryGenome queries the "genome" edge of the Gene entity.
+func (ge *Gene) QueryGenome() *GenomeQuery {
+	return (&GeneClient{config: ge.config}).QueryGenome(ge)
 }
 
 // Update returns a builder for updating this Gene.

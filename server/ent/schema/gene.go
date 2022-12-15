@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -19,5 +20,8 @@ func (Gene) Fields() []ent.Field {
 
 // Edges of the Gene.
 func (Gene) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("transcripts", Transcript.Type),
+		edge.From("genome", Genome.Type).Ref("genes").Unique(),
+	}
 }

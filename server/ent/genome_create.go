@@ -6,8 +6,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"genomedb/ent/gene"
 	"genomedb/ent/genome"
+	"genomedb/ent/scaffold"
 
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -21,22 +24,46 @@ type GenomeCreate struct {
 	conflict []sql.ConflictOption
 }
 
-// SetName sets the "name" field.
-func (gc *GenomeCreate) SetName(s string) *GenomeCreate {
-	gc.mutation.SetName(s)
-	return gc
-}
-
 // SetCodonTable sets the "codon_table" field.
 func (gc *GenomeCreate) SetCodonTable(i int32) *GenomeCreate {
 	gc.mutation.SetCodonTable(i)
 	return gc
 }
 
-// SetSeq sets the "seq" field.
-func (gc *GenomeCreate) SetSeq(s string) *GenomeCreate {
-	gc.mutation.SetSeq(s)
+// SetID sets the "id" field.
+func (gc *GenomeCreate) SetID(s string) *GenomeCreate {
+	gc.mutation.SetID(s)
 	return gc
+}
+
+// AddGeneIDs adds the "genes" edge to the Gene entity by IDs.
+func (gc *GenomeCreate) AddGeneIDs(ids ...string) *GenomeCreate {
+	gc.mutation.AddGeneIDs(ids...)
+	return gc
+}
+
+// AddGenes adds the "genes" edges to the Gene entity.
+func (gc *GenomeCreate) AddGenes(g ...*Gene) *GenomeCreate {
+	ids := make([]string, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return gc.AddGeneIDs(ids...)
+}
+
+// AddScaffoldIDs adds the "scaffolds" edge to the Scaffold entity by IDs.
+func (gc *GenomeCreate) AddScaffoldIDs(ids ...int) *GenomeCreate {
+	gc.mutation.AddScaffoldIDs(ids...)
+	return gc
+}
+
+// AddScaffolds adds the "scaffolds" edges to the Scaffold entity.
+func (gc *GenomeCreate) AddScaffolds(s ...*Scaffold) *GenomeCreate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return gc.AddScaffoldIDs(ids...)
 }
 
 // Mutation returns the GenomeMutation object of the builder.
@@ -115,14 +142,13 @@ func (gc *GenomeCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (gc *GenomeCreate) check() error {
-	if _, ok := gc.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Genome.name"`)}
-	}
 	if _, ok := gc.mutation.CodonTable(); !ok {
 		return &ValidationError{Name: "codon_table", err: errors.New(`ent: missing required field "Genome.codon_table"`)}
 	}
-	if _, ok := gc.mutation.Seq(); !ok {
-		return &ValidationError{Name: "seq", err: errors.New(`ent: missing required field "Genome.seq"`)}
+	if v, ok := gc.mutation.CodonTable(); ok {
+		if err := genome.CodonTableValidator(v); err != nil {
+			return &ValidationError{Name: "codon_table", err: fmt.Errorf(`ent: validator failed for field "Genome.codon_table": %w`, err)}
+		}
 	}
 	return nil
 }
@@ -135,8 +161,13 @@ func (gc *GenomeCreate) sqlSave(ctx context.Context) (*Genome, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(string); ok {
+			_node.ID = id
+		} else {
+			return nil, fmt.Errorf("unexpected Genome.ID type: %T", _spec.ID.Value)
+		}
+	}
 	return _node, nil
 }
 
@@ -146,23 +177,57 @@ func (gc *GenomeCreate) createSpec() (*Genome, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: genome.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: genome.FieldID,
 			},
 		}
 	)
 	_spec.OnConflict = gc.conflict
-	if value, ok := gc.mutation.Name(); ok {
-		_spec.SetField(genome.FieldName, field.TypeString, value)
-		_node.Name = value
+	if id, ok := gc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
 	}
 	if value, ok := gc.mutation.CodonTable(); ok {
 		_spec.SetField(genome.FieldCodonTable, field.TypeInt32, value)
 		_node.CodonTable = value
 	}
-	if value, ok := gc.mutation.Seq(); ok {
-		_spec.SetField(genome.FieldSeq, field.TypeString, value)
-		_node.Seq = value
+	if nodes := gc.mutation.GenesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   genome.GenesTable,
+			Columns: []string{genome.GenesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: gene.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := gc.mutation.ScaffoldsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   genome.ScaffoldsTable,
+			Columns: []string{genome.ScaffoldsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: scaffold.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }
@@ -171,7 +236,7 @@ func (gc *GenomeCreate) createSpec() (*Genome, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Genome.Create().
-//		SetName(v).
+//		SetCodonTable(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -180,7 +245,7 @@ func (gc *GenomeCreate) createSpec() (*Genome, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.GenomeUpsert) {
-//			SetName(v+v).
+//			SetCodonTable(v+v).
 //		}).
 //		Exec(ctx)
 func (gc *GenomeCreate) OnConflict(opts ...sql.ConflictOption) *GenomeUpsertOne {
@@ -216,18 +281,6 @@ type (
 	}
 )
 
-// SetName sets the "name" field.
-func (u *GenomeUpsert) SetName(v string) *GenomeUpsert {
-	u.Set(genome.FieldName, v)
-	return u
-}
-
-// UpdateName sets the "name" field to the value that was provided on create.
-func (u *GenomeUpsert) UpdateName() *GenomeUpsert {
-	u.SetExcluded(genome.FieldName)
-	return u
-}
-
 // SetCodonTable sets the "codon_table" field.
 func (u *GenomeUpsert) SetCodonTable(v int32) *GenomeUpsert {
 	u.Set(genome.FieldCodonTable, v)
@@ -246,28 +299,24 @@ func (u *GenomeUpsert) AddCodonTable(v int32) *GenomeUpsert {
 	return u
 }
 
-// SetSeq sets the "seq" field.
-func (u *GenomeUpsert) SetSeq(v string) *GenomeUpsert {
-	u.Set(genome.FieldSeq, v)
-	return u
-}
-
-// UpdateSeq sets the "seq" field to the value that was provided on create.
-func (u *GenomeUpsert) UpdateSeq() *GenomeUpsert {
-	u.SetExcluded(genome.FieldSeq)
-	return u
-}
-
-// UpdateNewValues updates the mutable fields using the new values that were set on create.
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
 //	client.Genome.Create().
 //		OnConflict(
 //			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(genome.FieldID)
+//			}),
 //		).
 //		Exec(ctx)
 func (u *GenomeUpsertOne) UpdateNewValues() *GenomeUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(genome.FieldID)
+		}
+	}))
 	return u
 }
 
@@ -298,20 +347,6 @@ func (u *GenomeUpsertOne) Update(set func(*GenomeUpsert)) *GenomeUpsertOne {
 	return u
 }
 
-// SetName sets the "name" field.
-func (u *GenomeUpsertOne) SetName(v string) *GenomeUpsertOne {
-	return u.Update(func(s *GenomeUpsert) {
-		s.SetName(v)
-	})
-}
-
-// UpdateName sets the "name" field to the value that was provided on create.
-func (u *GenomeUpsertOne) UpdateName() *GenomeUpsertOne {
-	return u.Update(func(s *GenomeUpsert) {
-		s.UpdateName()
-	})
-}
-
 // SetCodonTable sets the "codon_table" field.
 func (u *GenomeUpsertOne) SetCodonTable(v int32) *GenomeUpsertOne {
 	return u.Update(func(s *GenomeUpsert) {
@@ -333,20 +368,6 @@ func (u *GenomeUpsertOne) UpdateCodonTable() *GenomeUpsertOne {
 	})
 }
 
-// SetSeq sets the "seq" field.
-func (u *GenomeUpsertOne) SetSeq(v string) *GenomeUpsertOne {
-	return u.Update(func(s *GenomeUpsert) {
-		s.SetSeq(v)
-	})
-}
-
-// UpdateSeq sets the "seq" field to the value that was provided on create.
-func (u *GenomeUpsertOne) UpdateSeq() *GenomeUpsertOne {
-	return u.Update(func(s *GenomeUpsert) {
-		s.UpdateSeq()
-	})
-}
-
 // Exec executes the query.
 func (u *GenomeUpsertOne) Exec(ctx context.Context) error {
 	if len(u.create.conflict) == 0 {
@@ -363,7 +384,12 @@ func (u *GenomeUpsertOne) ExecX(ctx context.Context) {
 }
 
 // Exec executes the UPSERT query and returns the inserted/updated ID.
-func (u *GenomeUpsertOne) ID(ctx context.Context) (id int, err error) {
+func (u *GenomeUpsertOne) ID(ctx context.Context) (id string, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: GenomeUpsertOne.ID is not supported by MySQL driver. Use GenomeUpsertOne.Exec instead")
+	}
 	node, err := u.create.Save(ctx)
 	if err != nil {
 		return id, err
@@ -372,7 +398,7 @@ func (u *GenomeUpsertOne) ID(ctx context.Context) (id int, err error) {
 }
 
 // IDX is like ID, but panics if an error occurs.
-func (u *GenomeUpsertOne) IDX(ctx context.Context) int {
+func (u *GenomeUpsertOne) IDX(ctx context.Context) string {
 	id, err := u.ID(ctx)
 	if err != nil {
 		panic(err)
@@ -422,10 +448,6 @@ func (gcb *GenomeCreateBulk) Save(ctx context.Context) ([]*Genome, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})
@@ -477,7 +499,7 @@ func (gcb *GenomeCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.GenomeUpsert) {
-//			SetName(v+v).
+//			SetCodonTable(v+v).
 //		}).
 //		Exec(ctx)
 func (gcb *GenomeCreateBulk) OnConflict(opts ...sql.ConflictOption) *GenomeUpsertBulk {
@@ -512,10 +534,20 @@ type GenomeUpsertBulk struct {
 //	client.Genome.Create().
 //		OnConflict(
 //			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(genome.FieldID)
+//			}),
 //		).
 //		Exec(ctx)
 func (u *GenomeUpsertBulk) UpdateNewValues() *GenomeUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(genome.FieldID)
+			}
+		}
+	}))
 	return u
 }
 
@@ -546,20 +578,6 @@ func (u *GenomeUpsertBulk) Update(set func(*GenomeUpsert)) *GenomeUpsertBulk {
 	return u
 }
 
-// SetName sets the "name" field.
-func (u *GenomeUpsertBulk) SetName(v string) *GenomeUpsertBulk {
-	return u.Update(func(s *GenomeUpsert) {
-		s.SetName(v)
-	})
-}
-
-// UpdateName sets the "name" field to the value that was provided on create.
-func (u *GenomeUpsertBulk) UpdateName() *GenomeUpsertBulk {
-	return u.Update(func(s *GenomeUpsert) {
-		s.UpdateName()
-	})
-}
-
 // SetCodonTable sets the "codon_table" field.
 func (u *GenomeUpsertBulk) SetCodonTable(v int32) *GenomeUpsertBulk {
 	return u.Update(func(s *GenomeUpsert) {
@@ -578,20 +596,6 @@ func (u *GenomeUpsertBulk) AddCodonTable(v int32) *GenomeUpsertBulk {
 func (u *GenomeUpsertBulk) UpdateCodonTable() *GenomeUpsertBulk {
 	return u.Update(func(s *GenomeUpsert) {
 		s.UpdateCodonTable()
-	})
-}
-
-// SetSeq sets the "seq" field.
-func (u *GenomeUpsertBulk) SetSeq(v string) *GenomeUpsertBulk {
-	return u.Update(func(s *GenomeUpsert) {
-		s.SetSeq(v)
-	})
-}
-
-// UpdateSeq sets the "seq" field to the value that was provided on create.
-func (u *GenomeUpsertBulk) UpdateSeq() *GenomeUpsertBulk {
-	return u.Update(func(s *GenomeUpsert) {
-		s.UpdateSeq()
 	})
 }
 

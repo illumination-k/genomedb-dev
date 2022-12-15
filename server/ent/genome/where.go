@@ -6,31 +6,32 @@ import (
 	"genomedb/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // ID filters vertices based on their ID field.
-func ID(id int) predicate.Genome {
+func ID(id string) predicate.Genome {
 	return predicate.Genome(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
 	})
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id int) predicate.Genome {
+func IDEQ(id string) predicate.Genome {
 	return predicate.Genome(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
 	})
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id int) predicate.Genome {
+func IDNEQ(id string) predicate.Genome {
 	return predicate.Genome(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldID), id))
 	})
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...int) predicate.Genome {
+func IDIn(ids ...string) predicate.Genome {
 	return predicate.Genome(func(s *sql.Selector) {
 		v := make([]any, len(ids))
 		for i := range v {
@@ -41,7 +42,7 @@ func IDIn(ids ...int) predicate.Genome {
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...int) predicate.Genome {
+func IDNotIn(ids ...string) predicate.Genome {
 	return predicate.Genome(func(s *sql.Selector) {
 		v := make([]any, len(ids))
 		for i := range v {
@@ -52,37 +53,30 @@ func IDNotIn(ids ...int) predicate.Genome {
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id int) predicate.Genome {
+func IDGT(id string) predicate.Genome {
 	return predicate.Genome(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldID), id))
 	})
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id int) predicate.Genome {
+func IDGTE(id string) predicate.Genome {
 	return predicate.Genome(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldID), id))
 	})
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id int) predicate.Genome {
+func IDLT(id string) predicate.Genome {
 	return predicate.Genome(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldID), id))
 	})
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id int) predicate.Genome {
+func IDLTE(id string) predicate.Genome {
 	return predicate.Genome(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldID), id))
-	})
-}
-
-// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
-func Name(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldName), v))
 	})
 }
 
@@ -90,112 +84,6 @@ func Name(v string) predicate.Genome {
 func CodonTable(v int32) predicate.Genome {
 	return predicate.Genome(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldCodonTable), v))
-	})
-}
-
-// Seq applies equality check predicate on the "seq" field. It's identical to SeqEQ.
-func Seq(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldSeq), v))
-	})
-}
-
-// NameEQ applies the EQ predicate on the "name" field.
-func NameEQ(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldName), v))
-	})
-}
-
-// NameNEQ applies the NEQ predicate on the "name" field.
-func NameNEQ(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldName), v))
-	})
-}
-
-// NameIn applies the In predicate on the "name" field.
-func NameIn(vs ...string) predicate.Genome {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldName), v...))
-	})
-}
-
-// NameNotIn applies the NotIn predicate on the "name" field.
-func NameNotIn(vs ...string) predicate.Genome {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldName), v...))
-	})
-}
-
-// NameGT applies the GT predicate on the "name" field.
-func NameGT(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldName), v))
-	})
-}
-
-// NameGTE applies the GTE predicate on the "name" field.
-func NameGTE(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldName), v))
-	})
-}
-
-// NameLT applies the LT predicate on the "name" field.
-func NameLT(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldName), v))
-	})
-}
-
-// NameLTE applies the LTE predicate on the "name" field.
-func NameLTE(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldName), v))
-	})
-}
-
-// NameContains applies the Contains predicate on the "name" field.
-func NameContains(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldName), v))
-	})
-}
-
-// NameHasPrefix applies the HasPrefix predicate on the "name" field.
-func NameHasPrefix(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldName), v))
-	})
-}
-
-// NameHasSuffix applies the HasSuffix predicate on the "name" field.
-func NameHasSuffix(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldName), v))
-	})
-}
-
-// NameEqualFold applies the EqualFold predicate on the "name" field.
-func NameEqualFold(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldName), v))
-	})
-}
-
-// NameContainsFold applies the ContainsFold predicate on the "name" field.
-func NameContainsFold(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldName), v))
 	})
 }
 
@@ -263,102 +151,59 @@ func CodonTableLTE(v int32) predicate.Genome {
 	})
 }
 
-// SeqEQ applies the EQ predicate on the "seq" field.
-func SeqEQ(v string) predicate.Genome {
+// HasGenes applies the HasEdge predicate on the "genes" edge.
+func HasGenes() predicate.Genome {
 	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldSeq), v))
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(GenesTable, GeneFieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, GenesTable, GenesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// SeqNEQ applies the NEQ predicate on the "seq" field.
-func SeqNEQ(v string) predicate.Genome {
+// HasGenesWith applies the HasEdge predicate on the "genes" edge with a given conditions (other predicates).
+func HasGenesWith(preds ...predicate.Gene) predicate.Genome {
 	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldSeq), v))
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(GenesInverseTable, GeneFieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, GenesTable, GenesColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
 	})
 }
 
-// SeqIn applies the In predicate on the "seq" field.
-func SeqIn(vs ...string) predicate.Genome {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
+// HasScaffolds applies the HasEdge predicate on the "scaffolds" edge.
+func HasScaffolds() predicate.Genome {
 	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldSeq), v...))
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ScaffoldsTable, ScaffoldFieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ScaffoldsTable, ScaffoldsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// SeqNotIn applies the NotIn predicate on the "seq" field.
-func SeqNotIn(vs ...string) predicate.Genome {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
+// HasScaffoldsWith applies the HasEdge predicate on the "scaffolds" edge with a given conditions (other predicates).
+func HasScaffoldsWith(preds ...predicate.Scaffold) predicate.Genome {
 	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldSeq), v...))
-	})
-}
-
-// SeqGT applies the GT predicate on the "seq" field.
-func SeqGT(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldSeq), v))
-	})
-}
-
-// SeqGTE applies the GTE predicate on the "seq" field.
-func SeqGTE(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldSeq), v))
-	})
-}
-
-// SeqLT applies the LT predicate on the "seq" field.
-func SeqLT(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldSeq), v))
-	})
-}
-
-// SeqLTE applies the LTE predicate on the "seq" field.
-func SeqLTE(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldSeq), v))
-	})
-}
-
-// SeqContains applies the Contains predicate on the "seq" field.
-func SeqContains(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldSeq), v))
-	})
-}
-
-// SeqHasPrefix applies the HasPrefix predicate on the "seq" field.
-func SeqHasPrefix(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldSeq), v))
-	})
-}
-
-// SeqHasSuffix applies the HasSuffix predicate on the "seq" field.
-func SeqHasSuffix(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldSeq), v))
-	})
-}
-
-// SeqEqualFold applies the EqualFold predicate on the "seq" field.
-func SeqEqualFold(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldSeq), v))
-	})
-}
-
-// SeqContainsFold applies the ContainsFold predicate on the "seq" field.
-func SeqContainsFold(v string) predicate.Genome {
-	return predicate.Genome(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldSeq), v))
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ScaffoldsInverseTable, ScaffoldFieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ScaffoldsTable, ScaffoldsColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
 	})
 }
 

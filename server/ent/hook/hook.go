@@ -8,6 +8,45 @@ import (
 	"genomedb/ent"
 )
 
+// The CdsFunc type is an adapter to allow the use of ordinary
+// function as Cds mutator.
+type CdsFunc func(context.Context, *ent.CdsMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CdsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.CdsMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CdsMutation", m)
+	}
+	return f(ctx, mv)
+}
+
+// The ExonFunc type is an adapter to allow the use of ordinary
+// function as Exon mutator.
+type ExonFunc func(context.Context, *ent.ExonMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ExonFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.ExonMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ExonMutation", m)
+	}
+	return f(ctx, mv)
+}
+
+// The FivePrimeUtrFunc type is an adapter to allow the use of ordinary
+// function as FivePrimeUtr mutator.
+type FivePrimeUtrFunc func(context.Context, *ent.FivePrimeUtrMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f FivePrimeUtrFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.FivePrimeUtrMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.FivePrimeUtrMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The GeneFunc type is an adapter to allow the use of ordinary
 // function as Gene mutator.
 type GeneFunc func(context.Context, *ent.GeneMutation) (ent.Value, error)
@@ -34,6 +73,32 @@ func (f GenomeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return f(ctx, mv)
 }
 
+// The ScaffoldFunc type is an adapter to allow the use of ordinary
+// function as Scaffold mutator.
+type ScaffoldFunc func(context.Context, *ent.ScaffoldMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ScaffoldFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.ScaffoldMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ScaffoldMutation", m)
+	}
+	return f(ctx, mv)
+}
+
+// The ThreePrimeUtrFunc type is an adapter to allow the use of ordinary
+// function as ThreePrimeUtr mutator.
+type ThreePrimeUtrFunc func(context.Context, *ent.ThreePrimeUtrMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ThreePrimeUtrFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.ThreePrimeUtrMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ThreePrimeUtrMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The TranscriptFunc type is an adapter to allow the use of ordinary
 // function as Transcript mutator.
 type TranscriptFunc func(context.Context, *ent.TranscriptMutation) (ent.Value, error)
@@ -43,19 +108,6 @@ func (f TranscriptFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 	mv, ok := m.(*ent.TranscriptMutation)
 	if !ok {
 		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TranscriptMutation", m)
-	}
-	return f(ctx, mv)
-}
-
-// The TrasnscriptStructureFunc type is an adapter to allow the use of ordinary
-// function as TrasnscriptStructure mutator.
-type TrasnscriptStructureFunc func(context.Context, *ent.TrasnscriptStructureMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f TrasnscriptStructureFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	mv, ok := m.(*ent.TrasnscriptStructureMutation)
-	if !ok {
-		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TrasnscriptStructureMutation", m)
 	}
 	return f(ctx, mv)
 }

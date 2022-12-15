@@ -6,10 +6,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"genomedb/ent/cds"
+	"genomedb/ent/exon"
+	"genomedb/ent/fiveprimeutr"
 	"genomedb/ent/gene"
 	"genomedb/ent/genome"
+	"genomedb/ent/scaffold"
+	"genomedb/ent/threeprimeutr"
 	"genomedb/ent/transcript"
-	"genomedb/ent/trasnscriptstructure"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -34,10 +38,14 @@ type OrderFunc func(*sql.Selector)
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
-		gene.Table:                 gene.ValidColumn,
-		genome.Table:               genome.ValidColumn,
-		transcript.Table:           transcript.ValidColumn,
-		trasnscriptstructure.Table: trasnscriptstructure.ValidColumn,
+		cds.Table:           cds.ValidColumn,
+		exon.Table:          exon.ValidColumn,
+		fiveprimeutr.Table:  fiveprimeutr.ValidColumn,
+		gene.Table:          gene.ValidColumn,
+		genome.Table:        genome.ValidColumn,
+		scaffold.Table:      scaffold.ValidColumn,
+		threeprimeutr.Table: threeprimeutr.ValidColumn,
+		transcript.Table:    transcript.ValidColumn,
 	}
 	check, ok := checks[table]
 	if !ok {

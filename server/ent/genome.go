@@ -14,13 +14,41 @@ import (
 type Genome struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
-	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty"`
-	// CodonTable holds the value of the "codon_table" field.
+	ID string `json:"id,omitempty"`
+	// See https://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/index.cgi?chapter=tgencodes
 	CodonTable int32 `json:"codon_table,omitempty"`
-	// Seq holds the value of the "seq" field.
-	Seq string `json:"seq,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the GenomeQuery when eager-loading is set.
+	Edges GenomeEdges `json:"edges"`
+}
+
+// GenomeEdges holds the relations/edges for other nodes in the graph.
+type GenomeEdges struct {
+	// Genes holds the value of the genes edge.
+	Genes []*Gene `json:"genes,omitempty"`
+	// Scaffolds holds the value of the scaffolds edge.
+	Scaffolds []*Scaffold `json:"scaffolds,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [2]bool
+}
+
+// GenesOrErr returns the Genes value or an error if the edge
+// was not loaded in eager-loading.
+func (e GenomeEdges) GenesOrErr() ([]*Gene, error) {
+	if e.loadedTypes[0] {
+		return e.Genes, nil
+	}
+	return nil, &NotLoadedError{edge: "genes"}
+}
+
+// ScaffoldsOrErr returns the Scaffolds value or an error if the edge
+// was not loaded in eager-loading.
+func (e GenomeEdges) ScaffoldsOrErr() ([]*Scaffold, error) {
+	if e.loadedTypes[1] {
+		return e.Scaffolds, nil
+	}
+	return nil, &NotLoadedError{edge: "scaffolds"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -28,9 +56,9 @@ func (*Genome) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case genome.FieldID, genome.FieldCodonTable:
+		case genome.FieldCodonTable:
 			values[i] = new(sql.NullInt64)
-		case genome.FieldName, genome.FieldSeq:
+		case genome.FieldID:
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Genome", columns[i])
@@ -48,16 +76,10 @@ func (ge *Genome) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case genome.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
-			}
-			ge.ID = int(value.Int64)
-		case genome.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field name", values[i])
+				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value.Valid {
-				ge.Name = value.String
+				ge.ID = value.String
 			}
 		case genome.FieldCodonTable:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -65,15 +87,19 @@ func (ge *Genome) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				ge.CodonTable = int32(value.Int64)
 			}
-		case genome.FieldSeq:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field seq", values[i])
-			} else if value.Valid {
-				ge.Seq = value.String
-			}
 		}
 	}
 	return nil
+}
+
+// QueryGenes queries the "genes" edge of the Genome entity.
+func (ge *Genome) QueryGenes() *GeneQuery {
+	return (&GenomeClient{config: ge.config}).QueryGenes(ge)
+}
+
+// QueryScaffolds queries the "scaffolds" edge of the Genome entity.
+func (ge *Genome) QueryScaffolds() *ScaffoldQuery {
+	return (&GenomeClient{config: ge.config}).QueryScaffolds(ge)
 }
 
 // Update returns a builder for updating this Genome.
@@ -99,14 +125,8 @@ func (ge *Genome) String() string {
 	var builder strings.Builder
 	builder.WriteString("Genome(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", ge.ID))
-	builder.WriteString("name=")
-	builder.WriteString(ge.Name)
-	builder.WriteString(", ")
 	builder.WriteString("codon_table=")
 	builder.WriteString(fmt.Sprintf("%v", ge.CodonTable))
-	builder.WriteString(", ")
-	builder.WriteString("seq=")
-	builder.WriteString(ge.Seq)
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -6,6 +6,7 @@ import (
 	"genomedb/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // ID filters vertices based on their ID field.
@@ -76,6 +77,62 @@ func IDLT(id string) predicate.Gene {
 func IDLTE(id string) predicate.Gene {
 	return predicate.Gene(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldID), id))
+	})
+}
+
+// HasTranscripts applies the HasEdge predicate on the "transcripts" edge.
+func HasTranscripts() predicate.Gene {
+	return predicate.Gene(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(TranscriptsTable, TranscriptFieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, TranscriptsTable, TranscriptsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTranscriptsWith applies the HasEdge predicate on the "transcripts" edge with a given conditions (other predicates).
+func HasTranscriptsWith(preds ...predicate.Transcript) predicate.Gene {
+	return predicate.Gene(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(TranscriptsInverseTable, TranscriptFieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, TranscriptsTable, TranscriptsColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasGenome applies the HasEdge predicate on the "genome" edge.
+func HasGenome() predicate.Gene {
+	return predicate.Gene(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(GenomeTable, GenomeFieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, GenomeTable, GenomeColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasGenomeWith applies the HasEdge predicate on the "genome" edge with a given conditions (other predicates).
+func HasGenomeWith(preds ...predicate.Genome) predicate.Gene {
+	return predicate.Gene(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(GenomeInverseTable, GenomeFieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, GenomeTable, GenomeColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
 	})
 }
 

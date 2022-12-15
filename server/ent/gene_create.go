@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"genomedb/ent/gene"
+	"genomedb/ent/genome"
+	"genomedb/ent/transcript"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
@@ -26,6 +28,40 @@ type GeneCreate struct {
 func (gc *GeneCreate) SetID(s string) *GeneCreate {
 	gc.mutation.SetID(s)
 	return gc
+}
+
+// AddTranscriptIDs adds the "transcripts" edge to the Transcript entity by IDs.
+func (gc *GeneCreate) AddTranscriptIDs(ids ...string) *GeneCreate {
+	gc.mutation.AddTranscriptIDs(ids...)
+	return gc
+}
+
+// AddTranscripts adds the "transcripts" edges to the Transcript entity.
+func (gc *GeneCreate) AddTranscripts(t ...*Transcript) *GeneCreate {
+	ids := make([]string, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return gc.AddTranscriptIDs(ids...)
+}
+
+// SetGenomeID sets the "genome" edge to the Genome entity by ID.
+func (gc *GeneCreate) SetGenomeID(id string) *GeneCreate {
+	gc.mutation.SetGenomeID(id)
+	return gc
+}
+
+// SetNillableGenomeID sets the "genome" edge to the Genome entity by ID if the given value is not nil.
+func (gc *GeneCreate) SetNillableGenomeID(id *string) *GeneCreate {
+	if id != nil {
+		gc = gc.SetGenomeID(*id)
+	}
+	return gc
+}
+
+// SetGenome sets the "genome" edge to the Genome entity.
+func (gc *GeneCreate) SetGenome(g *Genome) *GeneCreate {
+	return gc.SetGenomeID(g.ID)
 }
 
 // Mutation returns the GeneMutation object of the builder.
@@ -140,6 +176,45 @@ func (gc *GeneCreate) createSpec() (*Gene, *sqlgraph.CreateSpec) {
 	if id, ok := gc.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
+	}
+	if nodes := gc.mutation.TranscriptsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   gene.TranscriptsTable,
+			Columns: []string{gene.TranscriptsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: transcript.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := gc.mutation.GenomeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   gene.GenomeTable,
+			Columns: []string{gene.GenomeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: genome.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.genome_genes = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

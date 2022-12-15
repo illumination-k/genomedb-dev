@@ -10,13 +10,18 @@ import (
 
 	"genomedb/ent/migrate"
 
+	"genomedb/ent/cds"
+	"genomedb/ent/exon"
+	"genomedb/ent/fiveprimeutr"
 	"genomedb/ent/gene"
 	"genomedb/ent/genome"
+	"genomedb/ent/scaffold"
+	"genomedb/ent/threeprimeutr"
 	"genomedb/ent/transcript"
-	"genomedb/ent/trasnscriptstructure"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // Client is the client that holds all ent builders.
@@ -24,14 +29,22 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Cds is the client for interacting with the Cds builders.
+	Cds *CdsClient
+	// Exon is the client for interacting with the Exon builders.
+	Exon *ExonClient
+	// FivePrimeUtr is the client for interacting with the FivePrimeUtr builders.
+	FivePrimeUtr *FivePrimeUtrClient
 	// Gene is the client for interacting with the Gene builders.
 	Gene *GeneClient
 	// Genome is the client for interacting with the Genome builders.
 	Genome *GenomeClient
+	// Scaffold is the client for interacting with the Scaffold builders.
+	Scaffold *ScaffoldClient
+	// ThreePrimeUtr is the client for interacting with the ThreePrimeUtr builders.
+	ThreePrimeUtr *ThreePrimeUtrClient
 	// Transcript is the client for interacting with the Transcript builders.
 	Transcript *TranscriptClient
-	// TrasnscriptStructure is the client for interacting with the TrasnscriptStructure builders.
-	TrasnscriptStructure *TrasnscriptStructureClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -45,10 +58,14 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Cds = NewCdsClient(c.config)
+	c.Exon = NewExonClient(c.config)
+	c.FivePrimeUtr = NewFivePrimeUtrClient(c.config)
 	c.Gene = NewGeneClient(c.config)
 	c.Genome = NewGenomeClient(c.config)
+	c.Scaffold = NewScaffoldClient(c.config)
+	c.ThreePrimeUtr = NewThreePrimeUtrClient(c.config)
 	c.Transcript = NewTranscriptClient(c.config)
-	c.TrasnscriptStructure = NewTrasnscriptStructureClient(c.config)
 }
 
 // Open opens a database/sql.DB specified by the driver name and
@@ -80,12 +97,16 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:                  ctx,
-		config:               cfg,
-		Gene:                 NewGeneClient(cfg),
-		Genome:               NewGenomeClient(cfg),
-		Transcript:           NewTranscriptClient(cfg),
-		TrasnscriptStructure: NewTrasnscriptStructureClient(cfg),
+		ctx:           ctx,
+		config:        cfg,
+		Cds:           NewCdsClient(cfg),
+		Exon:          NewExonClient(cfg),
+		FivePrimeUtr:  NewFivePrimeUtrClient(cfg),
+		Gene:          NewGeneClient(cfg),
+		Genome:        NewGenomeClient(cfg),
+		Scaffold:      NewScaffoldClient(cfg),
+		ThreePrimeUtr: NewThreePrimeUtrClient(cfg),
+		Transcript:    NewTranscriptClient(cfg),
 	}, nil
 }
 
@@ -103,19 +124,23 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:                  ctx,
-		config:               cfg,
-		Gene:                 NewGeneClient(cfg),
-		Genome:               NewGenomeClient(cfg),
-		Transcript:           NewTranscriptClient(cfg),
-		TrasnscriptStructure: NewTrasnscriptStructureClient(cfg),
+		ctx:           ctx,
+		config:        cfg,
+		Cds:           NewCdsClient(cfg),
+		Exon:          NewExonClient(cfg),
+		FivePrimeUtr:  NewFivePrimeUtrClient(cfg),
+		Gene:          NewGeneClient(cfg),
+		Genome:        NewGenomeClient(cfg),
+		Scaffold:      NewScaffoldClient(cfg),
+		ThreePrimeUtr: NewThreePrimeUtrClient(cfg),
+		Transcript:    NewTranscriptClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Gene.
+//		Cds.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -137,10 +162,332 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.Cds.Use(hooks...)
+	c.Exon.Use(hooks...)
+	c.FivePrimeUtr.Use(hooks...)
 	c.Gene.Use(hooks...)
 	c.Genome.Use(hooks...)
+	c.Scaffold.Use(hooks...)
+	c.ThreePrimeUtr.Use(hooks...)
 	c.Transcript.Use(hooks...)
-	c.TrasnscriptStructure.Use(hooks...)
+}
+
+// CdsClient is a client for the Cds schema.
+type CdsClient struct {
+	config
+}
+
+// NewCdsClient returns a client for the Cds from the given config.
+func NewCdsClient(c config) *CdsClient {
+	return &CdsClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `cds.Hooks(f(g(h())))`.
+func (c *CdsClient) Use(hooks ...Hook) {
+	c.hooks.Cds = append(c.hooks.Cds, hooks...)
+}
+
+// Create returns a builder for creating a Cds entity.
+func (c *CdsClient) Create() *CdsCreate {
+	mutation := newCdsMutation(c.config, OpCreate)
+	return &CdsCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Cds entities.
+func (c *CdsClient) CreateBulk(builders ...*CdsCreate) *CdsCreateBulk {
+	return &CdsCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Cds.
+func (c *CdsClient) Update() *CdsUpdate {
+	mutation := newCdsMutation(c.config, OpUpdate)
+	return &CdsUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CdsClient) UpdateOne(cd *Cds) *CdsUpdateOne {
+	mutation := newCdsMutation(c.config, OpUpdateOne, withCds(cd))
+	return &CdsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CdsClient) UpdateOneID(id int) *CdsUpdateOne {
+	mutation := newCdsMutation(c.config, OpUpdateOne, withCdsID(id))
+	return &CdsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Cds.
+func (c *CdsClient) Delete() *CdsDelete {
+	mutation := newCdsMutation(c.config, OpDelete)
+	return &CdsDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CdsClient) DeleteOne(cd *Cds) *CdsDeleteOne {
+	return c.DeleteOneID(cd.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CdsClient) DeleteOneID(id int) *CdsDeleteOne {
+	builder := c.Delete().Where(cds.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CdsDeleteOne{builder}
+}
+
+// Query returns a query builder for Cds.
+func (c *CdsClient) Query() *CdsQuery {
+	return &CdsQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Cds entity by its id.
+func (c *CdsClient) Get(ctx context.Context, id int) (*Cds, error) {
+	return c.Query().Where(cds.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CdsClient) GetX(ctx context.Context, id int) *Cds {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryTranscript queries the transcript edge of a Cds.
+func (c *CdsClient) QueryTranscript(cd *Cds) *TranscriptQuery {
+	query := &TranscriptQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := cd.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(cds.Table, cds.FieldID, id),
+			sqlgraph.To(transcript.Table, transcript.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, cds.TranscriptTable, cds.TranscriptColumn),
+		)
+		fromV = sqlgraph.Neighbors(cd.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *CdsClient) Hooks() []Hook {
+	return c.hooks.Cds
+}
+
+// ExonClient is a client for the Exon schema.
+type ExonClient struct {
+	config
+}
+
+// NewExonClient returns a client for the Exon from the given config.
+func NewExonClient(c config) *ExonClient {
+	return &ExonClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `exon.Hooks(f(g(h())))`.
+func (c *ExonClient) Use(hooks ...Hook) {
+	c.hooks.Exon = append(c.hooks.Exon, hooks...)
+}
+
+// Create returns a builder for creating a Exon entity.
+func (c *ExonClient) Create() *ExonCreate {
+	mutation := newExonMutation(c.config, OpCreate)
+	return &ExonCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Exon entities.
+func (c *ExonClient) CreateBulk(builders ...*ExonCreate) *ExonCreateBulk {
+	return &ExonCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Exon.
+func (c *ExonClient) Update() *ExonUpdate {
+	mutation := newExonMutation(c.config, OpUpdate)
+	return &ExonUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ExonClient) UpdateOne(e *Exon) *ExonUpdateOne {
+	mutation := newExonMutation(c.config, OpUpdateOne, withExon(e))
+	return &ExonUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ExonClient) UpdateOneID(id int) *ExonUpdateOne {
+	mutation := newExonMutation(c.config, OpUpdateOne, withExonID(id))
+	return &ExonUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Exon.
+func (c *ExonClient) Delete() *ExonDelete {
+	mutation := newExonMutation(c.config, OpDelete)
+	return &ExonDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ExonClient) DeleteOne(e *Exon) *ExonDeleteOne {
+	return c.DeleteOneID(e.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ExonClient) DeleteOneID(id int) *ExonDeleteOne {
+	builder := c.Delete().Where(exon.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ExonDeleteOne{builder}
+}
+
+// Query returns a query builder for Exon.
+func (c *ExonClient) Query() *ExonQuery {
+	return &ExonQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Exon entity by its id.
+func (c *ExonClient) Get(ctx context.Context, id int) (*Exon, error) {
+	return c.Query().Where(exon.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ExonClient) GetX(ctx context.Context, id int) *Exon {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryTranscript queries the transcript edge of a Exon.
+func (c *ExonClient) QueryTranscript(e *Exon) *TranscriptQuery {
+	query := &TranscriptQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := e.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(exon.Table, exon.FieldID, id),
+			sqlgraph.To(transcript.Table, transcript.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, exon.TranscriptTable, exon.TranscriptColumn),
+		)
+		fromV = sqlgraph.Neighbors(e.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ExonClient) Hooks() []Hook {
+	return c.hooks.Exon
+}
+
+// FivePrimeUtrClient is a client for the FivePrimeUtr schema.
+type FivePrimeUtrClient struct {
+	config
+}
+
+// NewFivePrimeUtrClient returns a client for the FivePrimeUtr from the given config.
+func NewFivePrimeUtrClient(c config) *FivePrimeUtrClient {
+	return &FivePrimeUtrClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `fiveprimeutr.Hooks(f(g(h())))`.
+func (c *FivePrimeUtrClient) Use(hooks ...Hook) {
+	c.hooks.FivePrimeUtr = append(c.hooks.FivePrimeUtr, hooks...)
+}
+
+// Create returns a builder for creating a FivePrimeUtr entity.
+func (c *FivePrimeUtrClient) Create() *FivePrimeUtrCreate {
+	mutation := newFivePrimeUtrMutation(c.config, OpCreate)
+	return &FivePrimeUtrCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of FivePrimeUtr entities.
+func (c *FivePrimeUtrClient) CreateBulk(builders ...*FivePrimeUtrCreate) *FivePrimeUtrCreateBulk {
+	return &FivePrimeUtrCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for FivePrimeUtr.
+func (c *FivePrimeUtrClient) Update() *FivePrimeUtrUpdate {
+	mutation := newFivePrimeUtrMutation(c.config, OpUpdate)
+	return &FivePrimeUtrUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *FivePrimeUtrClient) UpdateOne(fpu *FivePrimeUtr) *FivePrimeUtrUpdateOne {
+	mutation := newFivePrimeUtrMutation(c.config, OpUpdateOne, withFivePrimeUtr(fpu))
+	return &FivePrimeUtrUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *FivePrimeUtrClient) UpdateOneID(id int) *FivePrimeUtrUpdateOne {
+	mutation := newFivePrimeUtrMutation(c.config, OpUpdateOne, withFivePrimeUtrID(id))
+	return &FivePrimeUtrUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for FivePrimeUtr.
+func (c *FivePrimeUtrClient) Delete() *FivePrimeUtrDelete {
+	mutation := newFivePrimeUtrMutation(c.config, OpDelete)
+	return &FivePrimeUtrDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *FivePrimeUtrClient) DeleteOne(fpu *FivePrimeUtr) *FivePrimeUtrDeleteOne {
+	return c.DeleteOneID(fpu.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *FivePrimeUtrClient) DeleteOneID(id int) *FivePrimeUtrDeleteOne {
+	builder := c.Delete().Where(fiveprimeutr.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &FivePrimeUtrDeleteOne{builder}
+}
+
+// Query returns a query builder for FivePrimeUtr.
+func (c *FivePrimeUtrClient) Query() *FivePrimeUtrQuery {
+	return &FivePrimeUtrQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a FivePrimeUtr entity by its id.
+func (c *FivePrimeUtrClient) Get(ctx context.Context, id int) (*FivePrimeUtr, error) {
+	return c.Query().Where(fiveprimeutr.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *FivePrimeUtrClient) GetX(ctx context.Context, id int) *FivePrimeUtr {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryTranscript queries the transcript edge of a FivePrimeUtr.
+func (c *FivePrimeUtrClient) QueryTranscript(fpu *FivePrimeUtr) *TranscriptQuery {
+	query := &TranscriptQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := fpu.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(fiveprimeutr.Table, fiveprimeutr.FieldID, id),
+			sqlgraph.To(transcript.Table, transcript.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, fiveprimeutr.TranscriptTable, fiveprimeutr.TranscriptColumn),
+		)
+		fromV = sqlgraph.Neighbors(fpu.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *FivePrimeUtrClient) Hooks() []Hook {
+	return c.hooks.FivePrimeUtr
 }
 
 // GeneClient is a client for the Gene schema.
@@ -228,6 +575,38 @@ func (c *GeneClient) GetX(ctx context.Context, id string) *Gene {
 	return obj
 }
 
+// QueryTranscripts queries the transcripts edge of a Gene.
+func (c *GeneClient) QueryTranscripts(ge *Gene) *TranscriptQuery {
+	query := &TranscriptQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ge.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(gene.Table, gene.FieldID, id),
+			sqlgraph.To(transcript.Table, transcript.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, gene.TranscriptsTable, gene.TranscriptsColumn),
+		)
+		fromV = sqlgraph.Neighbors(ge.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryGenome queries the genome edge of a Gene.
+func (c *GeneClient) QueryGenome(ge *Gene) *GenomeQuery {
+	query := &GenomeQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ge.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(gene.Table, gene.FieldID, id),
+			sqlgraph.To(genome.Table, genome.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, gene.GenomeTable, gene.GenomeColumn),
+		)
+		fromV = sqlgraph.Neighbors(ge.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *GeneClient) Hooks() []Hook {
 	return c.hooks.Gene
@@ -273,7 +652,7 @@ func (c *GenomeClient) UpdateOne(ge *Genome) *GenomeUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *GenomeClient) UpdateOneID(id int) *GenomeUpdateOne {
+func (c *GenomeClient) UpdateOneID(id string) *GenomeUpdateOne {
 	mutation := newGenomeMutation(c.config, OpUpdateOne, withGenomeID(id))
 	return &GenomeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -290,7 +669,7 @@ func (c *GenomeClient) DeleteOne(ge *Genome) *GenomeDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *GenomeClient) DeleteOneID(id int) *GenomeDeleteOne {
+func (c *GenomeClient) DeleteOneID(id string) *GenomeDeleteOne {
 	builder := c.Delete().Where(genome.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -305,12 +684,12 @@ func (c *GenomeClient) Query() *GenomeQuery {
 }
 
 // Get returns a Genome entity by its id.
-func (c *GenomeClient) Get(ctx context.Context, id int) (*Genome, error) {
+func (c *GenomeClient) Get(ctx context.Context, id string) (*Genome, error) {
 	return c.Query().Where(genome.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *GenomeClient) GetX(ctx context.Context, id int) *Genome {
+func (c *GenomeClient) GetX(ctx context.Context, id string) *Genome {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -318,9 +697,253 @@ func (c *GenomeClient) GetX(ctx context.Context, id int) *Genome {
 	return obj
 }
 
+// QueryGenes queries the genes edge of a Genome.
+func (c *GenomeClient) QueryGenes(ge *Genome) *GeneQuery {
+	query := &GeneQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ge.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(genome.Table, genome.FieldID, id),
+			sqlgraph.To(gene.Table, gene.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, genome.GenesTable, genome.GenesColumn),
+		)
+		fromV = sqlgraph.Neighbors(ge.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryScaffolds queries the scaffolds edge of a Genome.
+func (c *GenomeClient) QueryScaffolds(ge *Genome) *ScaffoldQuery {
+	query := &ScaffoldQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ge.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(genome.Table, genome.FieldID, id),
+			sqlgraph.To(scaffold.Table, scaffold.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, genome.ScaffoldsTable, genome.ScaffoldsColumn),
+		)
+		fromV = sqlgraph.Neighbors(ge.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *GenomeClient) Hooks() []Hook {
 	return c.hooks.Genome
+}
+
+// ScaffoldClient is a client for the Scaffold schema.
+type ScaffoldClient struct {
+	config
+}
+
+// NewScaffoldClient returns a client for the Scaffold from the given config.
+func NewScaffoldClient(c config) *ScaffoldClient {
+	return &ScaffoldClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `scaffold.Hooks(f(g(h())))`.
+func (c *ScaffoldClient) Use(hooks ...Hook) {
+	c.hooks.Scaffold = append(c.hooks.Scaffold, hooks...)
+}
+
+// Create returns a builder for creating a Scaffold entity.
+func (c *ScaffoldClient) Create() *ScaffoldCreate {
+	mutation := newScaffoldMutation(c.config, OpCreate)
+	return &ScaffoldCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Scaffold entities.
+func (c *ScaffoldClient) CreateBulk(builders ...*ScaffoldCreate) *ScaffoldCreateBulk {
+	return &ScaffoldCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Scaffold.
+func (c *ScaffoldClient) Update() *ScaffoldUpdate {
+	mutation := newScaffoldMutation(c.config, OpUpdate)
+	return &ScaffoldUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ScaffoldClient) UpdateOne(s *Scaffold) *ScaffoldUpdateOne {
+	mutation := newScaffoldMutation(c.config, OpUpdateOne, withScaffold(s))
+	return &ScaffoldUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ScaffoldClient) UpdateOneID(id int) *ScaffoldUpdateOne {
+	mutation := newScaffoldMutation(c.config, OpUpdateOne, withScaffoldID(id))
+	return &ScaffoldUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Scaffold.
+func (c *ScaffoldClient) Delete() *ScaffoldDelete {
+	mutation := newScaffoldMutation(c.config, OpDelete)
+	return &ScaffoldDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ScaffoldClient) DeleteOne(s *Scaffold) *ScaffoldDeleteOne {
+	return c.DeleteOneID(s.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ScaffoldClient) DeleteOneID(id int) *ScaffoldDeleteOne {
+	builder := c.Delete().Where(scaffold.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ScaffoldDeleteOne{builder}
+}
+
+// Query returns a query builder for Scaffold.
+func (c *ScaffoldClient) Query() *ScaffoldQuery {
+	return &ScaffoldQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Scaffold entity by its id.
+func (c *ScaffoldClient) Get(ctx context.Context, id int) (*Scaffold, error) {
+	return c.Query().Where(scaffold.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ScaffoldClient) GetX(ctx context.Context, id int) *Scaffold {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryGenome queries the genome edge of a Scaffold.
+func (c *ScaffoldClient) QueryGenome(s *Scaffold) *GenomeQuery {
+	query := &GenomeQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(scaffold.Table, scaffold.FieldID, id),
+			sqlgraph.To(genome.Table, genome.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, scaffold.GenomeTable, scaffold.GenomeColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ScaffoldClient) Hooks() []Hook {
+	return c.hooks.Scaffold
+}
+
+// ThreePrimeUtrClient is a client for the ThreePrimeUtr schema.
+type ThreePrimeUtrClient struct {
+	config
+}
+
+// NewThreePrimeUtrClient returns a client for the ThreePrimeUtr from the given config.
+func NewThreePrimeUtrClient(c config) *ThreePrimeUtrClient {
+	return &ThreePrimeUtrClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `threeprimeutr.Hooks(f(g(h())))`.
+func (c *ThreePrimeUtrClient) Use(hooks ...Hook) {
+	c.hooks.ThreePrimeUtr = append(c.hooks.ThreePrimeUtr, hooks...)
+}
+
+// Create returns a builder for creating a ThreePrimeUtr entity.
+func (c *ThreePrimeUtrClient) Create() *ThreePrimeUtrCreate {
+	mutation := newThreePrimeUtrMutation(c.config, OpCreate)
+	return &ThreePrimeUtrCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ThreePrimeUtr entities.
+func (c *ThreePrimeUtrClient) CreateBulk(builders ...*ThreePrimeUtrCreate) *ThreePrimeUtrCreateBulk {
+	return &ThreePrimeUtrCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ThreePrimeUtr.
+func (c *ThreePrimeUtrClient) Update() *ThreePrimeUtrUpdate {
+	mutation := newThreePrimeUtrMutation(c.config, OpUpdate)
+	return &ThreePrimeUtrUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ThreePrimeUtrClient) UpdateOne(tpu *ThreePrimeUtr) *ThreePrimeUtrUpdateOne {
+	mutation := newThreePrimeUtrMutation(c.config, OpUpdateOne, withThreePrimeUtr(tpu))
+	return &ThreePrimeUtrUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ThreePrimeUtrClient) UpdateOneID(id int) *ThreePrimeUtrUpdateOne {
+	mutation := newThreePrimeUtrMutation(c.config, OpUpdateOne, withThreePrimeUtrID(id))
+	return &ThreePrimeUtrUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ThreePrimeUtr.
+func (c *ThreePrimeUtrClient) Delete() *ThreePrimeUtrDelete {
+	mutation := newThreePrimeUtrMutation(c.config, OpDelete)
+	return &ThreePrimeUtrDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ThreePrimeUtrClient) DeleteOne(tpu *ThreePrimeUtr) *ThreePrimeUtrDeleteOne {
+	return c.DeleteOneID(tpu.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ThreePrimeUtrClient) DeleteOneID(id int) *ThreePrimeUtrDeleteOne {
+	builder := c.Delete().Where(threeprimeutr.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ThreePrimeUtrDeleteOne{builder}
+}
+
+// Query returns a query builder for ThreePrimeUtr.
+func (c *ThreePrimeUtrClient) Query() *ThreePrimeUtrQuery {
+	return &ThreePrimeUtrQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a ThreePrimeUtr entity by its id.
+func (c *ThreePrimeUtrClient) Get(ctx context.Context, id int) (*ThreePrimeUtr, error) {
+	return c.Query().Where(threeprimeutr.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ThreePrimeUtrClient) GetX(ctx context.Context, id int) *ThreePrimeUtr {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryTranscript queries the transcript edge of a ThreePrimeUtr.
+func (c *ThreePrimeUtrClient) QueryTranscript(tpu *ThreePrimeUtr) *TranscriptQuery {
+	query := &TranscriptQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := tpu.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(threeprimeutr.Table, threeprimeutr.FieldID, id),
+			sqlgraph.To(transcript.Table, transcript.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, threeprimeutr.TranscriptTable, threeprimeutr.TranscriptColumn),
+		)
+		fromV = sqlgraph.Neighbors(tpu.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ThreePrimeUtrClient) Hooks() []Hook {
+	return c.hooks.ThreePrimeUtr
 }
 
 // TranscriptClient is a client for the Transcript schema.
@@ -408,97 +1031,87 @@ func (c *TranscriptClient) GetX(ctx context.Context, id string) *Transcript {
 	return obj
 }
 
+// QueryGene queries the gene edge of a Transcript.
+func (c *TranscriptClient) QueryGene(t *Transcript) *GeneQuery {
+	query := &GeneQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(transcript.Table, transcript.FieldID, id),
+			sqlgraph.To(gene.Table, gene.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, transcript.GeneTable, transcript.GeneColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryCds queries the cds edge of a Transcript.
+func (c *TranscriptClient) QueryCds(t *Transcript) *CdsQuery {
+	query := &CdsQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(transcript.Table, transcript.FieldID, id),
+			sqlgraph.To(cds.Table, cds.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, transcript.CdsTable, transcript.CdsColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryExon queries the exon edge of a Transcript.
+func (c *TranscriptClient) QueryExon(t *Transcript) *ExonQuery {
+	query := &ExonQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(transcript.Table, transcript.FieldID, id),
+			sqlgraph.To(exon.Table, exon.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, transcript.ExonTable, transcript.ExonColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryFivePrimeUtr queries the five_prime_utr edge of a Transcript.
+func (c *TranscriptClient) QueryFivePrimeUtr(t *Transcript) *FivePrimeUtrQuery {
+	query := &FivePrimeUtrQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(transcript.Table, transcript.FieldID, id),
+			sqlgraph.To(fiveprimeutr.Table, fiveprimeutr.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, transcript.FivePrimeUtrTable, transcript.FivePrimeUtrColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryThreePrimeUtr queries the three_prime_utr edge of a Transcript.
+func (c *TranscriptClient) QueryThreePrimeUtr(t *Transcript) *ThreePrimeUtrQuery {
+	query := &ThreePrimeUtrQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(transcript.Table, transcript.FieldID, id),
+			sqlgraph.To(threeprimeutr.Table, threeprimeutr.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, transcript.ThreePrimeUtrTable, transcript.ThreePrimeUtrColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *TranscriptClient) Hooks() []Hook {
 	return c.hooks.Transcript
-}
-
-// TrasnscriptStructureClient is a client for the TrasnscriptStructure schema.
-type TrasnscriptStructureClient struct {
-	config
-}
-
-// NewTrasnscriptStructureClient returns a client for the TrasnscriptStructure from the given config.
-func NewTrasnscriptStructureClient(c config) *TrasnscriptStructureClient {
-	return &TrasnscriptStructureClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `trasnscriptstructure.Hooks(f(g(h())))`.
-func (c *TrasnscriptStructureClient) Use(hooks ...Hook) {
-	c.hooks.TrasnscriptStructure = append(c.hooks.TrasnscriptStructure, hooks...)
-}
-
-// Create returns a builder for creating a TrasnscriptStructure entity.
-func (c *TrasnscriptStructureClient) Create() *TrasnscriptStructureCreate {
-	mutation := newTrasnscriptStructureMutation(c.config, OpCreate)
-	return &TrasnscriptStructureCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of TrasnscriptStructure entities.
-func (c *TrasnscriptStructureClient) CreateBulk(builders ...*TrasnscriptStructureCreate) *TrasnscriptStructureCreateBulk {
-	return &TrasnscriptStructureCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for TrasnscriptStructure.
-func (c *TrasnscriptStructureClient) Update() *TrasnscriptStructureUpdate {
-	mutation := newTrasnscriptStructureMutation(c.config, OpUpdate)
-	return &TrasnscriptStructureUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *TrasnscriptStructureClient) UpdateOne(ts *TrasnscriptStructure) *TrasnscriptStructureUpdateOne {
-	mutation := newTrasnscriptStructureMutation(c.config, OpUpdateOne, withTrasnscriptStructure(ts))
-	return &TrasnscriptStructureUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *TrasnscriptStructureClient) UpdateOneID(id int) *TrasnscriptStructureUpdateOne {
-	mutation := newTrasnscriptStructureMutation(c.config, OpUpdateOne, withTrasnscriptStructureID(id))
-	return &TrasnscriptStructureUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for TrasnscriptStructure.
-func (c *TrasnscriptStructureClient) Delete() *TrasnscriptStructureDelete {
-	mutation := newTrasnscriptStructureMutation(c.config, OpDelete)
-	return &TrasnscriptStructureDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *TrasnscriptStructureClient) DeleteOne(ts *TrasnscriptStructure) *TrasnscriptStructureDeleteOne {
-	return c.DeleteOneID(ts.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *TrasnscriptStructureClient) DeleteOneID(id int) *TrasnscriptStructureDeleteOne {
-	builder := c.Delete().Where(trasnscriptstructure.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &TrasnscriptStructureDeleteOne{builder}
-}
-
-// Query returns a query builder for TrasnscriptStructure.
-func (c *TrasnscriptStructureClient) Query() *TrasnscriptStructureQuery {
-	return &TrasnscriptStructureQuery{
-		config: c.config,
-	}
-}
-
-// Get returns a TrasnscriptStructure entity by its id.
-func (c *TrasnscriptStructureClient) Get(ctx context.Context, id int) (*TrasnscriptStructure, error) {
-	return c.Query().Where(trasnscriptstructure.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *TrasnscriptStructureClient) GetX(ctx context.Context, id int) *TrasnscriptStructure {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// Hooks returns the client hooks.
-func (c *TrasnscriptStructureClient) Hooks() []Hook {
-	return c.hooks.TrasnscriptStructure
 }

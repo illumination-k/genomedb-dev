@@ -6,23 +6,39 @@ const (
 	// Label holds the string label denoting the genome type in the database.
 	Label = "genome"
 	// FieldID holds the string denoting the id field in the database.
-	FieldID = "id"
-	// FieldName holds the string denoting the name field in the database.
-	FieldName = "name"
+	FieldID = "name"
 	// FieldCodonTable holds the string denoting the codon_table field in the database.
 	FieldCodonTable = "codon_table"
-	// FieldSeq holds the string denoting the seq field in the database.
-	FieldSeq = "seq"
+	// EdgeGenes holds the string denoting the genes edge name in mutations.
+	EdgeGenes = "genes"
+	// EdgeScaffolds holds the string denoting the scaffolds edge name in mutations.
+	EdgeScaffolds = "scaffolds"
+	// GeneFieldID holds the string denoting the ID field of the Gene.
+	GeneFieldID = "geneId"
+	// ScaffoldFieldID holds the string denoting the ID field of the Scaffold.
+	ScaffoldFieldID = "id"
 	// Table holds the table name of the genome in the database.
 	Table = "genomes"
+	// GenesTable is the table that holds the genes relation/edge.
+	GenesTable = "genes"
+	// GenesInverseTable is the table name for the Gene entity.
+	// It exists in this package in order to avoid circular dependency with the "gene" package.
+	GenesInverseTable = "genes"
+	// GenesColumn is the table column denoting the genes relation/edge.
+	GenesColumn = "genome_genes"
+	// ScaffoldsTable is the table that holds the scaffolds relation/edge.
+	ScaffoldsTable = "scaffolds"
+	// ScaffoldsInverseTable is the table name for the Scaffold entity.
+	// It exists in this package in order to avoid circular dependency with the "scaffold" package.
+	ScaffoldsInverseTable = "scaffolds"
+	// ScaffoldsColumn is the table column denoting the scaffolds relation/edge.
+	ScaffoldsColumn = "genome_scaffolds"
 )
 
 // Columns holds all SQL columns for genome fields.
 var Columns = []string{
 	FieldID,
-	FieldName,
 	FieldCodonTable,
-	FieldSeq,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -34,3 +50,8 @@ func ValidColumn(column string) bool {
 	}
 	return false
 }
+
+var (
+	// CodonTableValidator is a validator for the "codon_table" field. It is called by the builders before save.
+	CodonTableValidator func(int32) error
+)

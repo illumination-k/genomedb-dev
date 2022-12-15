@@ -6,7 +6,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"genomedb/ent/cds"
+	"genomedb/ent/exon"
+	"genomedb/ent/fiveprimeutr"
+	"genomedb/ent/gene"
 	"genomedb/ent/predicate"
+	"genomedb/ent/threeprimeutr"
 	"genomedb/ent/transcript"
 
 	"entgo.io/ent/dialect/sql"
@@ -27,45 +32,214 @@ func (tu *TranscriptUpdate) Where(ps ...predicate.Transcript) *TranscriptUpdate 
 	return tu
 }
 
-// SetGeneId sets the "geneId" field.
-func (tu *TranscriptUpdate) SetGeneId(s string) *TranscriptUpdate {
-	tu.mutation.SetGeneId(s)
-	return tu
-}
-
-// SetGenome sets the "genome" field.
-func (tu *TranscriptUpdate) SetGenome(s string) *TranscriptUpdate {
-	tu.mutation.SetGenome(s)
-	return tu
-}
-
 // SetStrand sets the "strand" field.
 func (tu *TranscriptUpdate) SetStrand(s string) *TranscriptUpdate {
 	tu.mutation.SetStrand(s)
 	return tu
 }
 
-// SetMrna sets the "mrna" field.
-func (tu *TranscriptUpdate) SetMrna(s string) *TranscriptUpdate {
-	tu.mutation.SetMrna(s)
+// SetType sets the "type" field.
+func (tu *TranscriptUpdate) SetType(s string) *TranscriptUpdate {
+	tu.mutation.SetType(s)
 	return tu
 }
 
-// SetCds sets the "cds" field.
-func (tu *TranscriptUpdate) SetCds(s string) *TranscriptUpdate {
-	tu.mutation.SetCds(s)
+// SetGenomeSeq sets the "genome_seq" field.
+func (tu *TranscriptUpdate) SetGenomeSeq(s string) *TranscriptUpdate {
+	tu.mutation.SetGenomeSeq(s)
 	return tu
 }
 
-// SetProtein sets the "protein" field.
-func (tu *TranscriptUpdate) SetProtein(s string) *TranscriptUpdate {
-	tu.mutation.SetProtein(s)
+// SetTranscriptSeq sets the "transcript_seq" field.
+func (tu *TranscriptUpdate) SetTranscriptSeq(s string) *TranscriptUpdate {
+	tu.mutation.SetTranscriptSeq(s)
 	return tu
+}
+
+// SetCdsSeq sets the "cds_seq" field.
+func (tu *TranscriptUpdate) SetCdsSeq(s string) *TranscriptUpdate {
+	tu.mutation.SetCdsSeq(s)
+	return tu
+}
+
+// SetProteinSeq sets the "protein_seq" field.
+func (tu *TranscriptUpdate) SetProteinSeq(s string) *TranscriptUpdate {
+	tu.mutation.SetProteinSeq(s)
+	return tu
+}
+
+// SetGeneID sets the "gene" edge to the Gene entity by ID.
+func (tu *TranscriptUpdate) SetGeneID(id string) *TranscriptUpdate {
+	tu.mutation.SetGeneID(id)
+	return tu
+}
+
+// SetNillableGeneID sets the "gene" edge to the Gene entity by ID if the given value is not nil.
+func (tu *TranscriptUpdate) SetNillableGeneID(id *string) *TranscriptUpdate {
+	if id != nil {
+		tu = tu.SetGeneID(*id)
+	}
+	return tu
+}
+
+// SetGene sets the "gene" edge to the Gene entity.
+func (tu *TranscriptUpdate) SetGene(g *Gene) *TranscriptUpdate {
+	return tu.SetGeneID(g.ID)
+}
+
+// AddCdIDs adds the "cds" edge to the Cds entity by IDs.
+func (tu *TranscriptUpdate) AddCdIDs(ids ...int) *TranscriptUpdate {
+	tu.mutation.AddCdIDs(ids...)
+	return tu
+}
+
+// AddCds adds the "cds" edges to the Cds entity.
+func (tu *TranscriptUpdate) AddCds(c ...*Cds) *TranscriptUpdate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return tu.AddCdIDs(ids...)
+}
+
+// AddExonIDs adds the "exon" edge to the Exon entity by IDs.
+func (tu *TranscriptUpdate) AddExonIDs(ids ...int) *TranscriptUpdate {
+	tu.mutation.AddExonIDs(ids...)
+	return tu
+}
+
+// AddExon adds the "exon" edges to the Exon entity.
+func (tu *TranscriptUpdate) AddExon(e ...*Exon) *TranscriptUpdate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return tu.AddExonIDs(ids...)
+}
+
+// AddFivePrimeUtrIDs adds the "five_prime_utr" edge to the FivePrimeUtr entity by IDs.
+func (tu *TranscriptUpdate) AddFivePrimeUtrIDs(ids ...int) *TranscriptUpdate {
+	tu.mutation.AddFivePrimeUtrIDs(ids...)
+	return tu
+}
+
+// AddFivePrimeUtr adds the "five_prime_utr" edges to the FivePrimeUtr entity.
+func (tu *TranscriptUpdate) AddFivePrimeUtr(f ...*FivePrimeUtr) *TranscriptUpdate {
+	ids := make([]int, len(f))
+	for i := range f {
+		ids[i] = f[i].ID
+	}
+	return tu.AddFivePrimeUtrIDs(ids...)
+}
+
+// AddThreePrimeUtrIDs adds the "three_prime_utr" edge to the ThreePrimeUtr entity by IDs.
+func (tu *TranscriptUpdate) AddThreePrimeUtrIDs(ids ...int) *TranscriptUpdate {
+	tu.mutation.AddThreePrimeUtrIDs(ids...)
+	return tu
+}
+
+// AddThreePrimeUtr adds the "three_prime_utr" edges to the ThreePrimeUtr entity.
+func (tu *TranscriptUpdate) AddThreePrimeUtr(t ...*ThreePrimeUtr) *TranscriptUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return tu.AddThreePrimeUtrIDs(ids...)
 }
 
 // Mutation returns the TranscriptMutation object of the builder.
 func (tu *TranscriptUpdate) Mutation() *TranscriptMutation {
 	return tu.mutation
+}
+
+// ClearGene clears the "gene" edge to the Gene entity.
+func (tu *TranscriptUpdate) ClearGene() *TranscriptUpdate {
+	tu.mutation.ClearGene()
+	return tu
+}
+
+// ClearCds clears all "cds" edges to the Cds entity.
+func (tu *TranscriptUpdate) ClearCds() *TranscriptUpdate {
+	tu.mutation.ClearCds()
+	return tu
+}
+
+// RemoveCdIDs removes the "cds" edge to Cds entities by IDs.
+func (tu *TranscriptUpdate) RemoveCdIDs(ids ...int) *TranscriptUpdate {
+	tu.mutation.RemoveCdIDs(ids...)
+	return tu
+}
+
+// RemoveCds removes "cds" edges to Cds entities.
+func (tu *TranscriptUpdate) RemoveCds(c ...*Cds) *TranscriptUpdate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return tu.RemoveCdIDs(ids...)
+}
+
+// ClearExon clears all "exon" edges to the Exon entity.
+func (tu *TranscriptUpdate) ClearExon() *TranscriptUpdate {
+	tu.mutation.ClearExon()
+	return tu
+}
+
+// RemoveExonIDs removes the "exon" edge to Exon entities by IDs.
+func (tu *TranscriptUpdate) RemoveExonIDs(ids ...int) *TranscriptUpdate {
+	tu.mutation.RemoveExonIDs(ids...)
+	return tu
+}
+
+// RemoveExon removes "exon" edges to Exon entities.
+func (tu *TranscriptUpdate) RemoveExon(e ...*Exon) *TranscriptUpdate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return tu.RemoveExonIDs(ids...)
+}
+
+// ClearFivePrimeUtr clears all "five_prime_utr" edges to the FivePrimeUtr entity.
+func (tu *TranscriptUpdate) ClearFivePrimeUtr() *TranscriptUpdate {
+	tu.mutation.ClearFivePrimeUtr()
+	return tu
+}
+
+// RemoveFivePrimeUtrIDs removes the "five_prime_utr" edge to FivePrimeUtr entities by IDs.
+func (tu *TranscriptUpdate) RemoveFivePrimeUtrIDs(ids ...int) *TranscriptUpdate {
+	tu.mutation.RemoveFivePrimeUtrIDs(ids...)
+	return tu
+}
+
+// RemoveFivePrimeUtr removes "five_prime_utr" edges to FivePrimeUtr entities.
+func (tu *TranscriptUpdate) RemoveFivePrimeUtr(f ...*FivePrimeUtr) *TranscriptUpdate {
+	ids := make([]int, len(f))
+	for i := range f {
+		ids[i] = f[i].ID
+	}
+	return tu.RemoveFivePrimeUtrIDs(ids...)
+}
+
+// ClearThreePrimeUtr clears all "three_prime_utr" edges to the ThreePrimeUtr entity.
+func (tu *TranscriptUpdate) ClearThreePrimeUtr() *TranscriptUpdate {
+	tu.mutation.ClearThreePrimeUtr()
+	return tu
+}
+
+// RemoveThreePrimeUtrIDs removes the "three_prime_utr" edge to ThreePrimeUtr entities by IDs.
+func (tu *TranscriptUpdate) RemoveThreePrimeUtrIDs(ids ...int) *TranscriptUpdate {
+	tu.mutation.RemoveThreePrimeUtrIDs(ids...)
+	return tu
+}
+
+// RemoveThreePrimeUtr removes "three_prime_utr" edges to ThreePrimeUtr entities.
+func (tu *TranscriptUpdate) RemoveThreePrimeUtr(t ...*ThreePrimeUtr) *TranscriptUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return tu.RemoveThreePrimeUtrIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -140,23 +314,274 @@ func (tu *TranscriptUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := tu.mutation.GeneId(); ok {
-		_spec.SetField(transcript.FieldGeneId, field.TypeString, value)
-	}
-	if value, ok := tu.mutation.Genome(); ok {
-		_spec.SetField(transcript.FieldGenome, field.TypeString, value)
-	}
 	if value, ok := tu.mutation.Strand(); ok {
 		_spec.SetField(transcript.FieldStrand, field.TypeString, value)
 	}
-	if value, ok := tu.mutation.Mrna(); ok {
-		_spec.SetField(transcript.FieldMrna, field.TypeString, value)
+	if value, ok := tu.mutation.GetType(); ok {
+		_spec.SetField(transcript.FieldType, field.TypeString, value)
 	}
-	if value, ok := tu.mutation.Cds(); ok {
-		_spec.SetField(transcript.FieldCds, field.TypeString, value)
+	if value, ok := tu.mutation.GenomeSeq(); ok {
+		_spec.SetField(transcript.FieldGenomeSeq, field.TypeString, value)
 	}
-	if value, ok := tu.mutation.Protein(); ok {
-		_spec.SetField(transcript.FieldProtein, field.TypeString, value)
+	if value, ok := tu.mutation.TranscriptSeq(); ok {
+		_spec.SetField(transcript.FieldTranscriptSeq, field.TypeString, value)
+	}
+	if value, ok := tu.mutation.CdsSeq(); ok {
+		_spec.SetField(transcript.FieldCdsSeq, field.TypeString, value)
+	}
+	if value, ok := tu.mutation.ProteinSeq(); ok {
+		_spec.SetField(transcript.FieldProteinSeq, field.TypeString, value)
+	}
+	if tu.mutation.GeneCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   transcript.GeneTable,
+			Columns: []string{transcript.GeneColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: gene.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.GeneIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   transcript.GeneTable,
+			Columns: []string{transcript.GeneColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: gene.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tu.mutation.CdsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.CdsTable,
+			Columns: []string{transcript.CdsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: cds.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.RemovedCdsIDs(); len(nodes) > 0 && !tu.mutation.CdsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.CdsTable,
+			Columns: []string{transcript.CdsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: cds.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.CdsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.CdsTable,
+			Columns: []string{transcript.CdsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: cds.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tu.mutation.ExonCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.ExonTable,
+			Columns: []string{transcript.ExonColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: exon.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.RemovedExonIDs(); len(nodes) > 0 && !tu.mutation.ExonCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.ExonTable,
+			Columns: []string{transcript.ExonColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: exon.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.ExonIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.ExonTable,
+			Columns: []string{transcript.ExonColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: exon.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tu.mutation.FivePrimeUtrCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.FivePrimeUtrTable,
+			Columns: []string{transcript.FivePrimeUtrColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: fiveprimeutr.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.RemovedFivePrimeUtrIDs(); len(nodes) > 0 && !tu.mutation.FivePrimeUtrCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.FivePrimeUtrTable,
+			Columns: []string{transcript.FivePrimeUtrColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: fiveprimeutr.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.FivePrimeUtrIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.FivePrimeUtrTable,
+			Columns: []string{transcript.FivePrimeUtrColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: fiveprimeutr.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tu.mutation.ThreePrimeUtrCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.ThreePrimeUtrTable,
+			Columns: []string{transcript.ThreePrimeUtrColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: threeprimeutr.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.RemovedThreePrimeUtrIDs(); len(nodes) > 0 && !tu.mutation.ThreePrimeUtrCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.ThreePrimeUtrTable,
+			Columns: []string{transcript.ThreePrimeUtrColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: threeprimeutr.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.ThreePrimeUtrIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.ThreePrimeUtrTable,
+			Columns: []string{transcript.ThreePrimeUtrColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: threeprimeutr.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -177,45 +602,214 @@ type TranscriptUpdateOne struct {
 	mutation *TranscriptMutation
 }
 
-// SetGeneId sets the "geneId" field.
-func (tuo *TranscriptUpdateOne) SetGeneId(s string) *TranscriptUpdateOne {
-	tuo.mutation.SetGeneId(s)
-	return tuo
-}
-
-// SetGenome sets the "genome" field.
-func (tuo *TranscriptUpdateOne) SetGenome(s string) *TranscriptUpdateOne {
-	tuo.mutation.SetGenome(s)
-	return tuo
-}
-
 // SetStrand sets the "strand" field.
 func (tuo *TranscriptUpdateOne) SetStrand(s string) *TranscriptUpdateOne {
 	tuo.mutation.SetStrand(s)
 	return tuo
 }
 
-// SetMrna sets the "mrna" field.
-func (tuo *TranscriptUpdateOne) SetMrna(s string) *TranscriptUpdateOne {
-	tuo.mutation.SetMrna(s)
+// SetType sets the "type" field.
+func (tuo *TranscriptUpdateOne) SetType(s string) *TranscriptUpdateOne {
+	tuo.mutation.SetType(s)
 	return tuo
 }
 
-// SetCds sets the "cds" field.
-func (tuo *TranscriptUpdateOne) SetCds(s string) *TranscriptUpdateOne {
-	tuo.mutation.SetCds(s)
+// SetGenomeSeq sets the "genome_seq" field.
+func (tuo *TranscriptUpdateOne) SetGenomeSeq(s string) *TranscriptUpdateOne {
+	tuo.mutation.SetGenomeSeq(s)
 	return tuo
 }
 
-// SetProtein sets the "protein" field.
-func (tuo *TranscriptUpdateOne) SetProtein(s string) *TranscriptUpdateOne {
-	tuo.mutation.SetProtein(s)
+// SetTranscriptSeq sets the "transcript_seq" field.
+func (tuo *TranscriptUpdateOne) SetTranscriptSeq(s string) *TranscriptUpdateOne {
+	tuo.mutation.SetTranscriptSeq(s)
 	return tuo
+}
+
+// SetCdsSeq sets the "cds_seq" field.
+func (tuo *TranscriptUpdateOne) SetCdsSeq(s string) *TranscriptUpdateOne {
+	tuo.mutation.SetCdsSeq(s)
+	return tuo
+}
+
+// SetProteinSeq sets the "protein_seq" field.
+func (tuo *TranscriptUpdateOne) SetProteinSeq(s string) *TranscriptUpdateOne {
+	tuo.mutation.SetProteinSeq(s)
+	return tuo
+}
+
+// SetGeneID sets the "gene" edge to the Gene entity by ID.
+func (tuo *TranscriptUpdateOne) SetGeneID(id string) *TranscriptUpdateOne {
+	tuo.mutation.SetGeneID(id)
+	return tuo
+}
+
+// SetNillableGeneID sets the "gene" edge to the Gene entity by ID if the given value is not nil.
+func (tuo *TranscriptUpdateOne) SetNillableGeneID(id *string) *TranscriptUpdateOne {
+	if id != nil {
+		tuo = tuo.SetGeneID(*id)
+	}
+	return tuo
+}
+
+// SetGene sets the "gene" edge to the Gene entity.
+func (tuo *TranscriptUpdateOne) SetGene(g *Gene) *TranscriptUpdateOne {
+	return tuo.SetGeneID(g.ID)
+}
+
+// AddCdIDs adds the "cds" edge to the Cds entity by IDs.
+func (tuo *TranscriptUpdateOne) AddCdIDs(ids ...int) *TranscriptUpdateOne {
+	tuo.mutation.AddCdIDs(ids...)
+	return tuo
+}
+
+// AddCds adds the "cds" edges to the Cds entity.
+func (tuo *TranscriptUpdateOne) AddCds(c ...*Cds) *TranscriptUpdateOne {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return tuo.AddCdIDs(ids...)
+}
+
+// AddExonIDs adds the "exon" edge to the Exon entity by IDs.
+func (tuo *TranscriptUpdateOne) AddExonIDs(ids ...int) *TranscriptUpdateOne {
+	tuo.mutation.AddExonIDs(ids...)
+	return tuo
+}
+
+// AddExon adds the "exon" edges to the Exon entity.
+func (tuo *TranscriptUpdateOne) AddExon(e ...*Exon) *TranscriptUpdateOne {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return tuo.AddExonIDs(ids...)
+}
+
+// AddFivePrimeUtrIDs adds the "five_prime_utr" edge to the FivePrimeUtr entity by IDs.
+func (tuo *TranscriptUpdateOne) AddFivePrimeUtrIDs(ids ...int) *TranscriptUpdateOne {
+	tuo.mutation.AddFivePrimeUtrIDs(ids...)
+	return tuo
+}
+
+// AddFivePrimeUtr adds the "five_prime_utr" edges to the FivePrimeUtr entity.
+func (tuo *TranscriptUpdateOne) AddFivePrimeUtr(f ...*FivePrimeUtr) *TranscriptUpdateOne {
+	ids := make([]int, len(f))
+	for i := range f {
+		ids[i] = f[i].ID
+	}
+	return tuo.AddFivePrimeUtrIDs(ids...)
+}
+
+// AddThreePrimeUtrIDs adds the "three_prime_utr" edge to the ThreePrimeUtr entity by IDs.
+func (tuo *TranscriptUpdateOne) AddThreePrimeUtrIDs(ids ...int) *TranscriptUpdateOne {
+	tuo.mutation.AddThreePrimeUtrIDs(ids...)
+	return tuo
+}
+
+// AddThreePrimeUtr adds the "three_prime_utr" edges to the ThreePrimeUtr entity.
+func (tuo *TranscriptUpdateOne) AddThreePrimeUtr(t ...*ThreePrimeUtr) *TranscriptUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return tuo.AddThreePrimeUtrIDs(ids...)
 }
 
 // Mutation returns the TranscriptMutation object of the builder.
 func (tuo *TranscriptUpdateOne) Mutation() *TranscriptMutation {
 	return tuo.mutation
+}
+
+// ClearGene clears the "gene" edge to the Gene entity.
+func (tuo *TranscriptUpdateOne) ClearGene() *TranscriptUpdateOne {
+	tuo.mutation.ClearGene()
+	return tuo
+}
+
+// ClearCds clears all "cds" edges to the Cds entity.
+func (tuo *TranscriptUpdateOne) ClearCds() *TranscriptUpdateOne {
+	tuo.mutation.ClearCds()
+	return tuo
+}
+
+// RemoveCdIDs removes the "cds" edge to Cds entities by IDs.
+func (tuo *TranscriptUpdateOne) RemoveCdIDs(ids ...int) *TranscriptUpdateOne {
+	tuo.mutation.RemoveCdIDs(ids...)
+	return tuo
+}
+
+// RemoveCds removes "cds" edges to Cds entities.
+func (tuo *TranscriptUpdateOne) RemoveCds(c ...*Cds) *TranscriptUpdateOne {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return tuo.RemoveCdIDs(ids...)
+}
+
+// ClearExon clears all "exon" edges to the Exon entity.
+func (tuo *TranscriptUpdateOne) ClearExon() *TranscriptUpdateOne {
+	tuo.mutation.ClearExon()
+	return tuo
+}
+
+// RemoveExonIDs removes the "exon" edge to Exon entities by IDs.
+func (tuo *TranscriptUpdateOne) RemoveExonIDs(ids ...int) *TranscriptUpdateOne {
+	tuo.mutation.RemoveExonIDs(ids...)
+	return tuo
+}
+
+// RemoveExon removes "exon" edges to Exon entities.
+func (tuo *TranscriptUpdateOne) RemoveExon(e ...*Exon) *TranscriptUpdateOne {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return tuo.RemoveExonIDs(ids...)
+}
+
+// ClearFivePrimeUtr clears all "five_prime_utr" edges to the FivePrimeUtr entity.
+func (tuo *TranscriptUpdateOne) ClearFivePrimeUtr() *TranscriptUpdateOne {
+	tuo.mutation.ClearFivePrimeUtr()
+	return tuo
+}
+
+// RemoveFivePrimeUtrIDs removes the "five_prime_utr" edge to FivePrimeUtr entities by IDs.
+func (tuo *TranscriptUpdateOne) RemoveFivePrimeUtrIDs(ids ...int) *TranscriptUpdateOne {
+	tuo.mutation.RemoveFivePrimeUtrIDs(ids...)
+	return tuo
+}
+
+// RemoveFivePrimeUtr removes "five_prime_utr" edges to FivePrimeUtr entities.
+func (tuo *TranscriptUpdateOne) RemoveFivePrimeUtr(f ...*FivePrimeUtr) *TranscriptUpdateOne {
+	ids := make([]int, len(f))
+	for i := range f {
+		ids[i] = f[i].ID
+	}
+	return tuo.RemoveFivePrimeUtrIDs(ids...)
+}
+
+// ClearThreePrimeUtr clears all "three_prime_utr" edges to the ThreePrimeUtr entity.
+func (tuo *TranscriptUpdateOne) ClearThreePrimeUtr() *TranscriptUpdateOne {
+	tuo.mutation.ClearThreePrimeUtr()
+	return tuo
+}
+
+// RemoveThreePrimeUtrIDs removes the "three_prime_utr" edge to ThreePrimeUtr entities by IDs.
+func (tuo *TranscriptUpdateOne) RemoveThreePrimeUtrIDs(ids ...int) *TranscriptUpdateOne {
+	tuo.mutation.RemoveThreePrimeUtrIDs(ids...)
+	return tuo
+}
+
+// RemoveThreePrimeUtr removes "three_prime_utr" edges to ThreePrimeUtr entities.
+func (tuo *TranscriptUpdateOne) RemoveThreePrimeUtr(t ...*ThreePrimeUtr) *TranscriptUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return tuo.RemoveThreePrimeUtrIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -320,23 +914,274 @@ func (tuo *TranscriptUpdateOne) sqlSave(ctx context.Context) (_node *Transcript,
 			}
 		}
 	}
-	if value, ok := tuo.mutation.GeneId(); ok {
-		_spec.SetField(transcript.FieldGeneId, field.TypeString, value)
-	}
-	if value, ok := tuo.mutation.Genome(); ok {
-		_spec.SetField(transcript.FieldGenome, field.TypeString, value)
-	}
 	if value, ok := tuo.mutation.Strand(); ok {
 		_spec.SetField(transcript.FieldStrand, field.TypeString, value)
 	}
-	if value, ok := tuo.mutation.Mrna(); ok {
-		_spec.SetField(transcript.FieldMrna, field.TypeString, value)
+	if value, ok := tuo.mutation.GetType(); ok {
+		_spec.SetField(transcript.FieldType, field.TypeString, value)
 	}
-	if value, ok := tuo.mutation.Cds(); ok {
-		_spec.SetField(transcript.FieldCds, field.TypeString, value)
+	if value, ok := tuo.mutation.GenomeSeq(); ok {
+		_spec.SetField(transcript.FieldGenomeSeq, field.TypeString, value)
 	}
-	if value, ok := tuo.mutation.Protein(); ok {
-		_spec.SetField(transcript.FieldProtein, field.TypeString, value)
+	if value, ok := tuo.mutation.TranscriptSeq(); ok {
+		_spec.SetField(transcript.FieldTranscriptSeq, field.TypeString, value)
+	}
+	if value, ok := tuo.mutation.CdsSeq(); ok {
+		_spec.SetField(transcript.FieldCdsSeq, field.TypeString, value)
+	}
+	if value, ok := tuo.mutation.ProteinSeq(); ok {
+		_spec.SetField(transcript.FieldProteinSeq, field.TypeString, value)
+	}
+	if tuo.mutation.GeneCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   transcript.GeneTable,
+			Columns: []string{transcript.GeneColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: gene.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.GeneIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   transcript.GeneTable,
+			Columns: []string{transcript.GeneColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: gene.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tuo.mutation.CdsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.CdsTable,
+			Columns: []string{transcript.CdsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: cds.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.RemovedCdsIDs(); len(nodes) > 0 && !tuo.mutation.CdsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.CdsTable,
+			Columns: []string{transcript.CdsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: cds.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.CdsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.CdsTable,
+			Columns: []string{transcript.CdsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: cds.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tuo.mutation.ExonCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.ExonTable,
+			Columns: []string{transcript.ExonColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: exon.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.RemovedExonIDs(); len(nodes) > 0 && !tuo.mutation.ExonCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.ExonTable,
+			Columns: []string{transcript.ExonColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: exon.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.ExonIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.ExonTable,
+			Columns: []string{transcript.ExonColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: exon.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tuo.mutation.FivePrimeUtrCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.FivePrimeUtrTable,
+			Columns: []string{transcript.FivePrimeUtrColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: fiveprimeutr.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.RemovedFivePrimeUtrIDs(); len(nodes) > 0 && !tuo.mutation.FivePrimeUtrCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.FivePrimeUtrTable,
+			Columns: []string{transcript.FivePrimeUtrColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: fiveprimeutr.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.FivePrimeUtrIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.FivePrimeUtrTable,
+			Columns: []string{transcript.FivePrimeUtrColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: fiveprimeutr.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tuo.mutation.ThreePrimeUtrCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.ThreePrimeUtrTable,
+			Columns: []string{transcript.ThreePrimeUtrColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: threeprimeutr.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.RemovedThreePrimeUtrIDs(); len(nodes) > 0 && !tuo.mutation.ThreePrimeUtrCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.ThreePrimeUtrTable,
+			Columns: []string{transcript.ThreePrimeUtrColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: threeprimeutr.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.ThreePrimeUtrIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   transcript.ThreePrimeUtrTable,
+			Columns: []string{transcript.ThreePrimeUtrColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: threeprimeutr.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Transcript{config: tuo.config}
 	_spec.Assign = _node.assignValues

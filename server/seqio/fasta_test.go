@@ -1,7 +1,7 @@
-package bioio_test
+package seqio_test
 
 import (
-	"genomedb/bioio"
+	"genomedb/seqio"
 	"strings"
 	"testing"
 )
@@ -17,7 +17,7 @@ ATGCCGTA
 ATTTTTTT
 GGGGGGGG
 `
-	parser := bioio.NewFastaParser()
+	parser := seqio.NewFastaParser()
 
 	for _, line := range strings.Split(fasta, "\n") {
 		parser.ConsumeLine(line)
@@ -25,10 +25,10 @@ GGGGGGGG
 
 	parser.Flush()
 
-	expected := []bioio.FastaRecord{
-		*bioio.NewFastaRecord("A", "", "ATGC"),
-		*bioio.NewFastaRecord("B", "", "ATGCCGTA"),
-		*bioio.NewFastaRecord("C", "test", "ATGCCGTAATTTTTTTGGGGGGGG"),
+	expected := []seqio.FastaRecord{
+		*seqio.NewFastaRecord("A", "", "ATGC"),
+		*seqio.NewFastaRecord("B", "", "ATGCCGTA"),
+		*seqio.NewFastaRecord("C", "test", "ATGCCGTAATTTTTTTGGGGGGGG"),
 	}
 
 	for i, e := range expected {

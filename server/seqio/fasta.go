@@ -1,4 +1,4 @@
-package bioio
+package seqio
 
 import (
 	"fmt"
@@ -21,10 +21,11 @@ func NewFastaRecord(id string, name string, seq string) *FastaRecord {
 }
 
 type FastaParser struct {
-	curId   string
-	curName string
-	curSeq  strings.Builder
-	Records []FastaRecord
+	curLineNumber int
+	curId         string
+	curName       string
+	curSeq        strings.Builder
+	Records       []FastaRecord
 }
 
 func NewFastaParser() *FastaParser {
@@ -53,7 +54,7 @@ func (p *FastaParser) ConsumeLine(line string) error {
 		p.curId = strings.ReplaceAll(attrs[0], ">", "")
 
 		if p.curId == "" {
-			return fmt.Errorf("Empty id in the fasta file")
+			return fmt.Errorf("Empty id in the fasta file in line %d", p.curLineNumber)
 		}
 
 		if len(attrs) > 1 {
@@ -64,6 +65,8 @@ func (p *FastaParser) ConsumeLine(line string) error {
 	} else {
 		p.curSeq.WriteString(line)
 	}
+
+	p.curLineNumber++
 
 	return nil
 }

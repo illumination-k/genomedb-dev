@@ -12,14 +12,22 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// Cds is the client for interacting with the Cds builders.
+	Cds *CdsClient
+	// Exon is the client for interacting with the Exon builders.
+	Exon *ExonClient
+	// FivePrimeUtr is the client for interacting with the FivePrimeUtr builders.
+	FivePrimeUtr *FivePrimeUtrClient
 	// Gene is the client for interacting with the Gene builders.
 	Gene *GeneClient
 	// Genome is the client for interacting with the Genome builders.
 	Genome *GenomeClient
+	// Scaffold is the client for interacting with the Scaffold builders.
+	Scaffold *ScaffoldClient
+	// ThreePrimeUtr is the client for interacting with the ThreePrimeUtr builders.
+	ThreePrimeUtr *ThreePrimeUtrClient
 	// Transcript is the client for interacting with the Transcript builders.
 	Transcript *TranscriptClient
-	// TrasnscriptStructure is the client for interacting with the TrasnscriptStructure builders.
-	TrasnscriptStructure *TrasnscriptStructureClient
 
 	// lazily loaded.
 	client     *Client
@@ -151,10 +159,14 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.Cds = NewCdsClient(tx.config)
+	tx.Exon = NewExonClient(tx.config)
+	tx.FivePrimeUtr = NewFivePrimeUtrClient(tx.config)
 	tx.Gene = NewGeneClient(tx.config)
 	tx.Genome = NewGenomeClient(tx.config)
+	tx.Scaffold = NewScaffoldClient(tx.config)
+	tx.ThreePrimeUtr = NewThreePrimeUtrClient(tx.config)
 	tx.Transcript = NewTranscriptClient(tx.config)
-	tx.TrasnscriptStructure = NewTrasnscriptStructureClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.
@@ -164,7 +176,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: Gene.QueryXXX(), the query will be executed
+// applies a query, for example: Cds.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

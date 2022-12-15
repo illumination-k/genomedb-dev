@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -13,13 +14,18 @@ type Genome struct {
 // Fields of the Genome.
 func (Genome) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("name").Unique(),
-		field.Int32("codon_table"),
-		field.Text("seq"),
+		field.String("id").StorageKey("name"),
+		field.Int32("codon_table").
+			Min(1).
+			Max(31).
+			Comment("See https://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/index.cgi?chapter=tgencodes"),
 	}
 }
 
 // Edges of the Genome.
 func (Genome) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("genes", Gene.Type),
+		edge.To("scaffolds", Scaffold.Type),
+	}
 }

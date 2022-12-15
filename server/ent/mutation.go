@@ -6,10 +6,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"genomedb/ent/cds"
+	"genomedb/ent/exon"
+	"genomedb/ent/fiveprimeutr"
+	"genomedb/ent/gene"
 	"genomedb/ent/genome"
 	"genomedb/ent/predicate"
+	"genomedb/ent/scaffold"
+	"genomedb/ent/threeprimeutr"
 	"genomedb/ent/transcript"
-	"genomedb/ent/trasnscriptstructure"
 	"sync"
 
 	"entgo.io/ent"
@@ -24,22 +29,1945 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeGene                 = "Gene"
-	TypeGenome               = "Genome"
-	TypeTranscript           = "Transcript"
-	TypeTrasnscriptStructure = "TrasnscriptStructure"
+	TypeCds           = "Cds"
+	TypeExon          = "Exon"
+	TypeFivePrimeUtr  = "FivePrimeUtr"
+	TypeGene          = "Gene"
+	TypeGenome        = "Genome"
+	TypeScaffold      = "Scaffold"
+	TypeThreePrimeUtr = "ThreePrimeUtr"
+	TypeTranscript    = "Transcript"
 )
+
+// CdsMutation represents an operation that mutates the Cds nodes in the graph.
+type CdsMutation struct {
+	config
+	op                Op
+	typ               string
+	id                *int
+	seqname           *string
+	start             *int32
+	addstart          *int32
+	end               *int32
+	addend            *int32
+	frame             *int8
+	addframe          *int8
+	strand            *string
+	clearedFields     map[string]struct{}
+	transcript        *string
+	clearedtranscript bool
+	done              bool
+	oldValue          func(context.Context) (*Cds, error)
+	predicates        []predicate.Cds
+}
+
+var _ ent.Mutation = (*CdsMutation)(nil)
+
+// cdsOption allows management of the mutation configuration using functional options.
+type cdsOption func(*CdsMutation)
+
+// newCdsMutation creates new mutation for the Cds entity.
+func newCdsMutation(c config, op Op, opts ...cdsOption) *CdsMutation {
+	m := &CdsMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCds,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCdsID sets the ID field of the mutation.
+func withCdsID(id int) cdsOption {
+	return func(m *CdsMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Cds
+		)
+		m.oldValue = func(ctx context.Context) (*Cds, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Cds.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCds sets the old Cds of the mutation.
+func withCds(node *Cds) cdsOption {
+	return func(m *CdsMutation) {
+		m.oldValue = func(context.Context) (*Cds, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CdsMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CdsMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CdsMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CdsMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Cds.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetSeqname sets the "seqname" field.
+func (m *CdsMutation) SetSeqname(s string) {
+	m.seqname = &s
+}
+
+// Seqname returns the value of the "seqname" field in the mutation.
+func (m *CdsMutation) Seqname() (r string, exists bool) {
+	v := m.seqname
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSeqname returns the old "seqname" field's value of the Cds entity.
+// If the Cds object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CdsMutation) OldSeqname(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSeqname is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSeqname requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSeqname: %w", err)
+	}
+	return oldValue.Seqname, nil
+}
+
+// ResetSeqname resets all changes to the "seqname" field.
+func (m *CdsMutation) ResetSeqname() {
+	m.seqname = nil
+}
+
+// SetStart sets the "start" field.
+func (m *CdsMutation) SetStart(i int32) {
+	m.start = &i
+	m.addstart = nil
+}
+
+// Start returns the value of the "start" field in the mutation.
+func (m *CdsMutation) Start() (r int32, exists bool) {
+	v := m.start
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStart returns the old "start" field's value of the Cds entity.
+// If the Cds object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CdsMutation) OldStart(ctx context.Context) (v int32, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStart is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStart requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStart: %w", err)
+	}
+	return oldValue.Start, nil
+}
+
+// AddStart adds i to the "start" field.
+func (m *CdsMutation) AddStart(i int32) {
+	if m.addstart != nil {
+		*m.addstart += i
+	} else {
+		m.addstart = &i
+	}
+}
+
+// AddedStart returns the value that was added to the "start" field in this mutation.
+func (m *CdsMutation) AddedStart() (r int32, exists bool) {
+	v := m.addstart
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetStart resets all changes to the "start" field.
+func (m *CdsMutation) ResetStart() {
+	m.start = nil
+	m.addstart = nil
+}
+
+// SetEnd sets the "end" field.
+func (m *CdsMutation) SetEnd(i int32) {
+	m.end = &i
+	m.addend = nil
+}
+
+// End returns the value of the "end" field in the mutation.
+func (m *CdsMutation) End() (r int32, exists bool) {
+	v := m.end
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnd returns the old "end" field's value of the Cds entity.
+// If the Cds object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CdsMutation) OldEnd(ctx context.Context) (v int32, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnd is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnd requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnd: %w", err)
+	}
+	return oldValue.End, nil
+}
+
+// AddEnd adds i to the "end" field.
+func (m *CdsMutation) AddEnd(i int32) {
+	if m.addend != nil {
+		*m.addend += i
+	} else {
+		m.addend = &i
+	}
+}
+
+// AddedEnd returns the value that was added to the "end" field in this mutation.
+func (m *CdsMutation) AddedEnd() (r int32, exists bool) {
+	v := m.addend
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetEnd resets all changes to the "end" field.
+func (m *CdsMutation) ResetEnd() {
+	m.end = nil
+	m.addend = nil
+}
+
+// SetFrame sets the "frame" field.
+func (m *CdsMutation) SetFrame(i int8) {
+	m.frame = &i
+	m.addframe = nil
+}
+
+// Frame returns the value of the "frame" field in the mutation.
+func (m *CdsMutation) Frame() (r int8, exists bool) {
+	v := m.frame
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFrame returns the old "frame" field's value of the Cds entity.
+// If the Cds object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CdsMutation) OldFrame(ctx context.Context) (v int8, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFrame is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFrame requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFrame: %w", err)
+	}
+	return oldValue.Frame, nil
+}
+
+// AddFrame adds i to the "frame" field.
+func (m *CdsMutation) AddFrame(i int8) {
+	if m.addframe != nil {
+		*m.addframe += i
+	} else {
+		m.addframe = &i
+	}
+}
+
+// AddedFrame returns the value that was added to the "frame" field in this mutation.
+func (m *CdsMutation) AddedFrame() (r int8, exists bool) {
+	v := m.addframe
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetFrame resets all changes to the "frame" field.
+func (m *CdsMutation) ResetFrame() {
+	m.frame = nil
+	m.addframe = nil
+}
+
+// SetStrand sets the "strand" field.
+func (m *CdsMutation) SetStrand(s string) {
+	m.strand = &s
+}
+
+// Strand returns the value of the "strand" field in the mutation.
+func (m *CdsMutation) Strand() (r string, exists bool) {
+	v := m.strand
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStrand returns the old "strand" field's value of the Cds entity.
+// If the Cds object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CdsMutation) OldStrand(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStrand is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStrand requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStrand: %w", err)
+	}
+	return oldValue.Strand, nil
+}
+
+// ResetStrand resets all changes to the "strand" field.
+func (m *CdsMutation) ResetStrand() {
+	m.strand = nil
+}
+
+// SetTranscriptID sets the "transcript" edge to the Transcript entity by id.
+func (m *CdsMutation) SetTranscriptID(id string) {
+	m.transcript = &id
+}
+
+// ClearTranscript clears the "transcript" edge to the Transcript entity.
+func (m *CdsMutation) ClearTranscript() {
+	m.clearedtranscript = true
+}
+
+// TranscriptCleared reports if the "transcript" edge to the Transcript entity was cleared.
+func (m *CdsMutation) TranscriptCleared() bool {
+	return m.clearedtranscript
+}
+
+// TranscriptID returns the "transcript" edge ID in the mutation.
+func (m *CdsMutation) TranscriptID() (id string, exists bool) {
+	if m.transcript != nil {
+		return *m.transcript, true
+	}
+	return
+}
+
+// TranscriptIDs returns the "transcript" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TranscriptID instead. It exists only for internal usage by the builders.
+func (m *CdsMutation) TranscriptIDs() (ids []string) {
+	if id := m.transcript; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTranscript resets all changes to the "transcript" edge.
+func (m *CdsMutation) ResetTranscript() {
+	m.transcript = nil
+	m.clearedtranscript = false
+}
+
+// Where appends a list predicates to the CdsMutation builder.
+func (m *CdsMutation) Where(ps ...predicate.Cds) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *CdsMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (Cds).
+func (m *CdsMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CdsMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.seqname != nil {
+		fields = append(fields, cds.FieldSeqname)
+	}
+	if m.start != nil {
+		fields = append(fields, cds.FieldStart)
+	}
+	if m.end != nil {
+		fields = append(fields, cds.FieldEnd)
+	}
+	if m.frame != nil {
+		fields = append(fields, cds.FieldFrame)
+	}
+	if m.strand != nil {
+		fields = append(fields, cds.FieldStrand)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CdsMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case cds.FieldSeqname:
+		return m.Seqname()
+	case cds.FieldStart:
+		return m.Start()
+	case cds.FieldEnd:
+		return m.End()
+	case cds.FieldFrame:
+		return m.Frame()
+	case cds.FieldStrand:
+		return m.Strand()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CdsMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case cds.FieldSeqname:
+		return m.OldSeqname(ctx)
+	case cds.FieldStart:
+		return m.OldStart(ctx)
+	case cds.FieldEnd:
+		return m.OldEnd(ctx)
+	case cds.FieldFrame:
+		return m.OldFrame(ctx)
+	case cds.FieldStrand:
+		return m.OldStrand(ctx)
+	}
+	return nil, fmt.Errorf("unknown Cds field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CdsMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case cds.FieldSeqname:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSeqname(v)
+		return nil
+	case cds.FieldStart:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStart(v)
+		return nil
+	case cds.FieldEnd:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnd(v)
+		return nil
+	case cds.FieldFrame:
+		v, ok := value.(int8)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFrame(v)
+		return nil
+	case cds.FieldStrand:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStrand(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Cds field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CdsMutation) AddedFields() []string {
+	var fields []string
+	if m.addstart != nil {
+		fields = append(fields, cds.FieldStart)
+	}
+	if m.addend != nil {
+		fields = append(fields, cds.FieldEnd)
+	}
+	if m.addframe != nil {
+		fields = append(fields, cds.FieldFrame)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CdsMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case cds.FieldStart:
+		return m.AddedStart()
+	case cds.FieldEnd:
+		return m.AddedEnd()
+	case cds.FieldFrame:
+		return m.AddedFrame()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CdsMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case cds.FieldStart:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddStart(v)
+		return nil
+	case cds.FieldEnd:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEnd(v)
+		return nil
+	case cds.FieldFrame:
+		v, ok := value.(int8)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddFrame(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Cds numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CdsMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CdsMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CdsMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Cds nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CdsMutation) ResetField(name string) error {
+	switch name {
+	case cds.FieldSeqname:
+		m.ResetSeqname()
+		return nil
+	case cds.FieldStart:
+		m.ResetStart()
+		return nil
+	case cds.FieldEnd:
+		m.ResetEnd()
+		return nil
+	case cds.FieldFrame:
+		m.ResetFrame()
+		return nil
+	case cds.FieldStrand:
+		m.ResetStrand()
+		return nil
+	}
+	return fmt.Errorf("unknown Cds field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CdsMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.transcript != nil {
+		edges = append(edges, cds.EdgeTranscript)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CdsMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case cds.EdgeTranscript:
+		if id := m.transcript; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CdsMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CdsMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CdsMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedtranscript {
+		edges = append(edges, cds.EdgeTranscript)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CdsMutation) EdgeCleared(name string) bool {
+	switch name {
+	case cds.EdgeTranscript:
+		return m.clearedtranscript
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CdsMutation) ClearEdge(name string) error {
+	switch name {
+	case cds.EdgeTranscript:
+		m.ClearTranscript()
+		return nil
+	}
+	return fmt.Errorf("unknown Cds unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CdsMutation) ResetEdge(name string) error {
+	switch name {
+	case cds.EdgeTranscript:
+		m.ResetTranscript()
+		return nil
+	}
+	return fmt.Errorf("unknown Cds edge %s", name)
+}
+
+// ExonMutation represents an operation that mutates the Exon nodes in the graph.
+type ExonMutation struct {
+	config
+	op                Op
+	typ               string
+	id                *int
+	seqname           *string
+	start             *int32
+	addstart          *int32
+	end               *int32
+	addend            *int32
+	strand            *string
+	clearedFields     map[string]struct{}
+	transcript        *string
+	clearedtranscript bool
+	done              bool
+	oldValue          func(context.Context) (*Exon, error)
+	predicates        []predicate.Exon
+}
+
+var _ ent.Mutation = (*ExonMutation)(nil)
+
+// exonOption allows management of the mutation configuration using functional options.
+type exonOption func(*ExonMutation)
+
+// newExonMutation creates new mutation for the Exon entity.
+func newExonMutation(c config, op Op, opts ...exonOption) *ExonMutation {
+	m := &ExonMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeExon,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withExonID sets the ID field of the mutation.
+func withExonID(id int) exonOption {
+	return func(m *ExonMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Exon
+		)
+		m.oldValue = func(ctx context.Context) (*Exon, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Exon.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withExon sets the old Exon of the mutation.
+func withExon(node *Exon) exonOption {
+	return func(m *ExonMutation) {
+		m.oldValue = func(context.Context) (*Exon, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ExonMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ExonMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ExonMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ExonMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Exon.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetSeqname sets the "seqname" field.
+func (m *ExonMutation) SetSeqname(s string) {
+	m.seqname = &s
+}
+
+// Seqname returns the value of the "seqname" field in the mutation.
+func (m *ExonMutation) Seqname() (r string, exists bool) {
+	v := m.seqname
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSeqname returns the old "seqname" field's value of the Exon entity.
+// If the Exon object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ExonMutation) OldSeqname(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSeqname is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSeqname requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSeqname: %w", err)
+	}
+	return oldValue.Seqname, nil
+}
+
+// ResetSeqname resets all changes to the "seqname" field.
+func (m *ExonMutation) ResetSeqname() {
+	m.seqname = nil
+}
+
+// SetStart sets the "start" field.
+func (m *ExonMutation) SetStart(i int32) {
+	m.start = &i
+	m.addstart = nil
+}
+
+// Start returns the value of the "start" field in the mutation.
+func (m *ExonMutation) Start() (r int32, exists bool) {
+	v := m.start
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStart returns the old "start" field's value of the Exon entity.
+// If the Exon object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ExonMutation) OldStart(ctx context.Context) (v int32, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStart is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStart requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStart: %w", err)
+	}
+	return oldValue.Start, nil
+}
+
+// AddStart adds i to the "start" field.
+func (m *ExonMutation) AddStart(i int32) {
+	if m.addstart != nil {
+		*m.addstart += i
+	} else {
+		m.addstart = &i
+	}
+}
+
+// AddedStart returns the value that was added to the "start" field in this mutation.
+func (m *ExonMutation) AddedStart() (r int32, exists bool) {
+	v := m.addstart
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetStart resets all changes to the "start" field.
+func (m *ExonMutation) ResetStart() {
+	m.start = nil
+	m.addstart = nil
+}
+
+// SetEnd sets the "end" field.
+func (m *ExonMutation) SetEnd(i int32) {
+	m.end = &i
+	m.addend = nil
+}
+
+// End returns the value of the "end" field in the mutation.
+func (m *ExonMutation) End() (r int32, exists bool) {
+	v := m.end
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnd returns the old "end" field's value of the Exon entity.
+// If the Exon object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ExonMutation) OldEnd(ctx context.Context) (v int32, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnd is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnd requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnd: %w", err)
+	}
+	return oldValue.End, nil
+}
+
+// AddEnd adds i to the "end" field.
+func (m *ExonMutation) AddEnd(i int32) {
+	if m.addend != nil {
+		*m.addend += i
+	} else {
+		m.addend = &i
+	}
+}
+
+// AddedEnd returns the value that was added to the "end" field in this mutation.
+func (m *ExonMutation) AddedEnd() (r int32, exists bool) {
+	v := m.addend
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetEnd resets all changes to the "end" field.
+func (m *ExonMutation) ResetEnd() {
+	m.end = nil
+	m.addend = nil
+}
+
+// SetStrand sets the "strand" field.
+func (m *ExonMutation) SetStrand(s string) {
+	m.strand = &s
+}
+
+// Strand returns the value of the "strand" field in the mutation.
+func (m *ExonMutation) Strand() (r string, exists bool) {
+	v := m.strand
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStrand returns the old "strand" field's value of the Exon entity.
+// If the Exon object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ExonMutation) OldStrand(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStrand is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStrand requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStrand: %w", err)
+	}
+	return oldValue.Strand, nil
+}
+
+// ResetStrand resets all changes to the "strand" field.
+func (m *ExonMutation) ResetStrand() {
+	m.strand = nil
+}
+
+// SetTranscriptID sets the "transcript" edge to the Transcript entity by id.
+func (m *ExonMutation) SetTranscriptID(id string) {
+	m.transcript = &id
+}
+
+// ClearTranscript clears the "transcript" edge to the Transcript entity.
+func (m *ExonMutation) ClearTranscript() {
+	m.clearedtranscript = true
+}
+
+// TranscriptCleared reports if the "transcript" edge to the Transcript entity was cleared.
+func (m *ExonMutation) TranscriptCleared() bool {
+	return m.clearedtranscript
+}
+
+// TranscriptID returns the "transcript" edge ID in the mutation.
+func (m *ExonMutation) TranscriptID() (id string, exists bool) {
+	if m.transcript != nil {
+		return *m.transcript, true
+	}
+	return
+}
+
+// TranscriptIDs returns the "transcript" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TranscriptID instead. It exists only for internal usage by the builders.
+func (m *ExonMutation) TranscriptIDs() (ids []string) {
+	if id := m.transcript; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTranscript resets all changes to the "transcript" edge.
+func (m *ExonMutation) ResetTranscript() {
+	m.transcript = nil
+	m.clearedtranscript = false
+}
+
+// Where appends a list predicates to the ExonMutation builder.
+func (m *ExonMutation) Where(ps ...predicate.Exon) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *ExonMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (Exon).
+func (m *ExonMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ExonMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.seqname != nil {
+		fields = append(fields, exon.FieldSeqname)
+	}
+	if m.start != nil {
+		fields = append(fields, exon.FieldStart)
+	}
+	if m.end != nil {
+		fields = append(fields, exon.FieldEnd)
+	}
+	if m.strand != nil {
+		fields = append(fields, exon.FieldStrand)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ExonMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case exon.FieldSeqname:
+		return m.Seqname()
+	case exon.FieldStart:
+		return m.Start()
+	case exon.FieldEnd:
+		return m.End()
+	case exon.FieldStrand:
+		return m.Strand()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ExonMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case exon.FieldSeqname:
+		return m.OldSeqname(ctx)
+	case exon.FieldStart:
+		return m.OldStart(ctx)
+	case exon.FieldEnd:
+		return m.OldEnd(ctx)
+	case exon.FieldStrand:
+		return m.OldStrand(ctx)
+	}
+	return nil, fmt.Errorf("unknown Exon field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ExonMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case exon.FieldSeqname:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSeqname(v)
+		return nil
+	case exon.FieldStart:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStart(v)
+		return nil
+	case exon.FieldEnd:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnd(v)
+		return nil
+	case exon.FieldStrand:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStrand(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Exon field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ExonMutation) AddedFields() []string {
+	var fields []string
+	if m.addstart != nil {
+		fields = append(fields, exon.FieldStart)
+	}
+	if m.addend != nil {
+		fields = append(fields, exon.FieldEnd)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ExonMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case exon.FieldStart:
+		return m.AddedStart()
+	case exon.FieldEnd:
+		return m.AddedEnd()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ExonMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case exon.FieldStart:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddStart(v)
+		return nil
+	case exon.FieldEnd:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEnd(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Exon numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ExonMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ExonMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ExonMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Exon nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ExonMutation) ResetField(name string) error {
+	switch name {
+	case exon.FieldSeqname:
+		m.ResetSeqname()
+		return nil
+	case exon.FieldStart:
+		m.ResetStart()
+		return nil
+	case exon.FieldEnd:
+		m.ResetEnd()
+		return nil
+	case exon.FieldStrand:
+		m.ResetStrand()
+		return nil
+	}
+	return fmt.Errorf("unknown Exon field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ExonMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.transcript != nil {
+		edges = append(edges, exon.EdgeTranscript)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ExonMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case exon.EdgeTranscript:
+		if id := m.transcript; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ExonMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ExonMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ExonMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedtranscript {
+		edges = append(edges, exon.EdgeTranscript)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ExonMutation) EdgeCleared(name string) bool {
+	switch name {
+	case exon.EdgeTranscript:
+		return m.clearedtranscript
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ExonMutation) ClearEdge(name string) error {
+	switch name {
+	case exon.EdgeTranscript:
+		m.ClearTranscript()
+		return nil
+	}
+	return fmt.Errorf("unknown Exon unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ExonMutation) ResetEdge(name string) error {
+	switch name {
+	case exon.EdgeTranscript:
+		m.ResetTranscript()
+		return nil
+	}
+	return fmt.Errorf("unknown Exon edge %s", name)
+}
+
+// FivePrimeUtrMutation represents an operation that mutates the FivePrimeUtr nodes in the graph.
+type FivePrimeUtrMutation struct {
+	config
+	op                Op
+	typ               string
+	id                *int
+	seqname           *string
+	start             *int32
+	addstart          *int32
+	end               *int32
+	addend            *int32
+	strand            *string
+	clearedFields     map[string]struct{}
+	transcript        *string
+	clearedtranscript bool
+	done              bool
+	oldValue          func(context.Context) (*FivePrimeUtr, error)
+	predicates        []predicate.FivePrimeUtr
+}
+
+var _ ent.Mutation = (*FivePrimeUtrMutation)(nil)
+
+// fiveprimeutrOption allows management of the mutation configuration using functional options.
+type fiveprimeutrOption func(*FivePrimeUtrMutation)
+
+// newFivePrimeUtrMutation creates new mutation for the FivePrimeUtr entity.
+func newFivePrimeUtrMutation(c config, op Op, opts ...fiveprimeutrOption) *FivePrimeUtrMutation {
+	m := &FivePrimeUtrMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeFivePrimeUtr,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withFivePrimeUtrID sets the ID field of the mutation.
+func withFivePrimeUtrID(id int) fiveprimeutrOption {
+	return func(m *FivePrimeUtrMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *FivePrimeUtr
+		)
+		m.oldValue = func(ctx context.Context) (*FivePrimeUtr, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().FivePrimeUtr.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withFivePrimeUtr sets the old FivePrimeUtr of the mutation.
+func withFivePrimeUtr(node *FivePrimeUtr) fiveprimeutrOption {
+	return func(m *FivePrimeUtrMutation) {
+		m.oldValue = func(context.Context) (*FivePrimeUtr, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m FivePrimeUtrMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m FivePrimeUtrMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *FivePrimeUtrMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *FivePrimeUtrMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().FivePrimeUtr.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetSeqname sets the "seqname" field.
+func (m *FivePrimeUtrMutation) SetSeqname(s string) {
+	m.seqname = &s
+}
+
+// Seqname returns the value of the "seqname" field in the mutation.
+func (m *FivePrimeUtrMutation) Seqname() (r string, exists bool) {
+	v := m.seqname
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSeqname returns the old "seqname" field's value of the FivePrimeUtr entity.
+// If the FivePrimeUtr object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FivePrimeUtrMutation) OldSeqname(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSeqname is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSeqname requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSeqname: %w", err)
+	}
+	return oldValue.Seqname, nil
+}
+
+// ResetSeqname resets all changes to the "seqname" field.
+func (m *FivePrimeUtrMutation) ResetSeqname() {
+	m.seqname = nil
+}
+
+// SetStart sets the "start" field.
+func (m *FivePrimeUtrMutation) SetStart(i int32) {
+	m.start = &i
+	m.addstart = nil
+}
+
+// Start returns the value of the "start" field in the mutation.
+func (m *FivePrimeUtrMutation) Start() (r int32, exists bool) {
+	v := m.start
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStart returns the old "start" field's value of the FivePrimeUtr entity.
+// If the FivePrimeUtr object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FivePrimeUtrMutation) OldStart(ctx context.Context) (v int32, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStart is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStart requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStart: %w", err)
+	}
+	return oldValue.Start, nil
+}
+
+// AddStart adds i to the "start" field.
+func (m *FivePrimeUtrMutation) AddStart(i int32) {
+	if m.addstart != nil {
+		*m.addstart += i
+	} else {
+		m.addstart = &i
+	}
+}
+
+// AddedStart returns the value that was added to the "start" field in this mutation.
+func (m *FivePrimeUtrMutation) AddedStart() (r int32, exists bool) {
+	v := m.addstart
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetStart resets all changes to the "start" field.
+func (m *FivePrimeUtrMutation) ResetStart() {
+	m.start = nil
+	m.addstart = nil
+}
+
+// SetEnd sets the "end" field.
+func (m *FivePrimeUtrMutation) SetEnd(i int32) {
+	m.end = &i
+	m.addend = nil
+}
+
+// End returns the value of the "end" field in the mutation.
+func (m *FivePrimeUtrMutation) End() (r int32, exists bool) {
+	v := m.end
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnd returns the old "end" field's value of the FivePrimeUtr entity.
+// If the FivePrimeUtr object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FivePrimeUtrMutation) OldEnd(ctx context.Context) (v int32, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnd is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnd requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnd: %w", err)
+	}
+	return oldValue.End, nil
+}
+
+// AddEnd adds i to the "end" field.
+func (m *FivePrimeUtrMutation) AddEnd(i int32) {
+	if m.addend != nil {
+		*m.addend += i
+	} else {
+		m.addend = &i
+	}
+}
+
+// AddedEnd returns the value that was added to the "end" field in this mutation.
+func (m *FivePrimeUtrMutation) AddedEnd() (r int32, exists bool) {
+	v := m.addend
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetEnd resets all changes to the "end" field.
+func (m *FivePrimeUtrMutation) ResetEnd() {
+	m.end = nil
+	m.addend = nil
+}
+
+// SetStrand sets the "strand" field.
+func (m *FivePrimeUtrMutation) SetStrand(s string) {
+	m.strand = &s
+}
+
+// Strand returns the value of the "strand" field in the mutation.
+func (m *FivePrimeUtrMutation) Strand() (r string, exists bool) {
+	v := m.strand
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStrand returns the old "strand" field's value of the FivePrimeUtr entity.
+// If the FivePrimeUtr object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FivePrimeUtrMutation) OldStrand(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStrand is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStrand requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStrand: %w", err)
+	}
+	return oldValue.Strand, nil
+}
+
+// ResetStrand resets all changes to the "strand" field.
+func (m *FivePrimeUtrMutation) ResetStrand() {
+	m.strand = nil
+}
+
+// SetTranscriptID sets the "transcript" edge to the Transcript entity by id.
+func (m *FivePrimeUtrMutation) SetTranscriptID(id string) {
+	m.transcript = &id
+}
+
+// ClearTranscript clears the "transcript" edge to the Transcript entity.
+func (m *FivePrimeUtrMutation) ClearTranscript() {
+	m.clearedtranscript = true
+}
+
+// TranscriptCleared reports if the "transcript" edge to the Transcript entity was cleared.
+func (m *FivePrimeUtrMutation) TranscriptCleared() bool {
+	return m.clearedtranscript
+}
+
+// TranscriptID returns the "transcript" edge ID in the mutation.
+func (m *FivePrimeUtrMutation) TranscriptID() (id string, exists bool) {
+	if m.transcript != nil {
+		return *m.transcript, true
+	}
+	return
+}
+
+// TranscriptIDs returns the "transcript" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TranscriptID instead. It exists only for internal usage by the builders.
+func (m *FivePrimeUtrMutation) TranscriptIDs() (ids []string) {
+	if id := m.transcript; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTranscript resets all changes to the "transcript" edge.
+func (m *FivePrimeUtrMutation) ResetTranscript() {
+	m.transcript = nil
+	m.clearedtranscript = false
+}
+
+// Where appends a list predicates to the FivePrimeUtrMutation builder.
+func (m *FivePrimeUtrMutation) Where(ps ...predicate.FivePrimeUtr) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *FivePrimeUtrMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (FivePrimeUtr).
+func (m *FivePrimeUtrMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *FivePrimeUtrMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.seqname != nil {
+		fields = append(fields, fiveprimeutr.FieldSeqname)
+	}
+	if m.start != nil {
+		fields = append(fields, fiveprimeutr.FieldStart)
+	}
+	if m.end != nil {
+		fields = append(fields, fiveprimeutr.FieldEnd)
+	}
+	if m.strand != nil {
+		fields = append(fields, fiveprimeutr.FieldStrand)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *FivePrimeUtrMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case fiveprimeutr.FieldSeqname:
+		return m.Seqname()
+	case fiveprimeutr.FieldStart:
+		return m.Start()
+	case fiveprimeutr.FieldEnd:
+		return m.End()
+	case fiveprimeutr.FieldStrand:
+		return m.Strand()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *FivePrimeUtrMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case fiveprimeutr.FieldSeqname:
+		return m.OldSeqname(ctx)
+	case fiveprimeutr.FieldStart:
+		return m.OldStart(ctx)
+	case fiveprimeutr.FieldEnd:
+		return m.OldEnd(ctx)
+	case fiveprimeutr.FieldStrand:
+		return m.OldStrand(ctx)
+	}
+	return nil, fmt.Errorf("unknown FivePrimeUtr field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *FivePrimeUtrMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case fiveprimeutr.FieldSeqname:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSeqname(v)
+		return nil
+	case fiveprimeutr.FieldStart:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStart(v)
+		return nil
+	case fiveprimeutr.FieldEnd:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnd(v)
+		return nil
+	case fiveprimeutr.FieldStrand:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStrand(v)
+		return nil
+	}
+	return fmt.Errorf("unknown FivePrimeUtr field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *FivePrimeUtrMutation) AddedFields() []string {
+	var fields []string
+	if m.addstart != nil {
+		fields = append(fields, fiveprimeutr.FieldStart)
+	}
+	if m.addend != nil {
+		fields = append(fields, fiveprimeutr.FieldEnd)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *FivePrimeUtrMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case fiveprimeutr.FieldStart:
+		return m.AddedStart()
+	case fiveprimeutr.FieldEnd:
+		return m.AddedEnd()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *FivePrimeUtrMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case fiveprimeutr.FieldStart:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddStart(v)
+		return nil
+	case fiveprimeutr.FieldEnd:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEnd(v)
+		return nil
+	}
+	return fmt.Errorf("unknown FivePrimeUtr numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *FivePrimeUtrMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *FivePrimeUtrMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *FivePrimeUtrMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown FivePrimeUtr nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *FivePrimeUtrMutation) ResetField(name string) error {
+	switch name {
+	case fiveprimeutr.FieldSeqname:
+		m.ResetSeqname()
+		return nil
+	case fiveprimeutr.FieldStart:
+		m.ResetStart()
+		return nil
+	case fiveprimeutr.FieldEnd:
+		m.ResetEnd()
+		return nil
+	case fiveprimeutr.FieldStrand:
+		m.ResetStrand()
+		return nil
+	}
+	return fmt.Errorf("unknown FivePrimeUtr field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *FivePrimeUtrMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.transcript != nil {
+		edges = append(edges, fiveprimeutr.EdgeTranscript)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *FivePrimeUtrMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case fiveprimeutr.EdgeTranscript:
+		if id := m.transcript; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *FivePrimeUtrMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *FivePrimeUtrMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *FivePrimeUtrMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedtranscript {
+		edges = append(edges, fiveprimeutr.EdgeTranscript)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *FivePrimeUtrMutation) EdgeCleared(name string) bool {
+	switch name {
+	case fiveprimeutr.EdgeTranscript:
+		return m.clearedtranscript
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *FivePrimeUtrMutation) ClearEdge(name string) error {
+	switch name {
+	case fiveprimeutr.EdgeTranscript:
+		m.ClearTranscript()
+		return nil
+	}
+	return fmt.Errorf("unknown FivePrimeUtr unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *FivePrimeUtrMutation) ResetEdge(name string) error {
+	switch name {
+	case fiveprimeutr.EdgeTranscript:
+		m.ResetTranscript()
+		return nil
+	}
+	return fmt.Errorf("unknown FivePrimeUtr edge %s", name)
+}
 
 // GeneMutation represents an operation that mutates the Gene nodes in the graph.
 type GeneMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *string
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*Gene, error)
-	predicates    []predicate.Gene
+	op                 Op
+	typ                string
+	id                 *string
+	clearedFields      map[string]struct{}
+	transcripts        map[string]struct{}
+	removedtranscripts map[string]struct{}
+	clearedtranscripts bool
+	genome             *string
+	clearedgenome      bool
+	done               bool
+	oldValue           func(context.Context) (*Gene, error)
+	predicates         []predicate.Gene
 }
 
 var _ ent.Mutation = (*GeneMutation)(nil)
@@ -146,6 +2074,99 @@ func (m *GeneMutation) IDs(ctx context.Context) ([]string, error) {
 	}
 }
 
+// AddTranscriptIDs adds the "transcripts" edge to the Transcript entity by ids.
+func (m *GeneMutation) AddTranscriptIDs(ids ...string) {
+	if m.transcripts == nil {
+		m.transcripts = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.transcripts[ids[i]] = struct{}{}
+	}
+}
+
+// ClearTranscripts clears the "transcripts" edge to the Transcript entity.
+func (m *GeneMutation) ClearTranscripts() {
+	m.clearedtranscripts = true
+}
+
+// TranscriptsCleared reports if the "transcripts" edge to the Transcript entity was cleared.
+func (m *GeneMutation) TranscriptsCleared() bool {
+	return m.clearedtranscripts
+}
+
+// RemoveTranscriptIDs removes the "transcripts" edge to the Transcript entity by IDs.
+func (m *GeneMutation) RemoveTranscriptIDs(ids ...string) {
+	if m.removedtranscripts == nil {
+		m.removedtranscripts = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.transcripts, ids[i])
+		m.removedtranscripts[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedTranscripts returns the removed IDs of the "transcripts" edge to the Transcript entity.
+func (m *GeneMutation) RemovedTranscriptsIDs() (ids []string) {
+	for id := range m.removedtranscripts {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// TranscriptsIDs returns the "transcripts" edge IDs in the mutation.
+func (m *GeneMutation) TranscriptsIDs() (ids []string) {
+	for id := range m.transcripts {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetTranscripts resets all changes to the "transcripts" edge.
+func (m *GeneMutation) ResetTranscripts() {
+	m.transcripts = nil
+	m.clearedtranscripts = false
+	m.removedtranscripts = nil
+}
+
+// SetGenomeID sets the "genome" edge to the Genome entity by id.
+func (m *GeneMutation) SetGenomeID(id string) {
+	m.genome = &id
+}
+
+// ClearGenome clears the "genome" edge to the Genome entity.
+func (m *GeneMutation) ClearGenome() {
+	m.clearedgenome = true
+}
+
+// GenomeCleared reports if the "genome" edge to the Genome entity was cleared.
+func (m *GeneMutation) GenomeCleared() bool {
+	return m.clearedgenome
+}
+
+// GenomeID returns the "genome" edge ID in the mutation.
+func (m *GeneMutation) GenomeID() (id string, exists bool) {
+	if m.genome != nil {
+		return *m.genome, true
+	}
+	return
+}
+
+// GenomeIDs returns the "genome" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// GenomeID instead. It exists only for internal usage by the builders.
+func (m *GeneMutation) GenomeIDs() (ids []string) {
+	if id := m.genome; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetGenome resets all changes to the "genome" edge.
+func (m *GeneMutation) ResetGenome() {
+	m.genome = nil
+	m.clearedgenome = false
+}
+
 // Where appends a list predicates to the GeneMutation builder.
 func (m *GeneMutation) Where(ps ...predicate.Gene) {
 	m.predicates = append(m.predicates, ps...)
@@ -239,66 +2260,124 @@ func (m *GeneMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *GeneMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 2)
+	if m.transcripts != nil {
+		edges = append(edges, gene.EdgeTranscripts)
+	}
+	if m.genome != nil {
+		edges = append(edges, gene.EdgeGenome)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *GeneMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case gene.EdgeTranscripts:
+		ids := make([]ent.Value, 0, len(m.transcripts))
+		for id := range m.transcripts {
+			ids = append(ids, id)
+		}
+		return ids
+	case gene.EdgeGenome:
+		if id := m.genome; id != nil {
+			return []ent.Value{*id}
+		}
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *GeneMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 2)
+	if m.removedtranscripts != nil {
+		edges = append(edges, gene.EdgeTranscripts)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *GeneMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case gene.EdgeTranscripts:
+		ids := make([]ent.Value, 0, len(m.removedtranscripts))
+		for id := range m.removedtranscripts {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *GeneMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 2)
+	if m.clearedtranscripts {
+		edges = append(edges, gene.EdgeTranscripts)
+	}
+	if m.clearedgenome {
+		edges = append(edges, gene.EdgeGenome)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *GeneMutation) EdgeCleared(name string) bool {
+	switch name {
+	case gene.EdgeTranscripts:
+		return m.clearedtranscripts
+	case gene.EdgeGenome:
+		return m.clearedgenome
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *GeneMutation) ClearEdge(name string) error {
+	switch name {
+	case gene.EdgeGenome:
+		m.ClearGenome()
+		return nil
+	}
 	return fmt.Errorf("unknown Gene unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *GeneMutation) ResetEdge(name string) error {
+	switch name {
+	case gene.EdgeTranscripts:
+		m.ResetTranscripts()
+		return nil
+	case gene.EdgeGenome:
+		m.ResetGenome()
+		return nil
+	}
 	return fmt.Errorf("unknown Gene edge %s", name)
 }
 
 // GenomeMutation represents an operation that mutates the Genome nodes in the graph.
 type GenomeMutation struct {
 	config
-	op             Op
-	typ            string
-	id             *int
-	name           *string
-	codon_table    *int32
-	addcodon_table *int32
-	seq            *string
-	clearedFields  map[string]struct{}
-	done           bool
-	oldValue       func(context.Context) (*Genome, error)
-	predicates     []predicate.Genome
+	op               Op
+	typ              string
+	id               *string
+	codon_table      *int32
+	addcodon_table   *int32
+	clearedFields    map[string]struct{}
+	genes            map[string]struct{}
+	removedgenes     map[string]struct{}
+	clearedgenes     bool
+	scaffolds        map[int]struct{}
+	removedscaffolds map[int]struct{}
+	clearedscaffolds bool
+	done             bool
+	oldValue         func(context.Context) (*Genome, error)
+	predicates       []predicate.Genome
 }
 
 var _ ent.Mutation = (*GenomeMutation)(nil)
@@ -321,7 +2400,7 @@ func newGenomeMutation(c config, op Op, opts ...genomeOption) *GenomeMutation {
 }
 
 // withGenomeID sets the ID field of the mutation.
-func withGenomeID(id int) genomeOption {
+func withGenomeID(id string) genomeOption {
 	return func(m *GenomeMutation) {
 		var (
 			err   error
@@ -371,9 +2450,15 @@ func (m GenomeMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Genome entities.
+func (m *GenomeMutation) SetID(id string) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *GenomeMutation) ID() (id int, exists bool) {
+func (m *GenomeMutation) ID() (id string, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -384,12 +2469,12 @@ func (m *GenomeMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *GenomeMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *GenomeMutation) IDs(ctx context.Context) ([]string, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []string{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -397,42 +2482,6 @@ func (m *GenomeMutation) IDs(ctx context.Context) ([]int, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
-}
-
-// SetName sets the "name" field.
-func (m *GenomeMutation) SetName(s string) {
-	m.name = &s
-}
-
-// Name returns the value of the "name" field in the mutation.
-func (m *GenomeMutation) Name() (r string, exists bool) {
-	v := m.name
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldName returns the old "name" field's value of the Genome entity.
-// If the Genome object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GenomeMutation) OldName(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldName is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldName requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldName: %w", err)
-	}
-	return oldValue.Name, nil
-}
-
-// ResetName resets all changes to the "name" field.
-func (m *GenomeMutation) ResetName() {
-	m.name = nil
 }
 
 // SetCodonTable sets the "codon_table" field.
@@ -491,40 +2540,112 @@ func (m *GenomeMutation) ResetCodonTable() {
 	m.addcodon_table = nil
 }
 
-// SetSeq sets the "seq" field.
-func (m *GenomeMutation) SetSeq(s string) {
-	m.seq = &s
+// AddGeneIDs adds the "genes" edge to the Gene entity by ids.
+func (m *GenomeMutation) AddGeneIDs(ids ...string) {
+	if m.genes == nil {
+		m.genes = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.genes[ids[i]] = struct{}{}
+	}
 }
 
-// Seq returns the value of the "seq" field in the mutation.
-func (m *GenomeMutation) Seq() (r string, exists bool) {
-	v := m.seq
-	if v == nil {
-		return
-	}
-	return *v, true
+// ClearGenes clears the "genes" edge to the Gene entity.
+func (m *GenomeMutation) ClearGenes() {
+	m.clearedgenes = true
 }
 
-// OldSeq returns the old "seq" field's value of the Genome entity.
-// If the Genome object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GenomeMutation) OldSeq(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldSeq requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldSeq: %w", err)
-	}
-	return oldValue.Seq, nil
+// GenesCleared reports if the "genes" edge to the Gene entity was cleared.
+func (m *GenomeMutation) GenesCleared() bool {
+	return m.clearedgenes
 }
 
-// ResetSeq resets all changes to the "seq" field.
-func (m *GenomeMutation) ResetSeq() {
-	m.seq = nil
+// RemoveGeneIDs removes the "genes" edge to the Gene entity by IDs.
+func (m *GenomeMutation) RemoveGeneIDs(ids ...string) {
+	if m.removedgenes == nil {
+		m.removedgenes = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.genes, ids[i])
+		m.removedgenes[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedGenes returns the removed IDs of the "genes" edge to the Gene entity.
+func (m *GenomeMutation) RemovedGenesIDs() (ids []string) {
+	for id := range m.removedgenes {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// GenesIDs returns the "genes" edge IDs in the mutation.
+func (m *GenomeMutation) GenesIDs() (ids []string) {
+	for id := range m.genes {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetGenes resets all changes to the "genes" edge.
+func (m *GenomeMutation) ResetGenes() {
+	m.genes = nil
+	m.clearedgenes = false
+	m.removedgenes = nil
+}
+
+// AddScaffoldIDs adds the "scaffolds" edge to the Scaffold entity by ids.
+func (m *GenomeMutation) AddScaffoldIDs(ids ...int) {
+	if m.scaffolds == nil {
+		m.scaffolds = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.scaffolds[ids[i]] = struct{}{}
+	}
+}
+
+// ClearScaffolds clears the "scaffolds" edge to the Scaffold entity.
+func (m *GenomeMutation) ClearScaffolds() {
+	m.clearedscaffolds = true
+}
+
+// ScaffoldsCleared reports if the "scaffolds" edge to the Scaffold entity was cleared.
+func (m *GenomeMutation) ScaffoldsCleared() bool {
+	return m.clearedscaffolds
+}
+
+// RemoveScaffoldIDs removes the "scaffolds" edge to the Scaffold entity by IDs.
+func (m *GenomeMutation) RemoveScaffoldIDs(ids ...int) {
+	if m.removedscaffolds == nil {
+		m.removedscaffolds = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.scaffolds, ids[i])
+		m.removedscaffolds[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedScaffolds returns the removed IDs of the "scaffolds" edge to the Scaffold entity.
+func (m *GenomeMutation) RemovedScaffoldsIDs() (ids []int) {
+	for id := range m.removedscaffolds {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ScaffoldsIDs returns the "scaffolds" edge IDs in the mutation.
+func (m *GenomeMutation) ScaffoldsIDs() (ids []int) {
+	for id := range m.scaffolds {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetScaffolds resets all changes to the "scaffolds" edge.
+func (m *GenomeMutation) ResetScaffolds() {
+	m.scaffolds = nil
+	m.clearedscaffolds = false
+	m.removedscaffolds = nil
 }
 
 // Where appends a list predicates to the GenomeMutation builder.
@@ -546,15 +2667,9 @@ func (m *GenomeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GenomeMutation) Fields() []string {
-	fields := make([]string, 0, 3)
-	if m.name != nil {
-		fields = append(fields, genome.FieldName)
-	}
+	fields := make([]string, 0, 1)
 	if m.codon_table != nil {
 		fields = append(fields, genome.FieldCodonTable)
-	}
-	if m.seq != nil {
-		fields = append(fields, genome.FieldSeq)
 	}
 	return fields
 }
@@ -564,12 +2679,8 @@ func (m *GenomeMutation) Fields() []string {
 // schema.
 func (m *GenomeMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case genome.FieldName:
-		return m.Name()
 	case genome.FieldCodonTable:
 		return m.CodonTable()
-	case genome.FieldSeq:
-		return m.Seq()
 	}
 	return nil, false
 }
@@ -579,12 +2690,8 @@ func (m *GenomeMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *GenomeMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case genome.FieldName:
-		return m.OldName(ctx)
 	case genome.FieldCodonTable:
 		return m.OldCodonTable(ctx)
-	case genome.FieldSeq:
-		return m.OldSeq(ctx)
 	}
 	return nil, fmt.Errorf("unknown Genome field %s", name)
 }
@@ -594,26 +2701,12 @@ func (m *GenomeMutation) OldField(ctx context.Context, name string) (ent.Value, 
 // type.
 func (m *GenomeMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case genome.FieldName:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetName(v)
-		return nil
 	case genome.FieldCodonTable:
 		v, ok := value.(int32)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCodonTable(v)
-		return nil
-	case genome.FieldSeq:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetSeq(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Genome field %s", name)
@@ -679,14 +2772,8 @@ func (m *GenomeMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *GenomeMutation) ResetField(name string) error {
 	switch name {
-	case genome.FieldName:
-		m.ResetName()
-		return nil
 	case genome.FieldCodonTable:
 		m.ResetCodonTable()
-		return nil
-	case genome.FieldSeq:
-		m.ResetSeq()
 		return nil
 	}
 	return fmt.Errorf("unknown Genome field %s", name)
@@ -694,68 +2781,1185 @@ func (m *GenomeMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *GenomeMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 2)
+	if m.genes != nil {
+		edges = append(edges, genome.EdgeGenes)
+	}
+	if m.scaffolds != nil {
+		edges = append(edges, genome.EdgeScaffolds)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *GenomeMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case genome.EdgeGenes:
+		ids := make([]ent.Value, 0, len(m.genes))
+		for id := range m.genes {
+			ids = append(ids, id)
+		}
+		return ids
+	case genome.EdgeScaffolds:
+		ids := make([]ent.Value, 0, len(m.scaffolds))
+		for id := range m.scaffolds {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *GenomeMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 2)
+	if m.removedgenes != nil {
+		edges = append(edges, genome.EdgeGenes)
+	}
+	if m.removedscaffolds != nil {
+		edges = append(edges, genome.EdgeScaffolds)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *GenomeMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case genome.EdgeGenes:
+		ids := make([]ent.Value, 0, len(m.removedgenes))
+		for id := range m.removedgenes {
+			ids = append(ids, id)
+		}
+		return ids
+	case genome.EdgeScaffolds:
+		ids := make([]ent.Value, 0, len(m.removedscaffolds))
+		for id := range m.removedscaffolds {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *GenomeMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 2)
+	if m.clearedgenes {
+		edges = append(edges, genome.EdgeGenes)
+	}
+	if m.clearedscaffolds {
+		edges = append(edges, genome.EdgeScaffolds)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *GenomeMutation) EdgeCleared(name string) bool {
+	switch name {
+	case genome.EdgeGenes:
+		return m.clearedgenes
+	case genome.EdgeScaffolds:
+		return m.clearedscaffolds
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *GenomeMutation) ClearEdge(name string) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown Genome unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *GenomeMutation) ResetEdge(name string) error {
+	switch name {
+	case genome.EdgeGenes:
+		m.ResetGenes()
+		return nil
+	case genome.EdgeScaffolds:
+		m.ResetScaffolds()
+		return nil
+	}
 	return fmt.Errorf("unknown Genome edge %s", name)
+}
+
+// ScaffoldMutation represents an operation that mutates the Scaffold nodes in the graph.
+type ScaffoldMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	seqname       *string
+	seq           *string
+	clearedFields map[string]struct{}
+	genome        *string
+	clearedgenome bool
+	done          bool
+	oldValue      func(context.Context) (*Scaffold, error)
+	predicates    []predicate.Scaffold
+}
+
+var _ ent.Mutation = (*ScaffoldMutation)(nil)
+
+// scaffoldOption allows management of the mutation configuration using functional options.
+type scaffoldOption func(*ScaffoldMutation)
+
+// newScaffoldMutation creates new mutation for the Scaffold entity.
+func newScaffoldMutation(c config, op Op, opts ...scaffoldOption) *ScaffoldMutation {
+	m := &ScaffoldMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeScaffold,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withScaffoldID sets the ID field of the mutation.
+func withScaffoldID(id int) scaffoldOption {
+	return func(m *ScaffoldMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Scaffold
+		)
+		m.oldValue = func(ctx context.Context) (*Scaffold, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Scaffold.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withScaffold sets the old Scaffold of the mutation.
+func withScaffold(node *Scaffold) scaffoldOption {
+	return func(m *ScaffoldMutation) {
+		m.oldValue = func(context.Context) (*Scaffold, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ScaffoldMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ScaffoldMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ScaffoldMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ScaffoldMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Scaffold.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetSeqname sets the "seqname" field.
+func (m *ScaffoldMutation) SetSeqname(s string) {
+	m.seqname = &s
+}
+
+// Seqname returns the value of the "seqname" field in the mutation.
+func (m *ScaffoldMutation) Seqname() (r string, exists bool) {
+	v := m.seqname
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSeqname returns the old "seqname" field's value of the Scaffold entity.
+// If the Scaffold object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ScaffoldMutation) OldSeqname(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSeqname is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSeqname requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSeqname: %w", err)
+	}
+	return oldValue.Seqname, nil
+}
+
+// ResetSeqname resets all changes to the "seqname" field.
+func (m *ScaffoldMutation) ResetSeqname() {
+	m.seqname = nil
+}
+
+// SetSeq sets the "seq" field.
+func (m *ScaffoldMutation) SetSeq(s string) {
+	m.seq = &s
+}
+
+// Seq returns the value of the "seq" field in the mutation.
+func (m *ScaffoldMutation) Seq() (r string, exists bool) {
+	v := m.seq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSeq returns the old "seq" field's value of the Scaffold entity.
+// If the Scaffold object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ScaffoldMutation) OldSeq(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSeq requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSeq: %w", err)
+	}
+	return oldValue.Seq, nil
+}
+
+// ResetSeq resets all changes to the "seq" field.
+func (m *ScaffoldMutation) ResetSeq() {
+	m.seq = nil
+}
+
+// SetGenomeID sets the "genome" edge to the Genome entity by id.
+func (m *ScaffoldMutation) SetGenomeID(id string) {
+	m.genome = &id
+}
+
+// ClearGenome clears the "genome" edge to the Genome entity.
+func (m *ScaffoldMutation) ClearGenome() {
+	m.clearedgenome = true
+}
+
+// GenomeCleared reports if the "genome" edge to the Genome entity was cleared.
+func (m *ScaffoldMutation) GenomeCleared() bool {
+	return m.clearedgenome
+}
+
+// GenomeID returns the "genome" edge ID in the mutation.
+func (m *ScaffoldMutation) GenomeID() (id string, exists bool) {
+	if m.genome != nil {
+		return *m.genome, true
+	}
+	return
+}
+
+// GenomeIDs returns the "genome" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// GenomeID instead. It exists only for internal usage by the builders.
+func (m *ScaffoldMutation) GenomeIDs() (ids []string) {
+	if id := m.genome; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetGenome resets all changes to the "genome" edge.
+func (m *ScaffoldMutation) ResetGenome() {
+	m.genome = nil
+	m.clearedgenome = false
+}
+
+// Where appends a list predicates to the ScaffoldMutation builder.
+func (m *ScaffoldMutation) Where(ps ...predicate.Scaffold) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *ScaffoldMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (Scaffold).
+func (m *ScaffoldMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ScaffoldMutation) Fields() []string {
+	fields := make([]string, 0, 2)
+	if m.seqname != nil {
+		fields = append(fields, scaffold.FieldSeqname)
+	}
+	if m.seq != nil {
+		fields = append(fields, scaffold.FieldSeq)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ScaffoldMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case scaffold.FieldSeqname:
+		return m.Seqname()
+	case scaffold.FieldSeq:
+		return m.Seq()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ScaffoldMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case scaffold.FieldSeqname:
+		return m.OldSeqname(ctx)
+	case scaffold.FieldSeq:
+		return m.OldSeq(ctx)
+	}
+	return nil, fmt.Errorf("unknown Scaffold field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ScaffoldMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case scaffold.FieldSeqname:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSeqname(v)
+		return nil
+	case scaffold.FieldSeq:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSeq(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Scaffold field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ScaffoldMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ScaffoldMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ScaffoldMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Scaffold numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ScaffoldMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ScaffoldMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ScaffoldMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Scaffold nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ScaffoldMutation) ResetField(name string) error {
+	switch name {
+	case scaffold.FieldSeqname:
+		m.ResetSeqname()
+		return nil
+	case scaffold.FieldSeq:
+		m.ResetSeq()
+		return nil
+	}
+	return fmt.Errorf("unknown Scaffold field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ScaffoldMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.genome != nil {
+		edges = append(edges, scaffold.EdgeGenome)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ScaffoldMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case scaffold.EdgeGenome:
+		if id := m.genome; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ScaffoldMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ScaffoldMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ScaffoldMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedgenome {
+		edges = append(edges, scaffold.EdgeGenome)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ScaffoldMutation) EdgeCleared(name string) bool {
+	switch name {
+	case scaffold.EdgeGenome:
+		return m.clearedgenome
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ScaffoldMutation) ClearEdge(name string) error {
+	switch name {
+	case scaffold.EdgeGenome:
+		m.ClearGenome()
+		return nil
+	}
+	return fmt.Errorf("unknown Scaffold unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ScaffoldMutation) ResetEdge(name string) error {
+	switch name {
+	case scaffold.EdgeGenome:
+		m.ResetGenome()
+		return nil
+	}
+	return fmt.Errorf("unknown Scaffold edge %s", name)
+}
+
+// ThreePrimeUtrMutation represents an operation that mutates the ThreePrimeUtr nodes in the graph.
+type ThreePrimeUtrMutation struct {
+	config
+	op                Op
+	typ               string
+	id                *int
+	seqname           *string
+	start             *int32
+	addstart          *int32
+	end               *int32
+	addend            *int32
+	strand            *string
+	clearedFields     map[string]struct{}
+	transcript        *string
+	clearedtranscript bool
+	done              bool
+	oldValue          func(context.Context) (*ThreePrimeUtr, error)
+	predicates        []predicate.ThreePrimeUtr
+}
+
+var _ ent.Mutation = (*ThreePrimeUtrMutation)(nil)
+
+// threeprimeutrOption allows management of the mutation configuration using functional options.
+type threeprimeutrOption func(*ThreePrimeUtrMutation)
+
+// newThreePrimeUtrMutation creates new mutation for the ThreePrimeUtr entity.
+func newThreePrimeUtrMutation(c config, op Op, opts ...threeprimeutrOption) *ThreePrimeUtrMutation {
+	m := &ThreePrimeUtrMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeThreePrimeUtr,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withThreePrimeUtrID sets the ID field of the mutation.
+func withThreePrimeUtrID(id int) threeprimeutrOption {
+	return func(m *ThreePrimeUtrMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ThreePrimeUtr
+		)
+		m.oldValue = func(ctx context.Context) (*ThreePrimeUtr, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ThreePrimeUtr.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withThreePrimeUtr sets the old ThreePrimeUtr of the mutation.
+func withThreePrimeUtr(node *ThreePrimeUtr) threeprimeutrOption {
+	return func(m *ThreePrimeUtrMutation) {
+		m.oldValue = func(context.Context) (*ThreePrimeUtr, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ThreePrimeUtrMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ThreePrimeUtrMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ThreePrimeUtrMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ThreePrimeUtrMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ThreePrimeUtr.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetSeqname sets the "seqname" field.
+func (m *ThreePrimeUtrMutation) SetSeqname(s string) {
+	m.seqname = &s
+}
+
+// Seqname returns the value of the "seqname" field in the mutation.
+func (m *ThreePrimeUtrMutation) Seqname() (r string, exists bool) {
+	v := m.seqname
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSeqname returns the old "seqname" field's value of the ThreePrimeUtr entity.
+// If the ThreePrimeUtr object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ThreePrimeUtrMutation) OldSeqname(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSeqname is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSeqname requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSeqname: %w", err)
+	}
+	return oldValue.Seqname, nil
+}
+
+// ResetSeqname resets all changes to the "seqname" field.
+func (m *ThreePrimeUtrMutation) ResetSeqname() {
+	m.seqname = nil
+}
+
+// SetStart sets the "start" field.
+func (m *ThreePrimeUtrMutation) SetStart(i int32) {
+	m.start = &i
+	m.addstart = nil
+}
+
+// Start returns the value of the "start" field in the mutation.
+func (m *ThreePrimeUtrMutation) Start() (r int32, exists bool) {
+	v := m.start
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStart returns the old "start" field's value of the ThreePrimeUtr entity.
+// If the ThreePrimeUtr object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ThreePrimeUtrMutation) OldStart(ctx context.Context) (v int32, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStart is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStart requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStart: %w", err)
+	}
+	return oldValue.Start, nil
+}
+
+// AddStart adds i to the "start" field.
+func (m *ThreePrimeUtrMutation) AddStart(i int32) {
+	if m.addstart != nil {
+		*m.addstart += i
+	} else {
+		m.addstart = &i
+	}
+}
+
+// AddedStart returns the value that was added to the "start" field in this mutation.
+func (m *ThreePrimeUtrMutation) AddedStart() (r int32, exists bool) {
+	v := m.addstart
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetStart resets all changes to the "start" field.
+func (m *ThreePrimeUtrMutation) ResetStart() {
+	m.start = nil
+	m.addstart = nil
+}
+
+// SetEnd sets the "end" field.
+func (m *ThreePrimeUtrMutation) SetEnd(i int32) {
+	m.end = &i
+	m.addend = nil
+}
+
+// End returns the value of the "end" field in the mutation.
+func (m *ThreePrimeUtrMutation) End() (r int32, exists bool) {
+	v := m.end
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnd returns the old "end" field's value of the ThreePrimeUtr entity.
+// If the ThreePrimeUtr object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ThreePrimeUtrMutation) OldEnd(ctx context.Context) (v int32, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnd is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnd requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnd: %w", err)
+	}
+	return oldValue.End, nil
+}
+
+// AddEnd adds i to the "end" field.
+func (m *ThreePrimeUtrMutation) AddEnd(i int32) {
+	if m.addend != nil {
+		*m.addend += i
+	} else {
+		m.addend = &i
+	}
+}
+
+// AddedEnd returns the value that was added to the "end" field in this mutation.
+func (m *ThreePrimeUtrMutation) AddedEnd() (r int32, exists bool) {
+	v := m.addend
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetEnd resets all changes to the "end" field.
+func (m *ThreePrimeUtrMutation) ResetEnd() {
+	m.end = nil
+	m.addend = nil
+}
+
+// SetStrand sets the "strand" field.
+func (m *ThreePrimeUtrMutation) SetStrand(s string) {
+	m.strand = &s
+}
+
+// Strand returns the value of the "strand" field in the mutation.
+func (m *ThreePrimeUtrMutation) Strand() (r string, exists bool) {
+	v := m.strand
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStrand returns the old "strand" field's value of the ThreePrimeUtr entity.
+// If the ThreePrimeUtr object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ThreePrimeUtrMutation) OldStrand(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStrand is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStrand requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStrand: %w", err)
+	}
+	return oldValue.Strand, nil
+}
+
+// ResetStrand resets all changes to the "strand" field.
+func (m *ThreePrimeUtrMutation) ResetStrand() {
+	m.strand = nil
+}
+
+// SetTranscriptID sets the "transcript" edge to the Transcript entity by id.
+func (m *ThreePrimeUtrMutation) SetTranscriptID(id string) {
+	m.transcript = &id
+}
+
+// ClearTranscript clears the "transcript" edge to the Transcript entity.
+func (m *ThreePrimeUtrMutation) ClearTranscript() {
+	m.clearedtranscript = true
+}
+
+// TranscriptCleared reports if the "transcript" edge to the Transcript entity was cleared.
+func (m *ThreePrimeUtrMutation) TranscriptCleared() bool {
+	return m.clearedtranscript
+}
+
+// TranscriptID returns the "transcript" edge ID in the mutation.
+func (m *ThreePrimeUtrMutation) TranscriptID() (id string, exists bool) {
+	if m.transcript != nil {
+		return *m.transcript, true
+	}
+	return
+}
+
+// TranscriptIDs returns the "transcript" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TranscriptID instead. It exists only for internal usage by the builders.
+func (m *ThreePrimeUtrMutation) TranscriptIDs() (ids []string) {
+	if id := m.transcript; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTranscript resets all changes to the "transcript" edge.
+func (m *ThreePrimeUtrMutation) ResetTranscript() {
+	m.transcript = nil
+	m.clearedtranscript = false
+}
+
+// Where appends a list predicates to the ThreePrimeUtrMutation builder.
+func (m *ThreePrimeUtrMutation) Where(ps ...predicate.ThreePrimeUtr) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *ThreePrimeUtrMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (ThreePrimeUtr).
+func (m *ThreePrimeUtrMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ThreePrimeUtrMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.seqname != nil {
+		fields = append(fields, threeprimeutr.FieldSeqname)
+	}
+	if m.start != nil {
+		fields = append(fields, threeprimeutr.FieldStart)
+	}
+	if m.end != nil {
+		fields = append(fields, threeprimeutr.FieldEnd)
+	}
+	if m.strand != nil {
+		fields = append(fields, threeprimeutr.FieldStrand)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ThreePrimeUtrMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case threeprimeutr.FieldSeqname:
+		return m.Seqname()
+	case threeprimeutr.FieldStart:
+		return m.Start()
+	case threeprimeutr.FieldEnd:
+		return m.End()
+	case threeprimeutr.FieldStrand:
+		return m.Strand()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ThreePrimeUtrMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case threeprimeutr.FieldSeqname:
+		return m.OldSeqname(ctx)
+	case threeprimeutr.FieldStart:
+		return m.OldStart(ctx)
+	case threeprimeutr.FieldEnd:
+		return m.OldEnd(ctx)
+	case threeprimeutr.FieldStrand:
+		return m.OldStrand(ctx)
+	}
+	return nil, fmt.Errorf("unknown ThreePrimeUtr field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ThreePrimeUtrMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case threeprimeutr.FieldSeqname:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSeqname(v)
+		return nil
+	case threeprimeutr.FieldStart:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStart(v)
+		return nil
+	case threeprimeutr.FieldEnd:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnd(v)
+		return nil
+	case threeprimeutr.FieldStrand:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStrand(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ThreePrimeUtr field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ThreePrimeUtrMutation) AddedFields() []string {
+	var fields []string
+	if m.addstart != nil {
+		fields = append(fields, threeprimeutr.FieldStart)
+	}
+	if m.addend != nil {
+		fields = append(fields, threeprimeutr.FieldEnd)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ThreePrimeUtrMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case threeprimeutr.FieldStart:
+		return m.AddedStart()
+	case threeprimeutr.FieldEnd:
+		return m.AddedEnd()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ThreePrimeUtrMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case threeprimeutr.FieldStart:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddStart(v)
+		return nil
+	case threeprimeutr.FieldEnd:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEnd(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ThreePrimeUtr numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ThreePrimeUtrMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ThreePrimeUtrMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ThreePrimeUtrMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown ThreePrimeUtr nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ThreePrimeUtrMutation) ResetField(name string) error {
+	switch name {
+	case threeprimeutr.FieldSeqname:
+		m.ResetSeqname()
+		return nil
+	case threeprimeutr.FieldStart:
+		m.ResetStart()
+		return nil
+	case threeprimeutr.FieldEnd:
+		m.ResetEnd()
+		return nil
+	case threeprimeutr.FieldStrand:
+		m.ResetStrand()
+		return nil
+	}
+	return fmt.Errorf("unknown ThreePrimeUtr field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ThreePrimeUtrMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.transcript != nil {
+		edges = append(edges, threeprimeutr.EdgeTranscript)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ThreePrimeUtrMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case threeprimeutr.EdgeTranscript:
+		if id := m.transcript; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ThreePrimeUtrMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ThreePrimeUtrMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ThreePrimeUtrMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedtranscript {
+		edges = append(edges, threeprimeutr.EdgeTranscript)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ThreePrimeUtrMutation) EdgeCleared(name string) bool {
+	switch name {
+	case threeprimeutr.EdgeTranscript:
+		return m.clearedtranscript
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ThreePrimeUtrMutation) ClearEdge(name string) error {
+	switch name {
+	case threeprimeutr.EdgeTranscript:
+		m.ClearTranscript()
+		return nil
+	}
+	return fmt.Errorf("unknown ThreePrimeUtr unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ThreePrimeUtrMutation) ResetEdge(name string) error {
+	switch name {
+	case threeprimeutr.EdgeTranscript:
+		m.ResetTranscript()
+		return nil
+	}
+	return fmt.Errorf("unknown ThreePrimeUtr edge %s", name)
 }
 
 // TranscriptMutation represents an operation that mutates the Transcript nodes in the graph.
 type TranscriptMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *string
-	geneId        *string
-	genome        *string
-	strand        *string
-	mrna          *string
-	cds           *string
-	protein       *string
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*Transcript, error)
-	predicates    []predicate.Transcript
+	op                     Op
+	typ                    string
+	id                     *string
+	strand                 *string
+	_type                  *string
+	genome_seq             *string
+	transcript_seq         *string
+	cds_seq                *string
+	protein_seq            *string
+	clearedFields          map[string]struct{}
+	gene                   *string
+	clearedgene            bool
+	cds                    map[int]struct{}
+	removedcds             map[int]struct{}
+	clearedcds             bool
+	exon                   map[int]struct{}
+	removedexon            map[int]struct{}
+	clearedexon            bool
+	five_prime_utr         map[int]struct{}
+	removedfive_prime_utr  map[int]struct{}
+	clearedfive_prime_utr  bool
+	three_prime_utr        map[int]struct{}
+	removedthree_prime_utr map[int]struct{}
+	clearedthree_prime_utr bool
+	done                   bool
+	oldValue               func(context.Context) (*Transcript, error)
+	predicates             []predicate.Transcript
 }
 
 var _ ent.Mutation = (*TranscriptMutation)(nil)
@@ -862,78 +4066,6 @@ func (m *TranscriptMutation) IDs(ctx context.Context) ([]string, error) {
 	}
 }
 
-// SetGeneId sets the "geneId" field.
-func (m *TranscriptMutation) SetGeneId(s string) {
-	m.geneId = &s
-}
-
-// GeneId returns the value of the "geneId" field in the mutation.
-func (m *TranscriptMutation) GeneId() (r string, exists bool) {
-	v := m.geneId
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldGeneId returns the old "geneId" field's value of the Transcript entity.
-// If the Transcript object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TranscriptMutation) OldGeneId(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldGeneId is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldGeneId requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldGeneId: %w", err)
-	}
-	return oldValue.GeneId, nil
-}
-
-// ResetGeneId resets all changes to the "geneId" field.
-func (m *TranscriptMutation) ResetGeneId() {
-	m.geneId = nil
-}
-
-// SetGenome sets the "genome" field.
-func (m *TranscriptMutation) SetGenome(s string) {
-	m.genome = &s
-}
-
-// Genome returns the value of the "genome" field in the mutation.
-func (m *TranscriptMutation) Genome() (r string, exists bool) {
-	v := m.genome
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldGenome returns the old "genome" field's value of the Transcript entity.
-// If the Transcript object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TranscriptMutation) OldGenome(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldGenome is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldGenome requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldGenome: %w", err)
-	}
-	return oldValue.Genome, nil
-}
-
-// ResetGenome resets all changes to the "genome" field.
-func (m *TranscriptMutation) ResetGenome() {
-	m.genome = nil
-}
-
 // SetStrand sets the "strand" field.
 func (m *TranscriptMutation) SetStrand(s string) {
 	m.strand = &s
@@ -970,112 +4102,439 @@ func (m *TranscriptMutation) ResetStrand() {
 	m.strand = nil
 }
 
-// SetMrna sets the "mrna" field.
-func (m *TranscriptMutation) SetMrna(s string) {
-	m.mrna = &s
+// SetType sets the "type" field.
+func (m *TranscriptMutation) SetType(s string) {
+	m._type = &s
 }
 
-// Mrna returns the value of the "mrna" field in the mutation.
-func (m *TranscriptMutation) Mrna() (r string, exists bool) {
-	v := m.mrna
+// GetType returns the value of the "type" field in the mutation.
+func (m *TranscriptMutation) GetType() (r string, exists bool) {
+	v := m._type
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldMrna returns the old "mrna" field's value of the Transcript entity.
+// OldType returns the old "type" field's value of the Transcript entity.
 // If the Transcript object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TranscriptMutation) OldMrna(ctx context.Context) (v string, err error) {
+func (m *TranscriptMutation) OldType(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldMrna is only allowed on UpdateOne operations")
+		return v, errors.New("OldType is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldMrna requires an ID field in the mutation")
+		return v, errors.New("OldType requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldMrna: %w", err)
+		return v, fmt.Errorf("querying old value for OldType: %w", err)
 	}
-	return oldValue.Mrna, nil
+	return oldValue.Type, nil
 }
 
-// ResetMrna resets all changes to the "mrna" field.
-func (m *TranscriptMutation) ResetMrna() {
-	m.mrna = nil
+// ResetType resets all changes to the "type" field.
+func (m *TranscriptMutation) ResetType() {
+	m._type = nil
 }
 
-// SetCds sets the "cds" field.
-func (m *TranscriptMutation) SetCds(s string) {
-	m.cds = &s
+// SetGenomeSeq sets the "genome_seq" field.
+func (m *TranscriptMutation) SetGenomeSeq(s string) {
+	m.genome_seq = &s
 }
 
-// Cds returns the value of the "cds" field in the mutation.
-func (m *TranscriptMutation) Cds() (r string, exists bool) {
-	v := m.cds
+// GenomeSeq returns the value of the "genome_seq" field in the mutation.
+func (m *TranscriptMutation) GenomeSeq() (r string, exists bool) {
+	v := m.genome_seq
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldCds returns the old "cds" field's value of the Transcript entity.
+// OldGenomeSeq returns the old "genome_seq" field's value of the Transcript entity.
 // If the Transcript object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TranscriptMutation) OldCds(ctx context.Context) (v string, err error) {
+func (m *TranscriptMutation) OldGenomeSeq(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldCds is only allowed on UpdateOne operations")
+		return v, errors.New("OldGenomeSeq is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldCds requires an ID field in the mutation")
+		return v, errors.New("OldGenomeSeq requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldCds: %w", err)
+		return v, fmt.Errorf("querying old value for OldGenomeSeq: %w", err)
 	}
-	return oldValue.Cds, nil
+	return oldValue.GenomeSeq, nil
 }
 
-// ResetCds resets all changes to the "cds" field.
+// ResetGenomeSeq resets all changes to the "genome_seq" field.
+func (m *TranscriptMutation) ResetGenomeSeq() {
+	m.genome_seq = nil
+}
+
+// SetTranscriptSeq sets the "transcript_seq" field.
+func (m *TranscriptMutation) SetTranscriptSeq(s string) {
+	m.transcript_seq = &s
+}
+
+// TranscriptSeq returns the value of the "transcript_seq" field in the mutation.
+func (m *TranscriptMutation) TranscriptSeq() (r string, exists bool) {
+	v := m.transcript_seq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTranscriptSeq returns the old "transcript_seq" field's value of the Transcript entity.
+// If the Transcript object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TranscriptMutation) OldTranscriptSeq(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTranscriptSeq is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTranscriptSeq requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTranscriptSeq: %w", err)
+	}
+	return oldValue.TranscriptSeq, nil
+}
+
+// ResetTranscriptSeq resets all changes to the "transcript_seq" field.
+func (m *TranscriptMutation) ResetTranscriptSeq() {
+	m.transcript_seq = nil
+}
+
+// SetCdsSeq sets the "cds_seq" field.
+func (m *TranscriptMutation) SetCdsSeq(s string) {
+	m.cds_seq = &s
+}
+
+// CdsSeq returns the value of the "cds_seq" field in the mutation.
+func (m *TranscriptMutation) CdsSeq() (r string, exists bool) {
+	v := m.cds_seq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCdsSeq returns the old "cds_seq" field's value of the Transcript entity.
+// If the Transcript object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TranscriptMutation) OldCdsSeq(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCdsSeq is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCdsSeq requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCdsSeq: %w", err)
+	}
+	return oldValue.CdsSeq, nil
+}
+
+// ResetCdsSeq resets all changes to the "cds_seq" field.
+func (m *TranscriptMutation) ResetCdsSeq() {
+	m.cds_seq = nil
+}
+
+// SetProteinSeq sets the "protein_seq" field.
+func (m *TranscriptMutation) SetProteinSeq(s string) {
+	m.protein_seq = &s
+}
+
+// ProteinSeq returns the value of the "protein_seq" field in the mutation.
+func (m *TranscriptMutation) ProteinSeq() (r string, exists bool) {
+	v := m.protein_seq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProteinSeq returns the old "protein_seq" field's value of the Transcript entity.
+// If the Transcript object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TranscriptMutation) OldProteinSeq(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProteinSeq is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProteinSeq requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProteinSeq: %w", err)
+	}
+	return oldValue.ProteinSeq, nil
+}
+
+// ResetProteinSeq resets all changes to the "protein_seq" field.
+func (m *TranscriptMutation) ResetProteinSeq() {
+	m.protein_seq = nil
+}
+
+// SetGeneID sets the "gene" edge to the Gene entity by id.
+func (m *TranscriptMutation) SetGeneID(id string) {
+	m.gene = &id
+}
+
+// ClearGene clears the "gene" edge to the Gene entity.
+func (m *TranscriptMutation) ClearGene() {
+	m.clearedgene = true
+}
+
+// GeneCleared reports if the "gene" edge to the Gene entity was cleared.
+func (m *TranscriptMutation) GeneCleared() bool {
+	return m.clearedgene
+}
+
+// GeneID returns the "gene" edge ID in the mutation.
+func (m *TranscriptMutation) GeneID() (id string, exists bool) {
+	if m.gene != nil {
+		return *m.gene, true
+	}
+	return
+}
+
+// GeneIDs returns the "gene" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// GeneID instead. It exists only for internal usage by the builders.
+func (m *TranscriptMutation) GeneIDs() (ids []string) {
+	if id := m.gene; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetGene resets all changes to the "gene" edge.
+func (m *TranscriptMutation) ResetGene() {
+	m.gene = nil
+	m.clearedgene = false
+}
+
+// AddCdIDs adds the "cds" edge to the Cds entity by ids.
+func (m *TranscriptMutation) AddCdIDs(ids ...int) {
+	if m.cds == nil {
+		m.cds = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.cds[ids[i]] = struct{}{}
+	}
+}
+
+// ClearCds clears the "cds" edge to the Cds entity.
+func (m *TranscriptMutation) ClearCds() {
+	m.clearedcds = true
+}
+
+// CdsCleared reports if the "cds" edge to the Cds entity was cleared.
+func (m *TranscriptMutation) CdsCleared() bool {
+	return m.clearedcds
+}
+
+// RemoveCdIDs removes the "cds" edge to the Cds entity by IDs.
+func (m *TranscriptMutation) RemoveCdIDs(ids ...int) {
+	if m.removedcds == nil {
+		m.removedcds = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.cds, ids[i])
+		m.removedcds[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedCds returns the removed IDs of the "cds" edge to the Cds entity.
+func (m *TranscriptMutation) RemovedCdsIDs() (ids []int) {
+	for id := range m.removedcds {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// CdsIDs returns the "cds" edge IDs in the mutation.
+func (m *TranscriptMutation) CdsIDs() (ids []int) {
+	for id := range m.cds {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetCds resets all changes to the "cds" edge.
 func (m *TranscriptMutation) ResetCds() {
 	m.cds = nil
+	m.clearedcds = false
+	m.removedcds = nil
 }
 
-// SetProtein sets the "protein" field.
-func (m *TranscriptMutation) SetProtein(s string) {
-	m.protein = &s
+// AddExonIDs adds the "exon" edge to the Exon entity by ids.
+func (m *TranscriptMutation) AddExonIDs(ids ...int) {
+	if m.exon == nil {
+		m.exon = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.exon[ids[i]] = struct{}{}
+	}
 }
 
-// Protein returns the value of the "protein" field in the mutation.
-func (m *TranscriptMutation) Protein() (r string, exists bool) {
-	v := m.protein
-	if v == nil {
-		return
-	}
-	return *v, true
+// ClearExon clears the "exon" edge to the Exon entity.
+func (m *TranscriptMutation) ClearExon() {
+	m.clearedexon = true
 }
 
-// OldProtein returns the old "protein" field's value of the Transcript entity.
-// If the Transcript object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TranscriptMutation) OldProtein(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldProtein is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldProtein requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldProtein: %w", err)
-	}
-	return oldValue.Protein, nil
+// ExonCleared reports if the "exon" edge to the Exon entity was cleared.
+func (m *TranscriptMutation) ExonCleared() bool {
+	return m.clearedexon
 }
 
-// ResetProtein resets all changes to the "protein" field.
-func (m *TranscriptMutation) ResetProtein() {
-	m.protein = nil
+// RemoveExonIDs removes the "exon" edge to the Exon entity by IDs.
+func (m *TranscriptMutation) RemoveExonIDs(ids ...int) {
+	if m.removedexon == nil {
+		m.removedexon = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.exon, ids[i])
+		m.removedexon[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedExon returns the removed IDs of the "exon" edge to the Exon entity.
+func (m *TranscriptMutation) RemovedExonIDs() (ids []int) {
+	for id := range m.removedexon {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ExonIDs returns the "exon" edge IDs in the mutation.
+func (m *TranscriptMutation) ExonIDs() (ids []int) {
+	for id := range m.exon {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetExon resets all changes to the "exon" edge.
+func (m *TranscriptMutation) ResetExon() {
+	m.exon = nil
+	m.clearedexon = false
+	m.removedexon = nil
+}
+
+// AddFivePrimeUtrIDs adds the "five_prime_utr" edge to the FivePrimeUtr entity by ids.
+func (m *TranscriptMutation) AddFivePrimeUtrIDs(ids ...int) {
+	if m.five_prime_utr == nil {
+		m.five_prime_utr = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.five_prime_utr[ids[i]] = struct{}{}
+	}
+}
+
+// ClearFivePrimeUtr clears the "five_prime_utr" edge to the FivePrimeUtr entity.
+func (m *TranscriptMutation) ClearFivePrimeUtr() {
+	m.clearedfive_prime_utr = true
+}
+
+// FivePrimeUtrCleared reports if the "five_prime_utr" edge to the FivePrimeUtr entity was cleared.
+func (m *TranscriptMutation) FivePrimeUtrCleared() bool {
+	return m.clearedfive_prime_utr
+}
+
+// RemoveFivePrimeUtrIDs removes the "five_prime_utr" edge to the FivePrimeUtr entity by IDs.
+func (m *TranscriptMutation) RemoveFivePrimeUtrIDs(ids ...int) {
+	if m.removedfive_prime_utr == nil {
+		m.removedfive_prime_utr = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.five_prime_utr, ids[i])
+		m.removedfive_prime_utr[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedFivePrimeUtr returns the removed IDs of the "five_prime_utr" edge to the FivePrimeUtr entity.
+func (m *TranscriptMutation) RemovedFivePrimeUtrIDs() (ids []int) {
+	for id := range m.removedfive_prime_utr {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// FivePrimeUtrIDs returns the "five_prime_utr" edge IDs in the mutation.
+func (m *TranscriptMutation) FivePrimeUtrIDs() (ids []int) {
+	for id := range m.five_prime_utr {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetFivePrimeUtr resets all changes to the "five_prime_utr" edge.
+func (m *TranscriptMutation) ResetFivePrimeUtr() {
+	m.five_prime_utr = nil
+	m.clearedfive_prime_utr = false
+	m.removedfive_prime_utr = nil
+}
+
+// AddThreePrimeUtrIDs adds the "three_prime_utr" edge to the ThreePrimeUtr entity by ids.
+func (m *TranscriptMutation) AddThreePrimeUtrIDs(ids ...int) {
+	if m.three_prime_utr == nil {
+		m.three_prime_utr = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.three_prime_utr[ids[i]] = struct{}{}
+	}
+}
+
+// ClearThreePrimeUtr clears the "three_prime_utr" edge to the ThreePrimeUtr entity.
+func (m *TranscriptMutation) ClearThreePrimeUtr() {
+	m.clearedthree_prime_utr = true
+}
+
+// ThreePrimeUtrCleared reports if the "three_prime_utr" edge to the ThreePrimeUtr entity was cleared.
+func (m *TranscriptMutation) ThreePrimeUtrCleared() bool {
+	return m.clearedthree_prime_utr
+}
+
+// RemoveThreePrimeUtrIDs removes the "three_prime_utr" edge to the ThreePrimeUtr entity by IDs.
+func (m *TranscriptMutation) RemoveThreePrimeUtrIDs(ids ...int) {
+	if m.removedthree_prime_utr == nil {
+		m.removedthree_prime_utr = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.three_prime_utr, ids[i])
+		m.removedthree_prime_utr[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedThreePrimeUtr returns the removed IDs of the "three_prime_utr" edge to the ThreePrimeUtr entity.
+func (m *TranscriptMutation) RemovedThreePrimeUtrIDs() (ids []int) {
+	for id := range m.removedthree_prime_utr {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ThreePrimeUtrIDs returns the "three_prime_utr" edge IDs in the mutation.
+func (m *TranscriptMutation) ThreePrimeUtrIDs() (ids []int) {
+	for id := range m.three_prime_utr {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetThreePrimeUtr resets all changes to the "three_prime_utr" edge.
+func (m *TranscriptMutation) ResetThreePrimeUtr() {
+	m.three_prime_utr = nil
+	m.clearedthree_prime_utr = false
+	m.removedthree_prime_utr = nil
 }
 
 // Where appends a list predicates to the TranscriptMutation builder.
@@ -1098,23 +4557,23 @@ func (m *TranscriptMutation) Type() string {
 // AddedFields().
 func (m *TranscriptMutation) Fields() []string {
 	fields := make([]string, 0, 6)
-	if m.geneId != nil {
-		fields = append(fields, transcript.FieldGeneId)
-	}
-	if m.genome != nil {
-		fields = append(fields, transcript.FieldGenome)
-	}
 	if m.strand != nil {
 		fields = append(fields, transcript.FieldStrand)
 	}
-	if m.mrna != nil {
-		fields = append(fields, transcript.FieldMrna)
+	if m._type != nil {
+		fields = append(fields, transcript.FieldType)
 	}
-	if m.cds != nil {
-		fields = append(fields, transcript.FieldCds)
+	if m.genome_seq != nil {
+		fields = append(fields, transcript.FieldGenomeSeq)
 	}
-	if m.protein != nil {
-		fields = append(fields, transcript.FieldProtein)
+	if m.transcript_seq != nil {
+		fields = append(fields, transcript.FieldTranscriptSeq)
+	}
+	if m.cds_seq != nil {
+		fields = append(fields, transcript.FieldCdsSeq)
+	}
+	if m.protein_seq != nil {
+		fields = append(fields, transcript.FieldProteinSeq)
 	}
 	return fields
 }
@@ -1124,18 +4583,18 @@ func (m *TranscriptMutation) Fields() []string {
 // schema.
 func (m *TranscriptMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case transcript.FieldGeneId:
-		return m.GeneId()
-	case transcript.FieldGenome:
-		return m.Genome()
 	case transcript.FieldStrand:
 		return m.Strand()
-	case transcript.FieldMrna:
-		return m.Mrna()
-	case transcript.FieldCds:
-		return m.Cds()
-	case transcript.FieldProtein:
-		return m.Protein()
+	case transcript.FieldType:
+		return m.GetType()
+	case transcript.FieldGenomeSeq:
+		return m.GenomeSeq()
+	case transcript.FieldTranscriptSeq:
+		return m.TranscriptSeq()
+	case transcript.FieldCdsSeq:
+		return m.CdsSeq()
+	case transcript.FieldProteinSeq:
+		return m.ProteinSeq()
 	}
 	return nil, false
 }
@@ -1145,18 +4604,18 @@ func (m *TranscriptMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *TranscriptMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case transcript.FieldGeneId:
-		return m.OldGeneId(ctx)
-	case transcript.FieldGenome:
-		return m.OldGenome(ctx)
 	case transcript.FieldStrand:
 		return m.OldStrand(ctx)
-	case transcript.FieldMrna:
-		return m.OldMrna(ctx)
-	case transcript.FieldCds:
-		return m.OldCds(ctx)
-	case transcript.FieldProtein:
-		return m.OldProtein(ctx)
+	case transcript.FieldType:
+		return m.OldType(ctx)
+	case transcript.FieldGenomeSeq:
+		return m.OldGenomeSeq(ctx)
+	case transcript.FieldTranscriptSeq:
+		return m.OldTranscriptSeq(ctx)
+	case transcript.FieldCdsSeq:
+		return m.OldCdsSeq(ctx)
+	case transcript.FieldProteinSeq:
+		return m.OldProteinSeq(ctx)
 	}
 	return nil, fmt.Errorf("unknown Transcript field %s", name)
 }
@@ -1166,20 +4625,6 @@ func (m *TranscriptMutation) OldField(ctx context.Context, name string) (ent.Val
 // type.
 func (m *TranscriptMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case transcript.FieldGeneId:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetGeneId(v)
-		return nil
-	case transcript.FieldGenome:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetGenome(v)
-		return nil
 	case transcript.FieldStrand:
 		v, ok := value.(string)
 		if !ok {
@@ -1187,26 +4632,40 @@ func (m *TranscriptMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetStrand(v)
 		return nil
-	case transcript.FieldMrna:
+	case transcript.FieldType:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetMrna(v)
+		m.SetType(v)
 		return nil
-	case transcript.FieldCds:
+	case transcript.FieldGenomeSeq:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetCds(v)
+		m.SetGenomeSeq(v)
 		return nil
-	case transcript.FieldProtein:
+	case transcript.FieldTranscriptSeq:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetProtein(v)
+		m.SetTranscriptSeq(v)
+		return nil
+	case transcript.FieldCdsSeq:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCdsSeq(v)
+		return nil
+	case transcript.FieldProteinSeq:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProteinSeq(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Transcript field %s", name)
@@ -1257,23 +4716,23 @@ func (m *TranscriptMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *TranscriptMutation) ResetField(name string) error {
 	switch name {
-	case transcript.FieldGeneId:
-		m.ResetGeneId()
-		return nil
-	case transcript.FieldGenome:
-		m.ResetGenome()
-		return nil
 	case transcript.FieldStrand:
 		m.ResetStrand()
 		return nil
-	case transcript.FieldMrna:
-		m.ResetMrna()
+	case transcript.FieldType:
+		m.ResetType()
 		return nil
-	case transcript.FieldCds:
-		m.ResetCds()
+	case transcript.FieldGenomeSeq:
+		m.ResetGenomeSeq()
 		return nil
-	case transcript.FieldProtein:
-		m.ResetProtein()
+	case transcript.FieldTranscriptSeq:
+		m.ResetTranscriptSeq()
+		return nil
+	case transcript.FieldCdsSeq:
+		m.ResetCdsSeq()
+		return nil
+	case transcript.FieldProteinSeq:
+		m.ResetProteinSeq()
 		return nil
 	}
 	return fmt.Errorf("unknown Transcript field %s", name)
@@ -1281,698 +4740,180 @@ func (m *TranscriptMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TranscriptMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 5)
+	if m.gene != nil {
+		edges = append(edges, transcript.EdgeGene)
+	}
+	if m.cds != nil {
+		edges = append(edges, transcript.EdgeCds)
+	}
+	if m.exon != nil {
+		edges = append(edges, transcript.EdgeExon)
+	}
+	if m.five_prime_utr != nil {
+		edges = append(edges, transcript.EdgeFivePrimeUtr)
+	}
+	if m.three_prime_utr != nil {
+		edges = append(edges, transcript.EdgeThreePrimeUtr)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *TranscriptMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case transcript.EdgeGene:
+		if id := m.gene; id != nil {
+			return []ent.Value{*id}
+		}
+	case transcript.EdgeCds:
+		ids := make([]ent.Value, 0, len(m.cds))
+		for id := range m.cds {
+			ids = append(ids, id)
+		}
+		return ids
+	case transcript.EdgeExon:
+		ids := make([]ent.Value, 0, len(m.exon))
+		for id := range m.exon {
+			ids = append(ids, id)
+		}
+		return ids
+	case transcript.EdgeFivePrimeUtr:
+		ids := make([]ent.Value, 0, len(m.five_prime_utr))
+		for id := range m.five_prime_utr {
+			ids = append(ids, id)
+		}
+		return ids
+	case transcript.EdgeThreePrimeUtr:
+		ids := make([]ent.Value, 0, len(m.three_prime_utr))
+		for id := range m.three_prime_utr {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *TranscriptMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 5)
+	if m.removedcds != nil {
+		edges = append(edges, transcript.EdgeCds)
+	}
+	if m.removedexon != nil {
+		edges = append(edges, transcript.EdgeExon)
+	}
+	if m.removedfive_prime_utr != nil {
+		edges = append(edges, transcript.EdgeFivePrimeUtr)
+	}
+	if m.removedthree_prime_utr != nil {
+		edges = append(edges, transcript.EdgeThreePrimeUtr)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *TranscriptMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case transcript.EdgeCds:
+		ids := make([]ent.Value, 0, len(m.removedcds))
+		for id := range m.removedcds {
+			ids = append(ids, id)
+		}
+		return ids
+	case transcript.EdgeExon:
+		ids := make([]ent.Value, 0, len(m.removedexon))
+		for id := range m.removedexon {
+			ids = append(ids, id)
+		}
+		return ids
+	case transcript.EdgeFivePrimeUtr:
+		ids := make([]ent.Value, 0, len(m.removedfive_prime_utr))
+		for id := range m.removedfive_prime_utr {
+			ids = append(ids, id)
+		}
+		return ids
+	case transcript.EdgeThreePrimeUtr:
+		ids := make([]ent.Value, 0, len(m.removedthree_prime_utr))
+		for id := range m.removedthree_prime_utr {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TranscriptMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 5)
+	if m.clearedgene {
+		edges = append(edges, transcript.EdgeGene)
+	}
+	if m.clearedcds {
+		edges = append(edges, transcript.EdgeCds)
+	}
+	if m.clearedexon {
+		edges = append(edges, transcript.EdgeExon)
+	}
+	if m.clearedfive_prime_utr {
+		edges = append(edges, transcript.EdgeFivePrimeUtr)
+	}
+	if m.clearedthree_prime_utr {
+		edges = append(edges, transcript.EdgeThreePrimeUtr)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *TranscriptMutation) EdgeCleared(name string) bool {
+	switch name {
+	case transcript.EdgeGene:
+		return m.clearedgene
+	case transcript.EdgeCds:
+		return m.clearedcds
+	case transcript.EdgeExon:
+		return m.clearedexon
+	case transcript.EdgeFivePrimeUtr:
+		return m.clearedfive_prime_utr
+	case transcript.EdgeThreePrimeUtr:
+		return m.clearedthree_prime_utr
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *TranscriptMutation) ClearEdge(name string) error {
+	switch name {
+	case transcript.EdgeGene:
+		m.ClearGene()
+		return nil
+	}
 	return fmt.Errorf("unknown Transcript unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *TranscriptMutation) ResetEdge(name string) error {
+	switch name {
+	case transcript.EdgeGene:
+		m.ResetGene()
+		return nil
+	case transcript.EdgeCds:
+		m.ResetCds()
+		return nil
+	case transcript.EdgeExon:
+		m.ResetExon()
+		return nil
+	case transcript.EdgeFivePrimeUtr:
+		m.ResetFivePrimeUtr()
+		return nil
+	case transcript.EdgeThreePrimeUtr:
+		m.ResetThreePrimeUtr()
+		return nil
+	}
 	return fmt.Errorf("unknown Transcript edge %s", name)
-}
-
-// TrasnscriptStructureMutation represents an operation that mutates the TrasnscriptStructure nodes in the graph.
-type TrasnscriptStructureMutation struct {
-	config
-	op            Op
-	typ           string
-	id            *int
-	transcriptId  *string
-	feature       *string
-	seqname       *string
-	start         *int32
-	addstart      *int32
-	end           *int32
-	addend        *int32
-	strand        *string
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*TrasnscriptStructure, error)
-	predicates    []predicate.TrasnscriptStructure
-}
-
-var _ ent.Mutation = (*TrasnscriptStructureMutation)(nil)
-
-// trasnscriptstructureOption allows management of the mutation configuration using functional options.
-type trasnscriptstructureOption func(*TrasnscriptStructureMutation)
-
-// newTrasnscriptStructureMutation creates new mutation for the TrasnscriptStructure entity.
-func newTrasnscriptStructureMutation(c config, op Op, opts ...trasnscriptstructureOption) *TrasnscriptStructureMutation {
-	m := &TrasnscriptStructureMutation{
-		config:        c,
-		op:            op,
-		typ:           TypeTrasnscriptStructure,
-		clearedFields: make(map[string]struct{}),
-	}
-	for _, opt := range opts {
-		opt(m)
-	}
-	return m
-}
-
-// withTrasnscriptStructureID sets the ID field of the mutation.
-func withTrasnscriptStructureID(id int) trasnscriptstructureOption {
-	return func(m *TrasnscriptStructureMutation) {
-		var (
-			err   error
-			once  sync.Once
-			value *TrasnscriptStructure
-		)
-		m.oldValue = func(ctx context.Context) (*TrasnscriptStructure, error) {
-			once.Do(func() {
-				if m.done {
-					err = errors.New("querying old values post mutation is not allowed")
-				} else {
-					value, err = m.Client().TrasnscriptStructure.Get(ctx, id)
-				}
-			})
-			return value, err
-		}
-		m.id = &id
-	}
-}
-
-// withTrasnscriptStructure sets the old TrasnscriptStructure of the mutation.
-func withTrasnscriptStructure(node *TrasnscriptStructure) trasnscriptstructureOption {
-	return func(m *TrasnscriptStructureMutation) {
-		m.oldValue = func(context.Context) (*TrasnscriptStructure, error) {
-			return node, nil
-		}
-		m.id = &node.ID
-	}
-}
-
-// Client returns a new `ent.Client` from the mutation. If the mutation was
-// executed in a transaction (ent.Tx), a transactional client is returned.
-func (m TrasnscriptStructureMutation) Client() *Client {
-	client := &Client{config: m.config}
-	client.init()
-	return client
-}
-
-// Tx returns an `ent.Tx` for mutations that were executed in transactions;
-// it returns an error otherwise.
-func (m TrasnscriptStructureMutation) Tx() (*Tx, error) {
-	if _, ok := m.driver.(*txDriver); !ok {
-		return nil, errors.New("ent: mutation is not running in a transaction")
-	}
-	tx := &Tx{config: m.config}
-	tx.init()
-	return tx, nil
-}
-
-// ID returns the ID value in the mutation. Note that the ID is only available
-// if it was provided to the builder or after it was returned from the database.
-func (m *TrasnscriptStructureMutation) ID() (id int, exists bool) {
-	if m.id == nil {
-		return
-	}
-	return *m.id, true
-}
-
-// IDs queries the database and returns the entity ids that match the mutation's predicate.
-// That means, if the mutation is applied within a transaction with an isolation level such
-// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
-// or updated by the mutation.
-func (m *TrasnscriptStructureMutation) IDs(ctx context.Context) ([]int, error) {
-	switch {
-	case m.op.Is(OpUpdateOne | OpDeleteOne):
-		id, exists := m.ID()
-		if exists {
-			return []int{id}, nil
-		}
-		fallthrough
-	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().TrasnscriptStructure.Query().Where(m.predicates...).IDs(ctx)
-	default:
-		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
-	}
-}
-
-// SetTranscriptId sets the "transcriptId" field.
-func (m *TrasnscriptStructureMutation) SetTranscriptId(s string) {
-	m.transcriptId = &s
-}
-
-// TranscriptId returns the value of the "transcriptId" field in the mutation.
-func (m *TrasnscriptStructureMutation) TranscriptId() (r string, exists bool) {
-	v := m.transcriptId
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldTranscriptId returns the old "transcriptId" field's value of the TrasnscriptStructure entity.
-// If the TrasnscriptStructure object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TrasnscriptStructureMutation) OldTranscriptId(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldTranscriptId is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldTranscriptId requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldTranscriptId: %w", err)
-	}
-	return oldValue.TranscriptId, nil
-}
-
-// ResetTranscriptId resets all changes to the "transcriptId" field.
-func (m *TrasnscriptStructureMutation) ResetTranscriptId() {
-	m.transcriptId = nil
-}
-
-// SetFeature sets the "feature" field.
-func (m *TrasnscriptStructureMutation) SetFeature(s string) {
-	m.feature = &s
-}
-
-// Feature returns the value of the "feature" field in the mutation.
-func (m *TrasnscriptStructureMutation) Feature() (r string, exists bool) {
-	v := m.feature
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldFeature returns the old "feature" field's value of the TrasnscriptStructure entity.
-// If the TrasnscriptStructure object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TrasnscriptStructureMutation) OldFeature(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldFeature is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldFeature requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldFeature: %w", err)
-	}
-	return oldValue.Feature, nil
-}
-
-// ResetFeature resets all changes to the "feature" field.
-func (m *TrasnscriptStructureMutation) ResetFeature() {
-	m.feature = nil
-}
-
-// SetSeqname sets the "seqname" field.
-func (m *TrasnscriptStructureMutation) SetSeqname(s string) {
-	m.seqname = &s
-}
-
-// Seqname returns the value of the "seqname" field in the mutation.
-func (m *TrasnscriptStructureMutation) Seqname() (r string, exists bool) {
-	v := m.seqname
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldSeqname returns the old "seqname" field's value of the TrasnscriptStructure entity.
-// If the TrasnscriptStructure object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TrasnscriptStructureMutation) OldSeqname(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldSeqname is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldSeqname requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldSeqname: %w", err)
-	}
-	return oldValue.Seqname, nil
-}
-
-// ResetSeqname resets all changes to the "seqname" field.
-func (m *TrasnscriptStructureMutation) ResetSeqname() {
-	m.seqname = nil
-}
-
-// SetStart sets the "start" field.
-func (m *TrasnscriptStructureMutation) SetStart(i int32) {
-	m.start = &i
-	m.addstart = nil
-}
-
-// Start returns the value of the "start" field in the mutation.
-func (m *TrasnscriptStructureMutation) Start() (r int32, exists bool) {
-	v := m.start
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldStart returns the old "start" field's value of the TrasnscriptStructure entity.
-// If the TrasnscriptStructure object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TrasnscriptStructureMutation) OldStart(ctx context.Context) (v int32, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldStart is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldStart requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldStart: %w", err)
-	}
-	return oldValue.Start, nil
-}
-
-// AddStart adds i to the "start" field.
-func (m *TrasnscriptStructureMutation) AddStart(i int32) {
-	if m.addstart != nil {
-		*m.addstart += i
-	} else {
-		m.addstart = &i
-	}
-}
-
-// AddedStart returns the value that was added to the "start" field in this mutation.
-func (m *TrasnscriptStructureMutation) AddedStart() (r int32, exists bool) {
-	v := m.addstart
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// ResetStart resets all changes to the "start" field.
-func (m *TrasnscriptStructureMutation) ResetStart() {
-	m.start = nil
-	m.addstart = nil
-}
-
-// SetEnd sets the "end" field.
-func (m *TrasnscriptStructureMutation) SetEnd(i int32) {
-	m.end = &i
-	m.addend = nil
-}
-
-// End returns the value of the "end" field in the mutation.
-func (m *TrasnscriptStructureMutation) End() (r int32, exists bool) {
-	v := m.end
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldEnd returns the old "end" field's value of the TrasnscriptStructure entity.
-// If the TrasnscriptStructure object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TrasnscriptStructureMutation) OldEnd(ctx context.Context) (v int32, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldEnd is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldEnd requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldEnd: %w", err)
-	}
-	return oldValue.End, nil
-}
-
-// AddEnd adds i to the "end" field.
-func (m *TrasnscriptStructureMutation) AddEnd(i int32) {
-	if m.addend != nil {
-		*m.addend += i
-	} else {
-		m.addend = &i
-	}
-}
-
-// AddedEnd returns the value that was added to the "end" field in this mutation.
-func (m *TrasnscriptStructureMutation) AddedEnd() (r int32, exists bool) {
-	v := m.addend
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// ResetEnd resets all changes to the "end" field.
-func (m *TrasnscriptStructureMutation) ResetEnd() {
-	m.end = nil
-	m.addend = nil
-}
-
-// SetStrand sets the "strand" field.
-func (m *TrasnscriptStructureMutation) SetStrand(s string) {
-	m.strand = &s
-}
-
-// Strand returns the value of the "strand" field in the mutation.
-func (m *TrasnscriptStructureMutation) Strand() (r string, exists bool) {
-	v := m.strand
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldStrand returns the old "strand" field's value of the TrasnscriptStructure entity.
-// If the TrasnscriptStructure object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TrasnscriptStructureMutation) OldStrand(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldStrand is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldStrand requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldStrand: %w", err)
-	}
-	return oldValue.Strand, nil
-}
-
-// ResetStrand resets all changes to the "strand" field.
-func (m *TrasnscriptStructureMutation) ResetStrand() {
-	m.strand = nil
-}
-
-// Where appends a list predicates to the TrasnscriptStructureMutation builder.
-func (m *TrasnscriptStructureMutation) Where(ps ...predicate.TrasnscriptStructure) {
-	m.predicates = append(m.predicates, ps...)
-}
-
-// Op returns the operation name.
-func (m *TrasnscriptStructureMutation) Op() Op {
-	return m.op
-}
-
-// Type returns the node type of this mutation (TrasnscriptStructure).
-func (m *TrasnscriptStructureMutation) Type() string {
-	return m.typ
-}
-
-// Fields returns all fields that were changed during this mutation. Note that in
-// order to get all numeric fields that were incremented/decremented, call
-// AddedFields().
-func (m *TrasnscriptStructureMutation) Fields() []string {
-	fields := make([]string, 0, 6)
-	if m.transcriptId != nil {
-		fields = append(fields, trasnscriptstructure.FieldTranscriptId)
-	}
-	if m.feature != nil {
-		fields = append(fields, trasnscriptstructure.FieldFeature)
-	}
-	if m.seqname != nil {
-		fields = append(fields, trasnscriptstructure.FieldSeqname)
-	}
-	if m.start != nil {
-		fields = append(fields, trasnscriptstructure.FieldStart)
-	}
-	if m.end != nil {
-		fields = append(fields, trasnscriptstructure.FieldEnd)
-	}
-	if m.strand != nil {
-		fields = append(fields, trasnscriptstructure.FieldStrand)
-	}
-	return fields
-}
-
-// Field returns the value of a field with the given name. The second boolean
-// return value indicates that this field was not set, or was not defined in the
-// schema.
-func (m *TrasnscriptStructureMutation) Field(name string) (ent.Value, bool) {
-	switch name {
-	case trasnscriptstructure.FieldTranscriptId:
-		return m.TranscriptId()
-	case trasnscriptstructure.FieldFeature:
-		return m.Feature()
-	case trasnscriptstructure.FieldSeqname:
-		return m.Seqname()
-	case trasnscriptstructure.FieldStart:
-		return m.Start()
-	case trasnscriptstructure.FieldEnd:
-		return m.End()
-	case trasnscriptstructure.FieldStrand:
-		return m.Strand()
-	}
-	return nil, false
-}
-
-// OldField returns the old value of the field from the database. An error is
-// returned if the mutation operation is not UpdateOne, or the query to the
-// database failed.
-func (m *TrasnscriptStructureMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
-	switch name {
-	case trasnscriptstructure.FieldTranscriptId:
-		return m.OldTranscriptId(ctx)
-	case trasnscriptstructure.FieldFeature:
-		return m.OldFeature(ctx)
-	case trasnscriptstructure.FieldSeqname:
-		return m.OldSeqname(ctx)
-	case trasnscriptstructure.FieldStart:
-		return m.OldStart(ctx)
-	case trasnscriptstructure.FieldEnd:
-		return m.OldEnd(ctx)
-	case trasnscriptstructure.FieldStrand:
-		return m.OldStrand(ctx)
-	}
-	return nil, fmt.Errorf("unknown TrasnscriptStructure field %s", name)
-}
-
-// SetField sets the value of a field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *TrasnscriptStructureMutation) SetField(name string, value ent.Value) error {
-	switch name {
-	case trasnscriptstructure.FieldTranscriptId:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetTranscriptId(v)
-		return nil
-	case trasnscriptstructure.FieldFeature:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetFeature(v)
-		return nil
-	case trasnscriptstructure.FieldSeqname:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetSeqname(v)
-		return nil
-	case trasnscriptstructure.FieldStart:
-		v, ok := value.(int32)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetStart(v)
-		return nil
-	case trasnscriptstructure.FieldEnd:
-		v, ok := value.(int32)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetEnd(v)
-		return nil
-	case trasnscriptstructure.FieldStrand:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetStrand(v)
-		return nil
-	}
-	return fmt.Errorf("unknown TrasnscriptStructure field %s", name)
-}
-
-// AddedFields returns all numeric fields that were incremented/decremented during
-// this mutation.
-func (m *TrasnscriptStructureMutation) AddedFields() []string {
-	var fields []string
-	if m.addstart != nil {
-		fields = append(fields, trasnscriptstructure.FieldStart)
-	}
-	if m.addend != nil {
-		fields = append(fields, trasnscriptstructure.FieldEnd)
-	}
-	return fields
-}
-
-// AddedField returns the numeric value that was incremented/decremented on a field
-// with the given name. The second boolean return value indicates that this field
-// was not set, or was not defined in the schema.
-func (m *TrasnscriptStructureMutation) AddedField(name string) (ent.Value, bool) {
-	switch name {
-	case trasnscriptstructure.FieldStart:
-		return m.AddedStart()
-	case trasnscriptstructure.FieldEnd:
-		return m.AddedEnd()
-	}
-	return nil, false
-}
-
-// AddField adds the value to the field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *TrasnscriptStructureMutation) AddField(name string, value ent.Value) error {
-	switch name {
-	case trasnscriptstructure.FieldStart:
-		v, ok := value.(int32)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddStart(v)
-		return nil
-	case trasnscriptstructure.FieldEnd:
-		v, ok := value.(int32)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddEnd(v)
-		return nil
-	}
-	return fmt.Errorf("unknown TrasnscriptStructure numeric field %s", name)
-}
-
-// ClearedFields returns all nullable fields that were cleared during this
-// mutation.
-func (m *TrasnscriptStructureMutation) ClearedFields() []string {
-	return nil
-}
-
-// FieldCleared returns a boolean indicating if a field with the given name was
-// cleared in this mutation.
-func (m *TrasnscriptStructureMutation) FieldCleared(name string) bool {
-	_, ok := m.clearedFields[name]
-	return ok
-}
-
-// ClearField clears the value of the field with the given name. It returns an
-// error if the field is not defined in the schema.
-func (m *TrasnscriptStructureMutation) ClearField(name string) error {
-	return fmt.Errorf("unknown TrasnscriptStructure nullable field %s", name)
-}
-
-// ResetField resets all changes in the mutation for the field with the given name.
-// It returns an error if the field is not defined in the schema.
-func (m *TrasnscriptStructureMutation) ResetField(name string) error {
-	switch name {
-	case trasnscriptstructure.FieldTranscriptId:
-		m.ResetTranscriptId()
-		return nil
-	case trasnscriptstructure.FieldFeature:
-		m.ResetFeature()
-		return nil
-	case trasnscriptstructure.FieldSeqname:
-		m.ResetSeqname()
-		return nil
-	case trasnscriptstructure.FieldStart:
-		m.ResetStart()
-		return nil
-	case trasnscriptstructure.FieldEnd:
-		m.ResetEnd()
-		return nil
-	case trasnscriptstructure.FieldStrand:
-		m.ResetStrand()
-		return nil
-	}
-	return fmt.Errorf("unknown TrasnscriptStructure field %s", name)
-}
-
-// AddedEdges returns all edge names that were set/added in this mutation.
-func (m *TrasnscriptStructureMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
-	return edges
-}
-
-// AddedIDs returns all IDs (to other nodes) that were added for the given edge
-// name in this mutation.
-func (m *TrasnscriptStructureMutation) AddedIDs(name string) []ent.Value {
-	return nil
-}
-
-// RemovedEdges returns all edge names that were removed in this mutation.
-func (m *TrasnscriptStructureMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
-	return edges
-}
-
-// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
-// the given name in this mutation.
-func (m *TrasnscriptStructureMutation) RemovedIDs(name string) []ent.Value {
-	return nil
-}
-
-// ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *TrasnscriptStructureMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
-	return edges
-}
-
-// EdgeCleared returns a boolean which indicates if the edge with the given name
-// was cleared in this mutation.
-func (m *TrasnscriptStructureMutation) EdgeCleared(name string) bool {
-	return false
-}
-
-// ClearEdge clears the value of the edge with the given name. It returns an error
-// if that edge is not defined in the schema.
-func (m *TrasnscriptStructureMutation) ClearEdge(name string) error {
-	return fmt.Errorf("unknown TrasnscriptStructure unique edge %s", name)
-}
-
-// ResetEdge resets all changes to the edge with the given name in this mutation.
-// It returns an error if the edge is not defined in the schema.
-func (m *TrasnscriptStructureMutation) ResetEdge(name string) error {
-	return fmt.Errorf("unknown TrasnscriptStructure edge %s", name)
 }

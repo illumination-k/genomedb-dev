@@ -4,9 +4,12 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
+	"genomedb/ent/gene"
 	"genomedb/ent/genome"
 	"genomedb/ent/predicate"
+	"genomedb/ent/scaffold"
 	"math"
 
 	"entgo.io/ent/dialect/sql"
@@ -17,12 +20,14 @@ import (
 // GenomeQuery is the builder for querying Genome entities.
 type GenomeQuery struct {
 	config
-	limit      *int
-	offset     *int
-	unique     *bool
-	order      []OrderFunc
-	fields     []string
-	predicates []predicate.Genome
+	limit         *int
+	offset        *int
+	unique        *bool
+	order         []OrderFunc
+	fields        []string
+	predicates    []predicate.Genome
+	withGenes     *GeneQuery
+	withScaffolds *ScaffoldQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -59,6 +64,50 @@ func (gq *GenomeQuery) Order(o ...OrderFunc) *GenomeQuery {
 	return gq
 }
 
+// QueryGenes chains the current query on the "genes" edge.
+func (gq *GenomeQuery) QueryGenes() *GeneQuery {
+	query := &GeneQuery{config: gq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := gq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := gq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(genome.Table, genome.FieldID, selector),
+			sqlgraph.To(gene.Table, gene.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, genome.GenesTable, genome.GenesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryScaffolds chains the current query on the "scaffolds" edge.
+func (gq *GenomeQuery) QueryScaffolds() *ScaffoldQuery {
+	query := &ScaffoldQuery{config: gq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := gq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := gq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(genome.Table, genome.FieldID, selector),
+			sqlgraph.To(scaffold.Table, scaffold.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, genome.ScaffoldsTable, genome.ScaffoldsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first Genome entity from the query.
 // Returns a *NotFoundError when no Genome was found.
 func (gq *GenomeQuery) First(ctx context.Context) (*Genome, error) {
@@ -83,8 +132,8 @@ func (gq *GenomeQuery) FirstX(ctx context.Context) *Genome {
 
 // FirstID returns the first Genome ID from the query.
 // Returns a *NotFoundError when no Genome ID was found.
-func (gq *GenomeQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (gq *GenomeQuery) FirstID(ctx context.Context) (id string, err error) {
+	var ids []string
 	if ids, err = gq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
@@ -96,7 +145,7 @@ func (gq *GenomeQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (gq *GenomeQuery) FirstIDX(ctx context.Context) int {
+func (gq *GenomeQuery) FirstIDX(ctx context.Context) string {
 	id, err := gq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -134,8 +183,8 @@ func (gq *GenomeQuery) OnlyX(ctx context.Context) *Genome {
 // OnlyID is like Only, but returns the only Genome ID in the query.
 // Returns a *NotSingularError when more than one Genome ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (gq *GenomeQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (gq *GenomeQuery) OnlyID(ctx context.Context) (id string, err error) {
+	var ids []string
 	if ids, err = gq.Limit(2).IDs(ctx); err != nil {
 		return
 	}
@@ -151,7 +200,7 @@ func (gq *GenomeQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (gq *GenomeQuery) OnlyIDX(ctx context.Context) int {
+func (gq *GenomeQuery) OnlyIDX(ctx context.Context) string {
 	id, err := gq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -177,8 +226,8 @@ func (gq *GenomeQuery) AllX(ctx context.Context) []*Genome {
 }
 
 // IDs executes the query and returns a list of Genome IDs.
-func (gq *GenomeQuery) IDs(ctx context.Context) ([]int, error) {
-	var ids []int
+func (gq *GenomeQuery) IDs(ctx context.Context) ([]string, error) {
+	var ids []string
 	if err := gq.Select(genome.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -186,7 +235,7 @@ func (gq *GenomeQuery) IDs(ctx context.Context) ([]int, error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (gq *GenomeQuery) IDsX(ctx context.Context) []int {
+func (gq *GenomeQuery) IDsX(ctx context.Context) []string {
 	ids, err := gq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -235,16 +284,40 @@ func (gq *GenomeQuery) Clone() *GenomeQuery {
 		return nil
 	}
 	return &GenomeQuery{
-		config:     gq.config,
-		limit:      gq.limit,
-		offset:     gq.offset,
-		order:      append([]OrderFunc{}, gq.order...),
-		predicates: append([]predicate.Genome{}, gq.predicates...),
+		config:        gq.config,
+		limit:         gq.limit,
+		offset:        gq.offset,
+		order:         append([]OrderFunc{}, gq.order...),
+		predicates:    append([]predicate.Genome{}, gq.predicates...),
+		withGenes:     gq.withGenes.Clone(),
+		withScaffolds: gq.withScaffolds.Clone(),
 		// clone intermediate query.
 		sql:    gq.sql.Clone(),
 		path:   gq.path,
 		unique: gq.unique,
 	}
+}
+
+// WithGenes tells the query-builder to eager-load the nodes that are connected to
+// the "genes" edge. The optional arguments are used to configure the query builder of the edge.
+func (gq *GenomeQuery) WithGenes(opts ...func(*GeneQuery)) *GenomeQuery {
+	query := &GeneQuery{config: gq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	gq.withGenes = query
+	return gq
+}
+
+// WithScaffolds tells the query-builder to eager-load the nodes that are connected to
+// the "scaffolds" edge. The optional arguments are used to configure the query builder of the edge.
+func (gq *GenomeQuery) WithScaffolds(opts ...func(*ScaffoldQuery)) *GenomeQuery {
+	query := &ScaffoldQuery{config: gq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	gq.withScaffolds = query
+	return gq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -253,12 +326,12 @@ func (gq *GenomeQuery) Clone() *GenomeQuery {
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		CodonTable int32 `json:"codon_table,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Genome.Query().
-//		GroupBy(genome.FieldName).
+//		GroupBy(genome.FieldCodonTable).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (gq *GenomeQuery) GroupBy(field string, fields ...string) *GenomeGroupBy {
@@ -281,11 +354,11 @@ func (gq *GenomeQuery) GroupBy(field string, fields ...string) *GenomeGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		CodonTable int32 `json:"codon_table,omitempty"`
 //	}
 //
 //	client.Genome.Query().
-//		Select(genome.FieldName).
+//		Select(genome.FieldCodonTable).
 //		Scan(ctx, &v)
 func (gq *GenomeQuery) Select(fields ...string) *GenomeSelect {
 	gq.fields = append(gq.fields, fields...)
@@ -318,8 +391,12 @@ func (gq *GenomeQuery) prepareQuery(ctx context.Context) error {
 
 func (gq *GenomeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Genome, error) {
 	var (
-		nodes = []*Genome{}
-		_spec = gq.querySpec()
+		nodes       = []*Genome{}
+		_spec       = gq.querySpec()
+		loadedTypes = [2]bool{
+			gq.withGenes != nil,
+			gq.withScaffolds != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Genome).scanValues(nil, columns)
@@ -327,6 +404,7 @@ func (gq *GenomeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Genom
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Genome{config: gq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -338,7 +416,84 @@ func (gq *GenomeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Genom
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := gq.withGenes; query != nil {
+		if err := gq.loadGenes(ctx, query, nodes,
+			func(n *Genome) { n.Edges.Genes = []*Gene{} },
+			func(n *Genome, e *Gene) { n.Edges.Genes = append(n.Edges.Genes, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := gq.withScaffolds; query != nil {
+		if err := gq.loadScaffolds(ctx, query, nodes,
+			func(n *Genome) { n.Edges.Scaffolds = []*Scaffold{} },
+			func(n *Genome, e *Scaffold) { n.Edges.Scaffolds = append(n.Edges.Scaffolds, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (gq *GenomeQuery) loadGenes(ctx context.Context, query *GeneQuery, nodes []*Genome, init func(*Genome), assign func(*Genome, *Gene)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[string]*Genome)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Gene(func(s *sql.Selector) {
+		s.Where(sql.InValues(genome.GenesColumn, fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.genome_genes
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "genome_genes" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "genome_genes" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (gq *GenomeQuery) loadScaffolds(ctx context.Context, query *ScaffoldQuery, nodes []*Genome, init func(*Genome), assign func(*Genome, *Scaffold)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[string]*Genome)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Scaffold(func(s *sql.Selector) {
+		s.Where(sql.InValues(genome.ScaffoldsColumn, fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.genome_scaffolds
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "genome_scaffolds" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "genome_scaffolds" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
 }
 
 func (gq *GenomeQuery) sqlCount(ctx context.Context) (int, error) {
@@ -367,7 +522,7 @@ func (gq *GenomeQuery) querySpec() *sqlgraph.QuerySpec {
 			Table:   genome.Table,
 			Columns: genome.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: genome.FieldID,
 			},
 		},

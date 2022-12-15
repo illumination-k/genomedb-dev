@@ -4,9 +4,12 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"genomedb/ent/gene"
+	"genomedb/ent/genome"
 	"genomedb/ent/predicate"
+	"genomedb/ent/transcript"
 	"math"
 
 	"entgo.io/ent/dialect/sql"
@@ -17,12 +20,15 @@ import (
 // GeneQuery is the builder for querying Gene entities.
 type GeneQuery struct {
 	config
-	limit      *int
-	offset     *int
-	unique     *bool
-	order      []OrderFunc
-	fields     []string
-	predicates []predicate.Gene
+	limit           *int
+	offset          *int
+	unique          *bool
+	order           []OrderFunc
+	fields          []string
+	predicates      []predicate.Gene
+	withTranscripts *TranscriptQuery
+	withGenome      *GenomeQuery
+	withFKs         bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -57,6 +63,50 @@ func (gq *GeneQuery) Unique(unique bool) *GeneQuery {
 func (gq *GeneQuery) Order(o ...OrderFunc) *GeneQuery {
 	gq.order = append(gq.order, o...)
 	return gq
+}
+
+// QueryTranscripts chains the current query on the "transcripts" edge.
+func (gq *GeneQuery) QueryTranscripts() *TranscriptQuery {
+	query := &TranscriptQuery{config: gq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := gq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := gq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(gene.Table, gene.FieldID, selector),
+			sqlgraph.To(transcript.Table, transcript.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, gene.TranscriptsTable, gene.TranscriptsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryGenome chains the current query on the "genome" edge.
+func (gq *GeneQuery) QueryGenome() *GenomeQuery {
+	query := &GenomeQuery{config: gq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := gq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := gq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(gene.Table, gene.FieldID, selector),
+			sqlgraph.To(genome.Table, genome.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, gene.GenomeTable, gene.GenomeColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Gene entity from the query.
@@ -235,16 +285,40 @@ func (gq *GeneQuery) Clone() *GeneQuery {
 		return nil
 	}
 	return &GeneQuery{
-		config:     gq.config,
-		limit:      gq.limit,
-		offset:     gq.offset,
-		order:      append([]OrderFunc{}, gq.order...),
-		predicates: append([]predicate.Gene{}, gq.predicates...),
+		config:          gq.config,
+		limit:           gq.limit,
+		offset:          gq.offset,
+		order:           append([]OrderFunc{}, gq.order...),
+		predicates:      append([]predicate.Gene{}, gq.predicates...),
+		withTranscripts: gq.withTranscripts.Clone(),
+		withGenome:      gq.withGenome.Clone(),
 		// clone intermediate query.
 		sql:    gq.sql.Clone(),
 		path:   gq.path,
 		unique: gq.unique,
 	}
+}
+
+// WithTranscripts tells the query-builder to eager-load the nodes that are connected to
+// the "transcripts" edge. The optional arguments are used to configure the query builder of the edge.
+func (gq *GeneQuery) WithTranscripts(opts ...func(*TranscriptQuery)) *GeneQuery {
+	query := &TranscriptQuery{config: gq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	gq.withTranscripts = query
+	return gq
+}
+
+// WithGenome tells the query-builder to eager-load the nodes that are connected to
+// the "genome" edge. The optional arguments are used to configure the query builder of the edge.
+func (gq *GeneQuery) WithGenome(opts ...func(*GenomeQuery)) *GeneQuery {
+	query := &GenomeQuery{config: gq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	gq.withGenome = query
+	return gq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -296,15 +370,27 @@ func (gq *GeneQuery) prepareQuery(ctx context.Context) error {
 
 func (gq *GeneQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Gene, error) {
 	var (
-		nodes = []*Gene{}
-		_spec = gq.querySpec()
+		nodes       = []*Gene{}
+		withFKs     = gq.withFKs
+		_spec       = gq.querySpec()
+		loadedTypes = [2]bool{
+			gq.withTranscripts != nil,
+			gq.withGenome != nil,
+		}
 	)
+	if gq.withGenome != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, gene.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Gene).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Gene{config: gq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -316,7 +402,81 @@ func (gq *GeneQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Gene, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := gq.withTranscripts; query != nil {
+		if err := gq.loadTranscripts(ctx, query, nodes,
+			func(n *Gene) { n.Edges.Transcripts = []*Transcript{} },
+			func(n *Gene, e *Transcript) { n.Edges.Transcripts = append(n.Edges.Transcripts, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := gq.withGenome; query != nil {
+		if err := gq.loadGenome(ctx, query, nodes, nil,
+			func(n *Gene, e *Genome) { n.Edges.Genome = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (gq *GeneQuery) loadTranscripts(ctx context.Context, query *TranscriptQuery, nodes []*Gene, init func(*Gene), assign func(*Gene, *Transcript)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[string]*Gene)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.InValues(gene.TranscriptsColumn, fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.gene_transcripts
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "gene_transcripts" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "gene_transcripts" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (gq *GeneQuery) loadGenome(ctx context.Context, query *GenomeQuery, nodes []*Gene, init func(*Gene), assign func(*Gene, *Genome)) error {
+	ids := make([]string, 0, len(nodes))
+	nodeids := make(map[string][]*Gene)
+	for i := range nodes {
+		if nodes[i].genome_genes == nil {
+			continue
+		}
+		fk := *nodes[i].genome_genes
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	query.Where(genome.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "genome_genes" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
 }
 
 func (gq *GeneQuery) sqlCount(ctx context.Context) (int, error) {
