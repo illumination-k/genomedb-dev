@@ -14,7 +14,7 @@ var (
 		{Name: "seqname", Type: field.TypeString},
 		{Name: "start", Type: field.TypeInt32},
 		{Name: "end", Type: field.TypeInt32},
-		{Name: "frame", Type: field.TypeInt8},
+		{Name: "phase", Type: field.TypeInt8},
 		{Name: "strand", Type: field.TypeString},
 		{Name: "transcript_cds", Type: field.TypeString, Nullable: true},
 	}

@@ -40,9 +40,9 @@ func (cc *CdsCreate) SetEnd(i int32) *CdsCreate {
 	return cc
 }
 
-// SetFrame sets the "frame" field.
-func (cc *CdsCreate) SetFrame(i int8) *CdsCreate {
-	cc.mutation.SetFrame(i)
+// SetPhase sets the "phase" field.
+func (cc *CdsCreate) SetPhase(i int8) *CdsCreate {
+	cc.mutation.SetPhase(i)
 	return cc
 }
 
@@ -166,8 +166,8 @@ func (cc *CdsCreate) check() error {
 			return &ValidationError{Name: "end", err: fmt.Errorf(`ent: validator failed for field "Cds.end": %w`, err)}
 		}
 	}
-	if _, ok := cc.mutation.Frame(); !ok {
-		return &ValidationError{Name: "frame", err: errors.New(`ent: missing required field "Cds.frame"`)}
+	if _, ok := cc.mutation.Phase(); !ok {
+		return &ValidationError{Name: "phase", err: errors.New(`ent: missing required field "Cds.phase"`)}
 	}
 	if _, ok := cc.mutation.Strand(); !ok {
 		return &ValidationError{Name: "strand", err: errors.New(`ent: missing required field "Cds.strand"`)}
@@ -212,9 +212,9 @@ func (cc *CdsCreate) createSpec() (*Cds, *sqlgraph.CreateSpec) {
 		_spec.SetField(cds.FieldEnd, field.TypeInt32, value)
 		_node.End = value
 	}
-	if value, ok := cc.mutation.Frame(); ok {
-		_spec.SetField(cds.FieldFrame, field.TypeInt8, value)
-		_node.Frame = value
+	if value, ok := cc.mutation.Phase(); ok {
+		_spec.SetField(cds.FieldPhase, field.TypeInt8, value)
+		_node.Phase = value
 	}
 	if value, ok := cc.mutation.Strand(); ok {
 		_spec.SetField(cds.FieldStrand, field.TypeString, value)
@@ -340,21 +340,21 @@ func (u *CdsUpsert) AddEnd(v int32) *CdsUpsert {
 	return u
 }
 
-// SetFrame sets the "frame" field.
-func (u *CdsUpsert) SetFrame(v int8) *CdsUpsert {
-	u.Set(cds.FieldFrame, v)
+// SetPhase sets the "phase" field.
+func (u *CdsUpsert) SetPhase(v int8) *CdsUpsert {
+	u.Set(cds.FieldPhase, v)
 	return u
 }
 
-// UpdateFrame sets the "frame" field to the value that was provided on create.
-func (u *CdsUpsert) UpdateFrame() *CdsUpsert {
-	u.SetExcluded(cds.FieldFrame)
+// UpdatePhase sets the "phase" field to the value that was provided on create.
+func (u *CdsUpsert) UpdatePhase() *CdsUpsert {
+	u.SetExcluded(cds.FieldPhase)
 	return u
 }
 
-// AddFrame adds v to the "frame" field.
-func (u *CdsUpsert) AddFrame(v int8) *CdsUpsert {
-	u.Add(cds.FieldFrame, v)
+// AddPhase adds v to the "phase" field.
+func (u *CdsUpsert) AddPhase(v int8) *CdsUpsert {
+	u.Add(cds.FieldPhase, v)
 	return u
 }
 
@@ -466,24 +466,24 @@ func (u *CdsUpsertOne) UpdateEnd() *CdsUpsertOne {
 	})
 }
 
-// SetFrame sets the "frame" field.
-func (u *CdsUpsertOne) SetFrame(v int8) *CdsUpsertOne {
+// SetPhase sets the "phase" field.
+func (u *CdsUpsertOne) SetPhase(v int8) *CdsUpsertOne {
 	return u.Update(func(s *CdsUpsert) {
-		s.SetFrame(v)
+		s.SetPhase(v)
 	})
 }
 
-// AddFrame adds v to the "frame" field.
-func (u *CdsUpsertOne) AddFrame(v int8) *CdsUpsertOne {
+// AddPhase adds v to the "phase" field.
+func (u *CdsUpsertOne) AddPhase(v int8) *CdsUpsertOne {
 	return u.Update(func(s *CdsUpsert) {
-		s.AddFrame(v)
+		s.AddPhase(v)
 	})
 }
 
-// UpdateFrame sets the "frame" field to the value that was provided on create.
-func (u *CdsUpsertOne) UpdateFrame() *CdsUpsertOne {
+// UpdatePhase sets the "phase" field to the value that was provided on create.
+func (u *CdsUpsertOne) UpdatePhase() *CdsUpsertOne {
 	return u.Update(func(s *CdsUpsert) {
-		s.UpdateFrame()
+		s.UpdatePhase()
 	})
 }
 
@@ -756,24 +756,24 @@ func (u *CdsUpsertBulk) UpdateEnd() *CdsUpsertBulk {
 	})
 }
 
-// SetFrame sets the "frame" field.
-func (u *CdsUpsertBulk) SetFrame(v int8) *CdsUpsertBulk {
+// SetPhase sets the "phase" field.
+func (u *CdsUpsertBulk) SetPhase(v int8) *CdsUpsertBulk {
 	return u.Update(func(s *CdsUpsert) {
-		s.SetFrame(v)
+		s.SetPhase(v)
 	})
 }
 
-// AddFrame adds v to the "frame" field.
-func (u *CdsUpsertBulk) AddFrame(v int8) *CdsUpsertBulk {
+// AddPhase adds v to the "phase" field.
+func (u *CdsUpsertBulk) AddPhase(v int8) *CdsUpsertBulk {
 	return u.Update(func(s *CdsUpsert) {
-		s.AddFrame(v)
+		s.AddPhase(v)
 	})
 }
 
-// UpdateFrame sets the "frame" field to the value that was provided on create.
-func (u *CdsUpsertBulk) UpdateFrame() *CdsUpsertBulk {
+// UpdatePhase sets the "phase" field to the value that was provided on create.
+func (u *CdsUpsertBulk) UpdatePhase() *CdsUpsertBulk {
 	return u.Update(func(s *CdsUpsert) {
-		s.UpdateFrame()
+		s.UpdatePhase()
 	})
 }
 

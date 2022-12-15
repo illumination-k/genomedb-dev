@@ -13,8 +13,8 @@ const (
 	FieldStart = "start"
 	// FieldEnd holds the string denoting the end field in the database.
 	FieldEnd = "end"
-	// FieldFrame holds the string denoting the frame field in the database.
-	FieldFrame = "frame"
+	// FieldPhase holds the string denoting the phase field in the database.
+	FieldPhase = "phase"
 	// FieldStrand holds the string denoting the strand field in the database.
 	FieldStrand = "strand"
 	// EdgeTranscript holds the string denoting the transcript edge name in mutations.
@@ -36,7 +36,7 @@ var Columns = []string{
 	FieldSeqname,
 	FieldStart,
 	FieldEnd,
-	FieldFrame,
+	FieldPhase,
 	FieldStrand,
 }
 

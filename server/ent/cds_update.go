@@ -60,16 +60,16 @@ func (cu *CdsUpdate) AddEnd(i int32) *CdsUpdate {
 	return cu
 }
 
-// SetFrame sets the "frame" field.
-func (cu *CdsUpdate) SetFrame(i int8) *CdsUpdate {
-	cu.mutation.ResetFrame()
-	cu.mutation.SetFrame(i)
+// SetPhase sets the "phase" field.
+func (cu *CdsUpdate) SetPhase(i int8) *CdsUpdate {
+	cu.mutation.ResetPhase()
+	cu.mutation.SetPhase(i)
 	return cu
 }
 
-// AddFrame adds i to the "frame" field.
-func (cu *CdsUpdate) AddFrame(i int8) *CdsUpdate {
-	cu.mutation.AddFrame(i)
+// AddPhase adds i to the "phase" field.
+func (cu *CdsUpdate) AddPhase(i int8) *CdsUpdate {
+	cu.mutation.AddPhase(i)
 	return cu
 }
 
@@ -217,11 +217,11 @@ func (cu *CdsUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := cu.mutation.AddedEnd(); ok {
 		_spec.AddField(cds.FieldEnd, field.TypeInt32, value)
 	}
-	if value, ok := cu.mutation.Frame(); ok {
-		_spec.SetField(cds.FieldFrame, field.TypeInt8, value)
+	if value, ok := cu.mutation.Phase(); ok {
+		_spec.SetField(cds.FieldPhase, field.TypeInt8, value)
 	}
-	if value, ok := cu.mutation.AddedFrame(); ok {
-		_spec.AddField(cds.FieldFrame, field.TypeInt8, value)
+	if value, ok := cu.mutation.AddedPhase(); ok {
+		_spec.AddField(cds.FieldPhase, field.TypeInt8, value)
 	}
 	if value, ok := cu.mutation.Strand(); ok {
 		_spec.SetField(cds.FieldStrand, field.TypeString, value)
@@ -312,16 +312,16 @@ func (cuo *CdsUpdateOne) AddEnd(i int32) *CdsUpdateOne {
 	return cuo
 }
 
-// SetFrame sets the "frame" field.
-func (cuo *CdsUpdateOne) SetFrame(i int8) *CdsUpdateOne {
-	cuo.mutation.ResetFrame()
-	cuo.mutation.SetFrame(i)
+// SetPhase sets the "phase" field.
+func (cuo *CdsUpdateOne) SetPhase(i int8) *CdsUpdateOne {
+	cuo.mutation.ResetPhase()
+	cuo.mutation.SetPhase(i)
 	return cuo
 }
 
-// AddFrame adds i to the "frame" field.
-func (cuo *CdsUpdateOne) AddFrame(i int8) *CdsUpdateOne {
-	cuo.mutation.AddFrame(i)
+// AddPhase adds i to the "phase" field.
+func (cuo *CdsUpdateOne) AddPhase(i int8) *CdsUpdateOne {
+	cuo.mutation.AddPhase(i)
 	return cuo
 }
 
@@ -499,11 +499,11 @@ func (cuo *CdsUpdateOne) sqlSave(ctx context.Context) (_node *Cds, err error) {
 	if value, ok := cuo.mutation.AddedEnd(); ok {
 		_spec.AddField(cds.FieldEnd, field.TypeInt32, value)
 	}
-	if value, ok := cuo.mutation.Frame(); ok {
-		_spec.SetField(cds.FieldFrame, field.TypeInt8, value)
+	if value, ok := cuo.mutation.Phase(); ok {
+		_spec.SetField(cds.FieldPhase, field.TypeInt8, value)
 	}
-	if value, ok := cuo.mutation.AddedFrame(); ok {
-		_spec.AddField(cds.FieldFrame, field.TypeInt8, value)
+	if value, ok := cuo.mutation.AddedPhase(); ok {
+		_spec.AddField(cds.FieldPhase, field.TypeInt8, value)
 	}
 	if value, ok := cuo.mutation.Strand(); ok {
 		_spec.SetField(cds.FieldStrand, field.TypeString, value)

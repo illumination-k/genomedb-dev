@@ -101,10 +101,10 @@ func End(v int32) predicate.Cds {
 	})
 }
 
-// Frame applies equality check predicate on the "frame" field. It's identical to FrameEQ.
-func Frame(v int8) predicate.Cds {
+// Phase applies equality check predicate on the "phase" field. It's identical to PhaseEQ.
+func Phase(v int8) predicate.Cds {
 	return predicate.Cds(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldFrame), v))
+		s.Where(sql.EQ(s.C(FieldPhase), v))
 	})
 }
 
@@ -342,67 +342,67 @@ func EndLTE(v int32) predicate.Cds {
 	})
 }
 
-// FrameEQ applies the EQ predicate on the "frame" field.
-func FrameEQ(v int8) predicate.Cds {
+// PhaseEQ applies the EQ predicate on the "phase" field.
+func PhaseEQ(v int8) predicate.Cds {
 	return predicate.Cds(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldFrame), v))
+		s.Where(sql.EQ(s.C(FieldPhase), v))
 	})
 }
 
-// FrameNEQ applies the NEQ predicate on the "frame" field.
-func FrameNEQ(v int8) predicate.Cds {
+// PhaseNEQ applies the NEQ predicate on the "phase" field.
+func PhaseNEQ(v int8) predicate.Cds {
 	return predicate.Cds(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldFrame), v))
+		s.Where(sql.NEQ(s.C(FieldPhase), v))
 	})
 }
 
-// FrameIn applies the In predicate on the "frame" field.
-func FrameIn(vs ...int8) predicate.Cds {
+// PhaseIn applies the In predicate on the "phase" field.
+func PhaseIn(vs ...int8) predicate.Cds {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
 	}
 	return predicate.Cds(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldFrame), v...))
+		s.Where(sql.In(s.C(FieldPhase), v...))
 	})
 }
 
-// FrameNotIn applies the NotIn predicate on the "frame" field.
-func FrameNotIn(vs ...int8) predicate.Cds {
+// PhaseNotIn applies the NotIn predicate on the "phase" field.
+func PhaseNotIn(vs ...int8) predicate.Cds {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
 	}
 	return predicate.Cds(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldFrame), v...))
+		s.Where(sql.NotIn(s.C(FieldPhase), v...))
 	})
 }
 
-// FrameGT applies the GT predicate on the "frame" field.
-func FrameGT(v int8) predicate.Cds {
+// PhaseGT applies the GT predicate on the "phase" field.
+func PhaseGT(v int8) predicate.Cds {
 	return predicate.Cds(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldFrame), v))
+		s.Where(sql.GT(s.C(FieldPhase), v))
 	})
 }
 
-// FrameGTE applies the GTE predicate on the "frame" field.
-func FrameGTE(v int8) predicate.Cds {
+// PhaseGTE applies the GTE predicate on the "phase" field.
+func PhaseGTE(v int8) predicate.Cds {
 	return predicate.Cds(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldFrame), v))
+		s.Where(sql.GTE(s.C(FieldPhase), v))
 	})
 }
 
-// FrameLT applies the LT predicate on the "frame" field.
-func FrameLT(v int8) predicate.Cds {
+// PhaseLT applies the LT predicate on the "phase" field.
+func PhaseLT(v int8) predicate.Cds {
 	return predicate.Cds(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldFrame), v))
+		s.Where(sql.LT(s.C(FieldPhase), v))
 	})
 }
 
-// FrameLTE applies the LTE predicate on the "frame" field.
-func FrameLTE(v int8) predicate.Cds {
+// PhaseLTE applies the LTE predicate on the "phase" field.
+func PhaseLTE(v int8) predicate.Cds {
 	return predicate.Cds(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldFrame), v))
+		s.Where(sql.LTE(s.C(FieldPhase), v))
 	})
 }
 

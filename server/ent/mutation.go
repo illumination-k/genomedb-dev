@@ -50,8 +50,8 @@ type CdsMutation struct {
 	addstart          *int32
 	end               *int32
 	addend            *int32
-	frame             *int8
-	addframe          *int8
+	phase             *int8
+	addphase          *int8
 	strand            *string
 	clearedFields     map[string]struct{}
 	transcript        *string
@@ -307,60 +307,60 @@ func (m *CdsMutation) ResetEnd() {
 	m.addend = nil
 }
 
-// SetFrame sets the "frame" field.
-func (m *CdsMutation) SetFrame(i int8) {
-	m.frame = &i
-	m.addframe = nil
+// SetPhase sets the "phase" field.
+func (m *CdsMutation) SetPhase(i int8) {
+	m.phase = &i
+	m.addphase = nil
 }
 
-// Frame returns the value of the "frame" field in the mutation.
-func (m *CdsMutation) Frame() (r int8, exists bool) {
-	v := m.frame
+// Phase returns the value of the "phase" field in the mutation.
+func (m *CdsMutation) Phase() (r int8, exists bool) {
+	v := m.phase
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldFrame returns the old "frame" field's value of the Cds entity.
+// OldPhase returns the old "phase" field's value of the Cds entity.
 // If the Cds object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CdsMutation) OldFrame(ctx context.Context) (v int8, err error) {
+func (m *CdsMutation) OldPhase(ctx context.Context) (v int8, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldFrame is only allowed on UpdateOne operations")
+		return v, errors.New("OldPhase is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldFrame requires an ID field in the mutation")
+		return v, errors.New("OldPhase requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldFrame: %w", err)
+		return v, fmt.Errorf("querying old value for OldPhase: %w", err)
 	}
-	return oldValue.Frame, nil
+	return oldValue.Phase, nil
 }
 
-// AddFrame adds i to the "frame" field.
-func (m *CdsMutation) AddFrame(i int8) {
-	if m.addframe != nil {
-		*m.addframe += i
+// AddPhase adds i to the "phase" field.
+func (m *CdsMutation) AddPhase(i int8) {
+	if m.addphase != nil {
+		*m.addphase += i
 	} else {
-		m.addframe = &i
+		m.addphase = &i
 	}
 }
 
-// AddedFrame returns the value that was added to the "frame" field in this mutation.
-func (m *CdsMutation) AddedFrame() (r int8, exists bool) {
-	v := m.addframe
+// AddedPhase returns the value that was added to the "phase" field in this mutation.
+func (m *CdsMutation) AddedPhase() (r int8, exists bool) {
+	v := m.addphase
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// ResetFrame resets all changes to the "frame" field.
-func (m *CdsMutation) ResetFrame() {
-	m.frame = nil
-	m.addframe = nil
+// ResetPhase resets all changes to the "phase" field.
+func (m *CdsMutation) ResetPhase() {
+	m.phase = nil
+	m.addphase = nil
 }
 
 // SetStrand sets the "strand" field.
@@ -467,8 +467,8 @@ func (m *CdsMutation) Fields() []string {
 	if m.end != nil {
 		fields = append(fields, cds.FieldEnd)
 	}
-	if m.frame != nil {
-		fields = append(fields, cds.FieldFrame)
+	if m.phase != nil {
+		fields = append(fields, cds.FieldPhase)
 	}
 	if m.strand != nil {
 		fields = append(fields, cds.FieldStrand)
@@ -487,8 +487,8 @@ func (m *CdsMutation) Field(name string) (ent.Value, bool) {
 		return m.Start()
 	case cds.FieldEnd:
 		return m.End()
-	case cds.FieldFrame:
-		return m.Frame()
+	case cds.FieldPhase:
+		return m.Phase()
 	case cds.FieldStrand:
 		return m.Strand()
 	}
@@ -506,8 +506,8 @@ func (m *CdsMutation) OldField(ctx context.Context, name string) (ent.Value, err
 		return m.OldStart(ctx)
 	case cds.FieldEnd:
 		return m.OldEnd(ctx)
-	case cds.FieldFrame:
-		return m.OldFrame(ctx)
+	case cds.FieldPhase:
+		return m.OldPhase(ctx)
 	case cds.FieldStrand:
 		return m.OldStrand(ctx)
 	}
@@ -540,12 +540,12 @@ func (m *CdsMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetEnd(v)
 		return nil
-	case cds.FieldFrame:
+	case cds.FieldPhase:
 		v, ok := value.(int8)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetFrame(v)
+		m.SetPhase(v)
 		return nil
 	case cds.FieldStrand:
 		v, ok := value.(string)
@@ -568,8 +568,8 @@ func (m *CdsMutation) AddedFields() []string {
 	if m.addend != nil {
 		fields = append(fields, cds.FieldEnd)
 	}
-	if m.addframe != nil {
-		fields = append(fields, cds.FieldFrame)
+	if m.addphase != nil {
+		fields = append(fields, cds.FieldPhase)
 	}
 	return fields
 }
@@ -583,8 +583,8 @@ func (m *CdsMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedStart()
 	case cds.FieldEnd:
 		return m.AddedEnd()
-	case cds.FieldFrame:
-		return m.AddedFrame()
+	case cds.FieldPhase:
+		return m.AddedPhase()
 	}
 	return nil, false
 }
@@ -608,12 +608,12 @@ func (m *CdsMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddEnd(v)
 		return nil
-	case cds.FieldFrame:
+	case cds.FieldPhase:
 		v, ok := value.(int8)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.AddFrame(v)
+		m.AddPhase(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Cds numeric field %s", name)
@@ -651,8 +651,8 @@ func (m *CdsMutation) ResetField(name string) error {
 	case cds.FieldEnd:
 		m.ResetEnd()
 		return nil
-	case cds.FieldFrame:
-		m.ResetFrame()
+	case cds.FieldPhase:
+		m.ResetPhase()
 		return nil
 	case cds.FieldStrand:
 		m.ResetStrand()

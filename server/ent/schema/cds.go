@@ -17,7 +17,7 @@ func (Cds) Fields() []ent.Field {
 		field.String("seqname"),
 		field.Int32("start").Positive(),
 		field.Int32("end").Positive(),
-		field.Int8("frame"),
+		field.Int8("phase"),
 		field.String("strand"),
 	}
 }

@@ -1,3 +1,5 @@
+// https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md
+
 package gffio
 
 import (
@@ -53,25 +55,25 @@ func (m *MultiMap) PutAll(key string, values ...string) {
 type GffRecord struct {
 	Seqname    string
 	Source     string
-	Feature    string
+	Type       string
 	Start      int32
 	End        int32
 	Score      string
 	Strand     string
-	Frame      string
+	Phase      string
 	Attributes MultiMap
 }
 
-func NewGffRecord(seqname string, source string, feature string, start int32, end int32, score string, strand string, frame string, attrs MultiMap) *GffRecord {
+func NewGffRecord(seqname string, source string, type_ string, start int32, end int32, score string, strand string, phase string, attrs MultiMap) *GffRecord {
 	record := new(GffRecord)
 	record.Seqname = seqname
 	record.Source = source
-	record.Feature = feature
+	record.Type = type_
 	record.Start = start
 	record.End = end
 	record.Score = score
 	record.Strand = strand
-	record.Frame = frame
+	record.Phase = phase
 	record.Attributes = attrs
 	return record
 }
@@ -95,23 +97,23 @@ func ParseGffAttrs(attrs_string string) (MultiMap, error) {
 }
 
 func (r GffRecord) IsGeneChild() bool {
-	return r.Feature == "mRNA" || r.Feature == "tRNA" || r.Feature == "rRNA" || r.Feature == "miRNA" || r.Feature == "pre-miRNA"
+	return r.Type == "mRNA" || r.Type == "tRNA" || r.Type == "rRNA" || r.Type == "miRNA" || r.Type == "pre-miRNA"
 }
 
 func (r GffRecord) IsExon() bool {
-	return r.Feature == "exon"
+	return r.Type == "exon"
 }
 
 func (r GffRecord) IsCds() bool {
-	return r.Feature == "CDS"
+	return r.Type == "CDS"
 }
 
 func (r GffRecord) IsFivePrimeUtr() bool {
-	return r.Feature == "five_prime_UTR"
+	return r.Type == "five_prime_UTR"
 }
 
 func (r GffRecord) IsThreePrimeUtr() bool {
-	return r.Feature == "three_prime_UTR"
+	return r.Type == "three_prime_UTR"
 }
 
 type GffParser struct {
@@ -141,7 +143,7 @@ func (p *GffParser) ConsumeLine(line string) error {
 
 	seqname := recs[0]
 	source := recs[1]
-	feature := recs[2]
+	type_ := recs[2]
 	start, err := strconv.Atoi(recs[3])
 
 	if err != nil {
@@ -161,14 +163,14 @@ func (p *GffParser) ConsumeLine(line string) error {
 		return fmt.Errorf("Incorrect line, strand must be - or + but %v: %v", strand, line)
 	}
 
-	frame := recs[7]
+	phase := recs[7]
 	attrs, err := ParseGffAttrs(recs[8])
 
 	if err != nil {
 		return fmt.Errorf("Errer: %v in %v", err, line)
 	}
 
-	gffRecord := NewGffRecord(seqname, source, feature, int32(start), int32(end), score, strand, frame, attrs)
+	gffRecord := NewGffRecord(seqname, source, type_, int32(start), int32(end), score, strand, phase, attrs)
 	p.Records = append(p.Records, *gffRecord)
 
 	return nil

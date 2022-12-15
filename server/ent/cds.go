@@ -22,8 +22,8 @@ type Cds struct {
 	Start int32 `json:"start,omitempty"`
 	// End holds the value of the "end" field.
 	End int32 `json:"end,omitempty"`
-	// Frame holds the value of the "frame" field.
-	Frame int8 `json:"frame,omitempty"`
+	// Phase holds the value of the "phase" field.
+	Phase int8 `json:"phase,omitempty"`
 	// Strand holds the value of the "strand" field.
 	Strand string `json:"strand,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -59,7 +59,7 @@ func (*Cds) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case cds.FieldID, cds.FieldStart, cds.FieldEnd, cds.FieldFrame:
+		case cds.FieldID, cds.FieldStart, cds.FieldEnd, cds.FieldPhase:
 			values[i] = new(sql.NullInt64)
 		case cds.FieldSeqname, cds.FieldStrand:
 			values[i] = new(sql.NullString)
@@ -104,11 +104,11 @@ func (c *Cds) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				c.End = int32(value.Int64)
 			}
-		case cds.FieldFrame:
+		case cds.FieldPhase:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field frame", values[i])
+				return fmt.Errorf("unexpected type %T for field phase", values[i])
 			} else if value.Valid {
-				c.Frame = int8(value.Int64)
+				c.Phase = int8(value.Int64)
 			}
 		case cds.FieldStrand:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -165,8 +165,8 @@ func (c *Cds) String() string {
 	builder.WriteString("end=")
 	builder.WriteString(fmt.Sprintf("%v", c.End))
 	builder.WriteString(", ")
-	builder.WriteString("frame=")
-	builder.WriteString(fmt.Sprintf("%v", c.Frame))
+	builder.WriteString("phase=")
+	builder.WriteString(fmt.Sprintf("%v", c.Phase))
 	builder.WriteString(", ")
 	builder.WriteString("strand=")
 	builder.WriteString(c.Strand)
