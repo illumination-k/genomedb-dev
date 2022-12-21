@@ -4,20 +4,19 @@ package gffio
 
 import (
 	"fmt"
+	"genomedb/seq"
 	"strconv"
 	"strings"
 )
 
-type MultiMap struct {
-	m map[string][]string
-}
+type MultiMap map[string][]string
 
 func NewMultiMap() MultiMap {
-	return MultiMap{make(map[string][]string)}
+	return make(map[string][]string)
 }
 
 func (m MultiMap) Get(key string) (value string, found bool) {
-	values, found := m.m[key]
+	values, found := m[key]
 
 	if !found {
 		return "", found
@@ -27,28 +26,28 @@ func (m MultiMap) Get(key string) (value string, found bool) {
 }
 
 func (m MultiMap) GetAll(key string) (values []string, found bool) {
-	values, found = m.m[key]
+	values, found = m[key]
 
 	return values, found
 }
 
 func (m *MultiMap) Put(key string, value string) {
-	values, found := m.m[key]
+	values, found := (*m)[key]
 
 	if !found {
-		m.m[key] = []string{value}
+		(*m)[key] = []string{value}
 	} else {
-		m.m[key] = append(values, value)
+		(*m)[key] = append(values, value)
 	}
 }
 
 func (m *MultiMap) PutAll(key string, values ...string) {
-	curValues, found := m.m[key]
+	curValues, found := (*m)[key]
 
 	if !found {
-		m.m[key] = values
+		(*m)[key] = values
 	} else {
-		m.m[key] = append(curValues, values...)
+		(*m)[key] = append(curValues, values...)
 	}
 }
 
@@ -109,16 +108,54 @@ func (r GffRecord) IsCds() bool {
 }
 
 func (r GffRecord) IsFivePrimeUtr() bool {
+	/*
+		[Term]
+		id: SO:0000204
+		name: five_prime_UTR
+		namespace: sequence
+		def: "A region at the 5' end of a mature transcript (preceding the initiation codon) that is not translated into a protein." [http://www.insdc.org/files/feature_table.html]
+		subset: SOFA
+		synonym: "5' UTR" EXACT []
+		synonym: "five prime UTR" EXACT []
+		synonym: "five_prime_untranslated_region" EXACT []
+		synonym: "INSDC_feature:5'UTR" EXACT []
+		xref: http://en.wikipedia.org/wiki/5'_UTR "wiki"
+		is_a: SO:0000203 ! UTR
+	*/
 	return r.Type == "five_prime_UTR"
 }
 
 func (r GffRecord) IsThreePrimeUtr() bool {
+	/*
+		[Term]
+		id: SO:0000205
+		name: three_prime_UTR
+		namespace: sequence
+		def: "A region at the 3' end of a mature transcript (following the stop codon) that is not translated into a protein." [http://www.insdc.org/files/feature_table.html]
+		subset: SOFA
+		synonym: "INSDC_feature:3'UTR" EXACT []
+		synonym: "three prime untranslated region" EXACT []
+		synonym: "three prime UTR" EXACT []
+		xref: http://en.wikipedia.org/wiki/Three_prime_untranslated_region "wiki"
+		is_a: SO:0000203 ! UTR
+	*/
 	return r.Type == "three_prime_UTR"
 }
 
+func (r GffRecord) ExtractSequence(seqnameSeq string) string {
+	sequence := seqnameSeq[r.Start:r.End]
+
+	if r.Strand == "-" {
+		sequence = seq.ReverseComplement(sequence)
+	}
+
+	return sequence
+}
+
 type GffParser struct {
-	Version string
-	Records []GffRecord
+	Version  string
+	Comments []string
+	Records  []GffRecord
 }
 
 func NewGffParser() *GffParser {
@@ -128,6 +165,7 @@ func NewGffParser() *GffParser {
 func (p *GffParser) ConsumeLine(line string) error {
 	line = strings.TrimSpace(line)
 	if strings.HasPrefix(line, "#") {
+		p.Comments = append(p.Comments, line)
 		return nil
 	}
 

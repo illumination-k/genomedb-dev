@@ -4,18 +4,43 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"genomedb/ent"
-	"genomedb/ent/proto/entpb"
-	"log"
-	"net"
+	genomedbv1 "genomedb/protogen/genomedb/v1"
+	"genomedb/protogen/genomedb/v1/genomedbv1connect"
+	"net/http"
 
+	"log"
+
+	"github.com/bufbuild/connect-go"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
+type GenomeServer struct{}
+
+func (s *GenomeServer) Get(
+	ctx context.Context,
+	req *connect.Request[genomedbv1.GenomeGetRequest],
+) (*connect.Response[genomedbv1.GenomeGetResponse], error) {
+	res := connect.NewResponse(&genomedbv1.GenomeGetResponse{Genome: &genomedbv1.Genome{Name: req.Msg.GenomeName}})
+	res.Header().Set("Genomedb-Version", "v1")
+	return res, nil
+}
+
+func (s *GenomeServer) ListGenomeNames(
+	ctx context.Context,
+	req *connect.Request[emptypb.Empty],
+) (*connect.Response[genomedbv1.ListGenomeNamesResponse], error) {
+	res := connect.NewResponse(&genomedbv1.ListGenomeNamesResponse{})
+	return res, nil
+}
+
 var port int32
+var host string
 
 // serveCmd represents the serve command
 var serveCmd = &cobra.Command{
@@ -36,22 +61,20 @@ to quickly create a Cobra application.`,
 
 		defer client.Close()
 
-		svc := entpb.NewTranscriptService(client)
-		server := grpc.NewServer()
-
-		entpb.RegisterTranscriptServiceServer(server, svc)
-
-		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
-		reflection.Register(server)
-
 		if err != nil {
 			log.Fatalf("failed listening: %s", err)
 		}
 
-		// トラフィックを無期限にリッスン
-		if err := server.Serve(lis); err != nil {
-			log.Fatalf("server ended: %s", err)
-		}
+		genomeServer := &GenomeServer{}
+		mux := http.NewServeMux()
+		path, handler := genomedbv1connect.NewGenomeServiceHandler(genomeServer)
+
+		mux.Handle(path, handler)
+		http.ListenAndServe(
+			fmt.Sprintf("%s:%d", host, port),
+			// Use h2c so we can serve HTTP/2 without TLS.
+			h2c.NewHandler(mux, &http2.Server{}),
+		)
 		return nil
 	},
 }
@@ -69,5 +92,6 @@ func init() {
 	// is called directly, e.g.:
 	// serveCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
+	serveCmd.Flags().StringVarP(&host, "host", "", "localhost", "host")
 	serveCmd.Flags().Int32VarP(&port, "port", "p", 50000, "port")
 }
