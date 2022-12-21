@@ -3,7 +3,6 @@ package schema
 import (
 	"entgo.io/contrib/entproto"
 	"entgo.io/ent"
-	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
@@ -16,7 +15,7 @@ type Genome struct {
 // Fields of the Genome.
 func (Genome) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("id").StorageKey("name").Annotations(entproto.Field(1)),
+		field.String("id").StorageKey("name"),
 		field.Int32("codon_table").
 			Min(1).
 			Max(31).
@@ -28,14 +27,7 @@ func (Genome) Fields() []ent.Field {
 // Edges of the Genome.
 func (Genome) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("genes", Gene.Type).Annotations(entproto.Field(3)),
-		edge.To("scaffolds", Scaffold.Type).Annotations(entproto.Field(4)),
-	}
-}
-
-// gRPC annotation
-func (Genome) Annotations() []schema.Annotation {
-	return []schema.Annotation{
-		entproto.Message(), entproto.Service(),
+		edge.To("locuses", Locus.Type),
+		edge.To("scaffolds", Scaffold.Type),
 	}
 }

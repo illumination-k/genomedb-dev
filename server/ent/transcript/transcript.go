@@ -7,84 +7,67 @@ const (
 	Label = "transcript"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldSeqname holds the string denoting the seqname field in the database.
+	FieldSeqname = "seqname"
 	// FieldStrand holds the string denoting the strand field in the database.
 	FieldStrand = "strand"
 	// FieldType holds the string denoting the type field in the database.
 	FieldType = "type"
-	// FieldGenomeSeq holds the string denoting the genome_seq field in the database.
-	FieldGenomeSeq = "genome_seq"
-	// FieldTranscriptSeq holds the string denoting the transcript_seq field in the database.
-	FieldTranscriptSeq = "transcript_seq"
-	// FieldCdsSeq holds the string denoting the cds_seq field in the database.
-	FieldCdsSeq = "cds_seq"
-	// FieldProteinSeq holds the string denoting the protein_seq field in the database.
-	FieldProteinSeq = "protein_seq"
-	// EdgeGene holds the string denoting the gene edge name in mutations.
-	EdgeGene = "gene"
-	// EdgeCds holds the string denoting the cds edge name in mutations.
-	EdgeCds = "cds"
-	// EdgeExon holds the string denoting the exon edge name in mutations.
-	EdgeExon = "exon"
-	// EdgeFivePrimeUtr holds the string denoting the five_prime_utr edge name in mutations.
-	EdgeFivePrimeUtr = "five_prime_utr"
-	// EdgeThreePrimeUtr holds the string denoting the three_prime_utr edge name in mutations.
-	EdgeThreePrimeUtr = "three_prime_utr"
-	// GeneFieldID holds the string denoting the ID field of the Gene.
-	GeneFieldID = "geneId"
+	// FieldStart holds the string denoting the start field in the database.
+	FieldStart = "start"
+	// FieldEnd holds the string denoting the end field in the database.
+	FieldEnd = "end"
+	// FieldExon holds the string denoting the exon field in the database.
+	FieldExon = "exon"
+	// FieldFivePrimeUtr holds the string denoting the five_prime_utr field in the database.
+	FieldFivePrimeUtr = "five_prime_utr"
+	// FieldThreePrimeUtr holds the string denoting the three_prime_utr field in the database.
+	FieldThreePrimeUtr = "three_prime_utr"
+	// FieldCds holds the string denoting the cds field in the database.
+	FieldCds = "cds"
+	// FieldGenomicSequence holds the string denoting the genomic_sequence field in the database.
+	FieldGenomicSequence = "genomic_sequence"
+	// FieldExonSequence holds the string denoting the exon_sequence field in the database.
+	FieldExonSequence = "exon_sequence"
+	// FieldCdsSequence holds the string denoting the cds_sequence field in the database.
+	FieldCdsSequence = "cds_sequence"
+	// FieldProteinSequence holds the string denoting the protein_sequence field in the database.
+	FieldProteinSequence = "protein_sequence"
+	// EdgeLocus holds the string denoting the locus edge name in mutations.
+	EdgeLocus = "locus"
 	// Table holds the table name of the transcript in the database.
 	Table = "transcripts"
-	// GeneTable is the table that holds the gene relation/edge.
-	GeneTable = "transcripts"
-	// GeneInverseTable is the table name for the Gene entity.
-	// It exists in this package in order to avoid circular dependency with the "gene" package.
-	GeneInverseTable = "genes"
-	// GeneColumn is the table column denoting the gene relation/edge.
-	GeneColumn = "gene_transcripts"
-	// CdsTable is the table that holds the cds relation/edge.
-	CdsTable = "cds"
-	// CdsInverseTable is the table name for the Cds entity.
-	// It exists in this package in order to avoid circular dependency with the "cds" package.
-	CdsInverseTable = "cds"
-	// CdsColumn is the table column denoting the cds relation/edge.
-	CdsColumn = "transcript_cds"
-	// ExonTable is the table that holds the exon relation/edge.
-	ExonTable = "exons"
-	// ExonInverseTable is the table name for the Exon entity.
-	// It exists in this package in order to avoid circular dependency with the "exon" package.
-	ExonInverseTable = "exons"
-	// ExonColumn is the table column denoting the exon relation/edge.
-	ExonColumn = "transcript_exon"
-	// FivePrimeUtrTable is the table that holds the five_prime_utr relation/edge.
-	FivePrimeUtrTable = "five_prime_utrs"
-	// FivePrimeUtrInverseTable is the table name for the FivePrimeUtr entity.
-	// It exists in this package in order to avoid circular dependency with the "fiveprimeutr" package.
-	FivePrimeUtrInverseTable = "five_prime_utrs"
-	// FivePrimeUtrColumn is the table column denoting the five_prime_utr relation/edge.
-	FivePrimeUtrColumn = "transcript_five_prime_utr"
-	// ThreePrimeUtrTable is the table that holds the three_prime_utr relation/edge.
-	ThreePrimeUtrTable = "three_prime_utrs"
-	// ThreePrimeUtrInverseTable is the table name for the ThreePrimeUtr entity.
-	// It exists in this package in order to avoid circular dependency with the "threeprimeutr" package.
-	ThreePrimeUtrInverseTable = "three_prime_utrs"
-	// ThreePrimeUtrColumn is the table column denoting the three_prime_utr relation/edge.
-	ThreePrimeUtrColumn = "transcript_three_prime_utr"
+	// LocusTable is the table that holds the locus relation/edge.
+	LocusTable = "transcripts"
+	// LocusInverseTable is the table name for the Locus entity.
+	// It exists in this package in order to avoid circular dependency with the "locus" package.
+	LocusInverseTable = "locus"
+	// LocusColumn is the table column denoting the locus relation/edge.
+	LocusColumn = "locus_transcripts"
 )
 
 // Columns holds all SQL columns for transcript fields.
 var Columns = []string{
 	FieldID,
+	FieldSeqname,
 	FieldStrand,
 	FieldType,
-	FieldGenomeSeq,
-	FieldTranscriptSeq,
-	FieldCdsSeq,
-	FieldProteinSeq,
+	FieldStart,
+	FieldEnd,
+	FieldExon,
+	FieldFivePrimeUtr,
+	FieldThreePrimeUtr,
+	FieldCds,
+	FieldGenomicSequence,
+	FieldExonSequence,
+	FieldCdsSequence,
+	FieldProteinSequence,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "transcripts"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"gene_transcripts",
+	"locus_transcripts",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -101,3 +84,10 @@ func ValidColumn(column string) bool {
 	}
 	return false
 }
+
+var (
+	// StartValidator is a validator for the "start" field. It is called by the builders before save.
+	StartValidator func(int32) error
+	// EndValidator is a validator for the "end" field. It is called by the builders before save.
+	EndValidator func(int32) error
+)

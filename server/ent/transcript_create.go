@@ -6,12 +6,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"genomedb/ent/cds"
-	"genomedb/ent/exon"
-	"genomedb/ent/fiveprimeutr"
-	"genomedb/ent/gene"
-	"genomedb/ent/threeprimeutr"
+	"genomedb/ent/locus"
 	"genomedb/ent/transcript"
+	"genomedb/gffio"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
@@ -27,6 +24,12 @@ type TranscriptCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetSeqname sets the "seqname" field.
+func (tc *TranscriptCreate) SetSeqname(s string) *TranscriptCreate {
+	tc.mutation.SetSeqname(s)
+	return tc
+}
+
 // SetStrand sets the "strand" field.
 func (tc *TranscriptCreate) SetStrand(s string) *TranscriptCreate {
 	tc.mutation.SetStrand(s)
@@ -39,27 +42,63 @@ func (tc *TranscriptCreate) SetType(s string) *TranscriptCreate {
 	return tc
 }
 
-// SetGenomeSeq sets the "genome_seq" field.
-func (tc *TranscriptCreate) SetGenomeSeq(s string) *TranscriptCreate {
-	tc.mutation.SetGenomeSeq(s)
+// SetStart sets the "start" field.
+func (tc *TranscriptCreate) SetStart(i int32) *TranscriptCreate {
+	tc.mutation.SetStart(i)
 	return tc
 }
 
-// SetTranscriptSeq sets the "transcript_seq" field.
-func (tc *TranscriptCreate) SetTranscriptSeq(s string) *TranscriptCreate {
-	tc.mutation.SetTranscriptSeq(s)
+// SetEnd sets the "end" field.
+func (tc *TranscriptCreate) SetEnd(i int32) *TranscriptCreate {
+	tc.mutation.SetEnd(i)
 	return tc
 }
 
-// SetCdsSeq sets the "cds_seq" field.
-func (tc *TranscriptCreate) SetCdsSeq(s string) *TranscriptCreate {
-	tc.mutation.SetCdsSeq(s)
+// SetExon sets the "exon" field.
+func (tc *TranscriptCreate) SetExon(gr []gffio.GffRecord) *TranscriptCreate {
+	tc.mutation.SetExon(gr)
 	return tc
 }
 
-// SetProteinSeq sets the "protein_seq" field.
-func (tc *TranscriptCreate) SetProteinSeq(s string) *TranscriptCreate {
-	tc.mutation.SetProteinSeq(s)
+// SetFivePrimeUtr sets the "five_prime_utr" field.
+func (tc *TranscriptCreate) SetFivePrimeUtr(gr []gffio.GffRecord) *TranscriptCreate {
+	tc.mutation.SetFivePrimeUtr(gr)
+	return tc
+}
+
+// SetThreePrimeUtr sets the "three_prime_utr" field.
+func (tc *TranscriptCreate) SetThreePrimeUtr(gr []gffio.GffRecord) *TranscriptCreate {
+	tc.mutation.SetThreePrimeUtr(gr)
+	return tc
+}
+
+// SetCds sets the "cds" field.
+func (tc *TranscriptCreate) SetCds(gr []gffio.GffRecord) *TranscriptCreate {
+	tc.mutation.SetCds(gr)
+	return tc
+}
+
+// SetGenomicSequence sets the "genomic_sequence" field.
+func (tc *TranscriptCreate) SetGenomicSequence(s string) *TranscriptCreate {
+	tc.mutation.SetGenomicSequence(s)
+	return tc
+}
+
+// SetExonSequence sets the "exon_sequence" field.
+func (tc *TranscriptCreate) SetExonSequence(s string) *TranscriptCreate {
+	tc.mutation.SetExonSequence(s)
+	return tc
+}
+
+// SetCdsSequence sets the "cds_sequence" field.
+func (tc *TranscriptCreate) SetCdsSequence(s string) *TranscriptCreate {
+	tc.mutation.SetCdsSequence(s)
+	return tc
+}
+
+// SetProteinSequence sets the "protein_sequence" field.
+func (tc *TranscriptCreate) SetProteinSequence(s string) *TranscriptCreate {
+	tc.mutation.SetProteinSequence(s)
 	return tc
 }
 
@@ -69,83 +108,23 @@ func (tc *TranscriptCreate) SetID(s string) *TranscriptCreate {
 	return tc
 }
 
-// SetGeneID sets the "gene" edge to the Gene entity by ID.
-func (tc *TranscriptCreate) SetGeneID(id string) *TranscriptCreate {
-	tc.mutation.SetGeneID(id)
+// SetLocusID sets the "locus" edge to the Locus entity by ID.
+func (tc *TranscriptCreate) SetLocusID(id string) *TranscriptCreate {
+	tc.mutation.SetLocusID(id)
 	return tc
 }
 
-// SetNillableGeneID sets the "gene" edge to the Gene entity by ID if the given value is not nil.
-func (tc *TranscriptCreate) SetNillableGeneID(id *string) *TranscriptCreate {
+// SetNillableLocusID sets the "locus" edge to the Locus entity by ID if the given value is not nil.
+func (tc *TranscriptCreate) SetNillableLocusID(id *string) *TranscriptCreate {
 	if id != nil {
-		tc = tc.SetGeneID(*id)
+		tc = tc.SetLocusID(*id)
 	}
 	return tc
 }
 
-// SetGene sets the "gene" edge to the Gene entity.
-func (tc *TranscriptCreate) SetGene(g *Gene) *TranscriptCreate {
-	return tc.SetGeneID(g.ID)
-}
-
-// AddCdIDs adds the "cds" edge to the Cds entity by IDs.
-func (tc *TranscriptCreate) AddCdIDs(ids ...int) *TranscriptCreate {
-	tc.mutation.AddCdIDs(ids...)
-	return tc
-}
-
-// AddCds adds the "cds" edges to the Cds entity.
-func (tc *TranscriptCreate) AddCds(c ...*Cds) *TranscriptCreate {
-	ids := make([]int, len(c))
-	for i := range c {
-		ids[i] = c[i].ID
-	}
-	return tc.AddCdIDs(ids...)
-}
-
-// AddExonIDs adds the "exon" edge to the Exon entity by IDs.
-func (tc *TranscriptCreate) AddExonIDs(ids ...int) *TranscriptCreate {
-	tc.mutation.AddExonIDs(ids...)
-	return tc
-}
-
-// AddExon adds the "exon" edges to the Exon entity.
-func (tc *TranscriptCreate) AddExon(e ...*Exon) *TranscriptCreate {
-	ids := make([]int, len(e))
-	for i := range e {
-		ids[i] = e[i].ID
-	}
-	return tc.AddExonIDs(ids...)
-}
-
-// AddFivePrimeUtrIDs adds the "five_prime_utr" edge to the FivePrimeUtr entity by IDs.
-func (tc *TranscriptCreate) AddFivePrimeUtrIDs(ids ...int) *TranscriptCreate {
-	tc.mutation.AddFivePrimeUtrIDs(ids...)
-	return tc
-}
-
-// AddFivePrimeUtr adds the "five_prime_utr" edges to the FivePrimeUtr entity.
-func (tc *TranscriptCreate) AddFivePrimeUtr(f ...*FivePrimeUtr) *TranscriptCreate {
-	ids := make([]int, len(f))
-	for i := range f {
-		ids[i] = f[i].ID
-	}
-	return tc.AddFivePrimeUtrIDs(ids...)
-}
-
-// AddThreePrimeUtrIDs adds the "three_prime_utr" edge to the ThreePrimeUtr entity by IDs.
-func (tc *TranscriptCreate) AddThreePrimeUtrIDs(ids ...int) *TranscriptCreate {
-	tc.mutation.AddThreePrimeUtrIDs(ids...)
-	return tc
-}
-
-// AddThreePrimeUtr adds the "three_prime_utr" edges to the ThreePrimeUtr entity.
-func (tc *TranscriptCreate) AddThreePrimeUtr(t ...*ThreePrimeUtr) *TranscriptCreate {
-	ids := make([]int, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
-	}
-	return tc.AddThreePrimeUtrIDs(ids...)
+// SetLocus sets the "locus" edge to the Locus entity.
+func (tc *TranscriptCreate) SetLocus(l *Locus) *TranscriptCreate {
+	return tc.SetLocusID(l.ID)
 }
 
 // Mutation returns the TranscriptMutation object of the builder.
@@ -224,23 +203,54 @@ func (tc *TranscriptCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (tc *TranscriptCreate) check() error {
+	if _, ok := tc.mutation.Seqname(); !ok {
+		return &ValidationError{Name: "seqname", err: errors.New(`ent: missing required field "Transcript.seqname"`)}
+	}
 	if _, ok := tc.mutation.Strand(); !ok {
 		return &ValidationError{Name: "strand", err: errors.New(`ent: missing required field "Transcript.strand"`)}
 	}
 	if _, ok := tc.mutation.GetType(); !ok {
 		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "Transcript.type"`)}
 	}
-	if _, ok := tc.mutation.GenomeSeq(); !ok {
-		return &ValidationError{Name: "genome_seq", err: errors.New(`ent: missing required field "Transcript.genome_seq"`)}
+	if _, ok := tc.mutation.Start(); !ok {
+		return &ValidationError{Name: "start", err: errors.New(`ent: missing required field "Transcript.start"`)}
 	}
-	if _, ok := tc.mutation.TranscriptSeq(); !ok {
-		return &ValidationError{Name: "transcript_seq", err: errors.New(`ent: missing required field "Transcript.transcript_seq"`)}
+	if v, ok := tc.mutation.Start(); ok {
+		if err := transcript.StartValidator(v); err != nil {
+			return &ValidationError{Name: "start", err: fmt.Errorf(`ent: validator failed for field "Transcript.start": %w`, err)}
+		}
 	}
-	if _, ok := tc.mutation.CdsSeq(); !ok {
-		return &ValidationError{Name: "cds_seq", err: errors.New(`ent: missing required field "Transcript.cds_seq"`)}
+	if _, ok := tc.mutation.End(); !ok {
+		return &ValidationError{Name: "end", err: errors.New(`ent: missing required field "Transcript.end"`)}
 	}
-	if _, ok := tc.mutation.ProteinSeq(); !ok {
-		return &ValidationError{Name: "protein_seq", err: errors.New(`ent: missing required field "Transcript.protein_seq"`)}
+	if v, ok := tc.mutation.End(); ok {
+		if err := transcript.EndValidator(v); err != nil {
+			return &ValidationError{Name: "end", err: fmt.Errorf(`ent: validator failed for field "Transcript.end": %w`, err)}
+		}
+	}
+	if _, ok := tc.mutation.Exon(); !ok {
+		return &ValidationError{Name: "exon", err: errors.New(`ent: missing required field "Transcript.exon"`)}
+	}
+	if _, ok := tc.mutation.FivePrimeUtr(); !ok {
+		return &ValidationError{Name: "five_prime_utr", err: errors.New(`ent: missing required field "Transcript.five_prime_utr"`)}
+	}
+	if _, ok := tc.mutation.ThreePrimeUtr(); !ok {
+		return &ValidationError{Name: "three_prime_utr", err: errors.New(`ent: missing required field "Transcript.three_prime_utr"`)}
+	}
+	if _, ok := tc.mutation.Cds(); !ok {
+		return &ValidationError{Name: "cds", err: errors.New(`ent: missing required field "Transcript.cds"`)}
+	}
+	if _, ok := tc.mutation.GenomicSequence(); !ok {
+		return &ValidationError{Name: "genomic_sequence", err: errors.New(`ent: missing required field "Transcript.genomic_sequence"`)}
+	}
+	if _, ok := tc.mutation.ExonSequence(); !ok {
+		return &ValidationError{Name: "exon_sequence", err: errors.New(`ent: missing required field "Transcript.exon_sequence"`)}
+	}
+	if _, ok := tc.mutation.CdsSequence(); !ok {
+		return &ValidationError{Name: "cds_sequence", err: errors.New(`ent: missing required field "Transcript.cds_sequence"`)}
+	}
+	if _, ok := tc.mutation.ProteinSequence(); !ok {
+		return &ValidationError{Name: "protein_sequence", err: errors.New(`ent: missing required field "Transcript.protein_sequence"`)}
 	}
 	return nil
 }
@@ -279,6 +289,10 @@ func (tc *TranscriptCreate) createSpec() (*Transcript, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := tc.mutation.Seqname(); ok {
+		_spec.SetField(transcript.FieldSeqname, field.TypeString, value)
+		_node.Seqname = value
+	}
 	if value, ok := tc.mutation.Strand(); ok {
 		_spec.SetField(transcript.FieldStrand, field.TypeString, value)
 		_node.Strand = value
@@ -287,116 +301,64 @@ func (tc *TranscriptCreate) createSpec() (*Transcript, *sqlgraph.CreateSpec) {
 		_spec.SetField(transcript.FieldType, field.TypeString, value)
 		_node.Type = value
 	}
-	if value, ok := tc.mutation.GenomeSeq(); ok {
-		_spec.SetField(transcript.FieldGenomeSeq, field.TypeString, value)
-		_node.GenomeSeq = value
+	if value, ok := tc.mutation.Start(); ok {
+		_spec.SetField(transcript.FieldStart, field.TypeInt32, value)
+		_node.Start = value
 	}
-	if value, ok := tc.mutation.TranscriptSeq(); ok {
-		_spec.SetField(transcript.FieldTranscriptSeq, field.TypeString, value)
-		_node.TranscriptSeq = value
+	if value, ok := tc.mutation.End(); ok {
+		_spec.SetField(transcript.FieldEnd, field.TypeInt32, value)
+		_node.End = value
 	}
-	if value, ok := tc.mutation.CdsSeq(); ok {
-		_spec.SetField(transcript.FieldCdsSeq, field.TypeString, value)
-		_node.CdsSeq = value
+	if value, ok := tc.mutation.Exon(); ok {
+		_spec.SetField(transcript.FieldExon, field.TypeJSON, value)
+		_node.Exon = value
 	}
-	if value, ok := tc.mutation.ProteinSeq(); ok {
-		_spec.SetField(transcript.FieldProteinSeq, field.TypeString, value)
-		_node.ProteinSeq = value
+	if value, ok := tc.mutation.FivePrimeUtr(); ok {
+		_spec.SetField(transcript.FieldFivePrimeUtr, field.TypeJSON, value)
+		_node.FivePrimeUtr = value
 	}
-	if nodes := tc.mutation.GeneIDs(); len(nodes) > 0 {
+	if value, ok := tc.mutation.ThreePrimeUtr(); ok {
+		_spec.SetField(transcript.FieldThreePrimeUtr, field.TypeJSON, value)
+		_node.ThreePrimeUtr = value
+	}
+	if value, ok := tc.mutation.Cds(); ok {
+		_spec.SetField(transcript.FieldCds, field.TypeJSON, value)
+		_node.Cds = value
+	}
+	if value, ok := tc.mutation.GenomicSequence(); ok {
+		_spec.SetField(transcript.FieldGenomicSequence, field.TypeString, value)
+		_node.GenomicSequence = value
+	}
+	if value, ok := tc.mutation.ExonSequence(); ok {
+		_spec.SetField(transcript.FieldExonSequence, field.TypeString, value)
+		_node.ExonSequence = value
+	}
+	if value, ok := tc.mutation.CdsSequence(); ok {
+		_spec.SetField(transcript.FieldCdsSequence, field.TypeString, value)
+		_node.CdsSequence = value
+	}
+	if value, ok := tc.mutation.ProteinSequence(); ok {
+		_spec.SetField(transcript.FieldProteinSequence, field.TypeString, value)
+		_node.ProteinSequence = value
+	}
+	if nodes := tc.mutation.LocusIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   transcript.GeneTable,
-			Columns: []string{transcript.GeneColumn},
+			Table:   transcript.LocusTable,
+			Columns: []string{transcript.LocusColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
-					Column: gene.FieldID,
+					Column: locus.FieldID,
 				},
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.gene_transcripts = &nodes[0]
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := tc.mutation.CdsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   transcript.CdsTable,
-			Columns: []string{transcript.CdsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
-					Column: cds.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := tc.mutation.ExonIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   transcript.ExonTable,
-			Columns: []string{transcript.ExonColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
-					Column: exon.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := tc.mutation.FivePrimeUtrIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   transcript.FivePrimeUtrTable,
-			Columns: []string{transcript.FivePrimeUtrColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
-					Column: fiveprimeutr.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := tc.mutation.ThreePrimeUtrIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   transcript.ThreePrimeUtrTable,
-			Columns: []string{transcript.ThreePrimeUtrColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
-					Column: threeprimeutr.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
+		_node.locus_transcripts = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -406,7 +368,7 @@ func (tc *TranscriptCreate) createSpec() (*Transcript, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Transcript.Create().
-//		SetStrand(v).
+//		SetSeqname(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -415,7 +377,7 @@ func (tc *TranscriptCreate) createSpec() (*Transcript, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.TranscriptUpsert) {
-//			SetStrand(v+v).
+//			SetSeqname(v+v).
 //		}).
 //		Exec(ctx)
 func (tc *TranscriptCreate) OnConflict(opts ...sql.ConflictOption) *TranscriptUpsertOne {
@@ -451,6 +413,18 @@ type (
 	}
 )
 
+// SetSeqname sets the "seqname" field.
+func (u *TranscriptUpsert) SetSeqname(v string) *TranscriptUpsert {
+	u.Set(transcript.FieldSeqname, v)
+	return u
+}
+
+// UpdateSeqname sets the "seqname" field to the value that was provided on create.
+func (u *TranscriptUpsert) UpdateSeqname() *TranscriptUpsert {
+	u.SetExcluded(transcript.FieldSeqname)
+	return u
+}
+
 // SetStrand sets the "strand" field.
 func (u *TranscriptUpsert) SetStrand(v string) *TranscriptUpsert {
 	u.Set(transcript.FieldStrand, v)
@@ -475,51 +449,135 @@ func (u *TranscriptUpsert) UpdateType() *TranscriptUpsert {
 	return u
 }
 
-// SetGenomeSeq sets the "genome_seq" field.
-func (u *TranscriptUpsert) SetGenomeSeq(v string) *TranscriptUpsert {
-	u.Set(transcript.FieldGenomeSeq, v)
+// SetStart sets the "start" field.
+func (u *TranscriptUpsert) SetStart(v int32) *TranscriptUpsert {
+	u.Set(transcript.FieldStart, v)
 	return u
 }
 
-// UpdateGenomeSeq sets the "genome_seq" field to the value that was provided on create.
-func (u *TranscriptUpsert) UpdateGenomeSeq() *TranscriptUpsert {
-	u.SetExcluded(transcript.FieldGenomeSeq)
+// UpdateStart sets the "start" field to the value that was provided on create.
+func (u *TranscriptUpsert) UpdateStart() *TranscriptUpsert {
+	u.SetExcluded(transcript.FieldStart)
 	return u
 }
 
-// SetTranscriptSeq sets the "transcript_seq" field.
-func (u *TranscriptUpsert) SetTranscriptSeq(v string) *TranscriptUpsert {
-	u.Set(transcript.FieldTranscriptSeq, v)
+// AddStart adds v to the "start" field.
+func (u *TranscriptUpsert) AddStart(v int32) *TranscriptUpsert {
+	u.Add(transcript.FieldStart, v)
 	return u
 }
 
-// UpdateTranscriptSeq sets the "transcript_seq" field to the value that was provided on create.
-func (u *TranscriptUpsert) UpdateTranscriptSeq() *TranscriptUpsert {
-	u.SetExcluded(transcript.FieldTranscriptSeq)
+// SetEnd sets the "end" field.
+func (u *TranscriptUpsert) SetEnd(v int32) *TranscriptUpsert {
+	u.Set(transcript.FieldEnd, v)
 	return u
 }
 
-// SetCdsSeq sets the "cds_seq" field.
-func (u *TranscriptUpsert) SetCdsSeq(v string) *TranscriptUpsert {
-	u.Set(transcript.FieldCdsSeq, v)
+// UpdateEnd sets the "end" field to the value that was provided on create.
+func (u *TranscriptUpsert) UpdateEnd() *TranscriptUpsert {
+	u.SetExcluded(transcript.FieldEnd)
 	return u
 }
 
-// UpdateCdsSeq sets the "cds_seq" field to the value that was provided on create.
-func (u *TranscriptUpsert) UpdateCdsSeq() *TranscriptUpsert {
-	u.SetExcluded(transcript.FieldCdsSeq)
+// AddEnd adds v to the "end" field.
+func (u *TranscriptUpsert) AddEnd(v int32) *TranscriptUpsert {
+	u.Add(transcript.FieldEnd, v)
 	return u
 }
 
-// SetProteinSeq sets the "protein_seq" field.
-func (u *TranscriptUpsert) SetProteinSeq(v string) *TranscriptUpsert {
-	u.Set(transcript.FieldProteinSeq, v)
+// SetExon sets the "exon" field.
+func (u *TranscriptUpsert) SetExon(v []gffio.GffRecord) *TranscriptUpsert {
+	u.Set(transcript.FieldExon, v)
 	return u
 }
 
-// UpdateProteinSeq sets the "protein_seq" field to the value that was provided on create.
-func (u *TranscriptUpsert) UpdateProteinSeq() *TranscriptUpsert {
-	u.SetExcluded(transcript.FieldProteinSeq)
+// UpdateExon sets the "exon" field to the value that was provided on create.
+func (u *TranscriptUpsert) UpdateExon() *TranscriptUpsert {
+	u.SetExcluded(transcript.FieldExon)
+	return u
+}
+
+// SetFivePrimeUtr sets the "five_prime_utr" field.
+func (u *TranscriptUpsert) SetFivePrimeUtr(v []gffio.GffRecord) *TranscriptUpsert {
+	u.Set(transcript.FieldFivePrimeUtr, v)
+	return u
+}
+
+// UpdateFivePrimeUtr sets the "five_prime_utr" field to the value that was provided on create.
+func (u *TranscriptUpsert) UpdateFivePrimeUtr() *TranscriptUpsert {
+	u.SetExcluded(transcript.FieldFivePrimeUtr)
+	return u
+}
+
+// SetThreePrimeUtr sets the "three_prime_utr" field.
+func (u *TranscriptUpsert) SetThreePrimeUtr(v []gffio.GffRecord) *TranscriptUpsert {
+	u.Set(transcript.FieldThreePrimeUtr, v)
+	return u
+}
+
+// UpdateThreePrimeUtr sets the "three_prime_utr" field to the value that was provided on create.
+func (u *TranscriptUpsert) UpdateThreePrimeUtr() *TranscriptUpsert {
+	u.SetExcluded(transcript.FieldThreePrimeUtr)
+	return u
+}
+
+// SetCds sets the "cds" field.
+func (u *TranscriptUpsert) SetCds(v []gffio.GffRecord) *TranscriptUpsert {
+	u.Set(transcript.FieldCds, v)
+	return u
+}
+
+// UpdateCds sets the "cds" field to the value that was provided on create.
+func (u *TranscriptUpsert) UpdateCds() *TranscriptUpsert {
+	u.SetExcluded(transcript.FieldCds)
+	return u
+}
+
+// SetGenomicSequence sets the "genomic_sequence" field.
+func (u *TranscriptUpsert) SetGenomicSequence(v string) *TranscriptUpsert {
+	u.Set(transcript.FieldGenomicSequence, v)
+	return u
+}
+
+// UpdateGenomicSequence sets the "genomic_sequence" field to the value that was provided on create.
+func (u *TranscriptUpsert) UpdateGenomicSequence() *TranscriptUpsert {
+	u.SetExcluded(transcript.FieldGenomicSequence)
+	return u
+}
+
+// SetExonSequence sets the "exon_sequence" field.
+func (u *TranscriptUpsert) SetExonSequence(v string) *TranscriptUpsert {
+	u.Set(transcript.FieldExonSequence, v)
+	return u
+}
+
+// UpdateExonSequence sets the "exon_sequence" field to the value that was provided on create.
+func (u *TranscriptUpsert) UpdateExonSequence() *TranscriptUpsert {
+	u.SetExcluded(transcript.FieldExonSequence)
+	return u
+}
+
+// SetCdsSequence sets the "cds_sequence" field.
+func (u *TranscriptUpsert) SetCdsSequence(v string) *TranscriptUpsert {
+	u.Set(transcript.FieldCdsSequence, v)
+	return u
+}
+
+// UpdateCdsSequence sets the "cds_sequence" field to the value that was provided on create.
+func (u *TranscriptUpsert) UpdateCdsSequence() *TranscriptUpsert {
+	u.SetExcluded(transcript.FieldCdsSequence)
+	return u
+}
+
+// SetProteinSequence sets the "protein_sequence" field.
+func (u *TranscriptUpsert) SetProteinSequence(v string) *TranscriptUpsert {
+	u.Set(transcript.FieldProteinSequence, v)
+	return u
+}
+
+// UpdateProteinSequence sets the "protein_sequence" field to the value that was provided on create.
+func (u *TranscriptUpsert) UpdateProteinSequence() *TranscriptUpsert {
+	u.SetExcluded(transcript.FieldProteinSequence)
 	return u
 }
 
@@ -571,6 +629,20 @@ func (u *TranscriptUpsertOne) Update(set func(*TranscriptUpsert)) *TranscriptUps
 	return u
 }
 
+// SetSeqname sets the "seqname" field.
+func (u *TranscriptUpsertOne) SetSeqname(v string) *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetSeqname(v)
+	})
+}
+
+// UpdateSeqname sets the "seqname" field to the value that was provided on create.
+func (u *TranscriptUpsertOne) UpdateSeqname() *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateSeqname()
+	})
+}
+
 // SetStrand sets the "strand" field.
 func (u *TranscriptUpsertOne) SetStrand(v string) *TranscriptUpsertOne {
 	return u.Update(func(s *TranscriptUpsert) {
@@ -599,59 +671,157 @@ func (u *TranscriptUpsertOne) UpdateType() *TranscriptUpsertOne {
 	})
 }
 
-// SetGenomeSeq sets the "genome_seq" field.
-func (u *TranscriptUpsertOne) SetGenomeSeq(v string) *TranscriptUpsertOne {
+// SetStart sets the "start" field.
+func (u *TranscriptUpsertOne) SetStart(v int32) *TranscriptUpsertOne {
 	return u.Update(func(s *TranscriptUpsert) {
-		s.SetGenomeSeq(v)
+		s.SetStart(v)
 	})
 }
 
-// UpdateGenomeSeq sets the "genome_seq" field to the value that was provided on create.
-func (u *TranscriptUpsertOne) UpdateGenomeSeq() *TranscriptUpsertOne {
+// AddStart adds v to the "start" field.
+func (u *TranscriptUpsertOne) AddStart(v int32) *TranscriptUpsertOne {
 	return u.Update(func(s *TranscriptUpsert) {
-		s.UpdateGenomeSeq()
+		s.AddStart(v)
 	})
 }
 
-// SetTranscriptSeq sets the "transcript_seq" field.
-func (u *TranscriptUpsertOne) SetTranscriptSeq(v string) *TranscriptUpsertOne {
+// UpdateStart sets the "start" field to the value that was provided on create.
+func (u *TranscriptUpsertOne) UpdateStart() *TranscriptUpsertOne {
 	return u.Update(func(s *TranscriptUpsert) {
-		s.SetTranscriptSeq(v)
+		s.UpdateStart()
 	})
 }
 
-// UpdateTranscriptSeq sets the "transcript_seq" field to the value that was provided on create.
-func (u *TranscriptUpsertOne) UpdateTranscriptSeq() *TranscriptUpsertOne {
+// SetEnd sets the "end" field.
+func (u *TranscriptUpsertOne) SetEnd(v int32) *TranscriptUpsertOne {
 	return u.Update(func(s *TranscriptUpsert) {
-		s.UpdateTranscriptSeq()
+		s.SetEnd(v)
 	})
 }
 
-// SetCdsSeq sets the "cds_seq" field.
-func (u *TranscriptUpsertOne) SetCdsSeq(v string) *TranscriptUpsertOne {
+// AddEnd adds v to the "end" field.
+func (u *TranscriptUpsertOne) AddEnd(v int32) *TranscriptUpsertOne {
 	return u.Update(func(s *TranscriptUpsert) {
-		s.SetCdsSeq(v)
+		s.AddEnd(v)
 	})
 }
 
-// UpdateCdsSeq sets the "cds_seq" field to the value that was provided on create.
-func (u *TranscriptUpsertOne) UpdateCdsSeq() *TranscriptUpsertOne {
+// UpdateEnd sets the "end" field to the value that was provided on create.
+func (u *TranscriptUpsertOne) UpdateEnd() *TranscriptUpsertOne {
 	return u.Update(func(s *TranscriptUpsert) {
-		s.UpdateCdsSeq()
+		s.UpdateEnd()
 	})
 }
 
-// SetProteinSeq sets the "protein_seq" field.
-func (u *TranscriptUpsertOne) SetProteinSeq(v string) *TranscriptUpsertOne {
+// SetExon sets the "exon" field.
+func (u *TranscriptUpsertOne) SetExon(v []gffio.GffRecord) *TranscriptUpsertOne {
 	return u.Update(func(s *TranscriptUpsert) {
-		s.SetProteinSeq(v)
+		s.SetExon(v)
 	})
 }
 
-// UpdateProteinSeq sets the "protein_seq" field to the value that was provided on create.
-func (u *TranscriptUpsertOne) UpdateProteinSeq() *TranscriptUpsertOne {
+// UpdateExon sets the "exon" field to the value that was provided on create.
+func (u *TranscriptUpsertOne) UpdateExon() *TranscriptUpsertOne {
 	return u.Update(func(s *TranscriptUpsert) {
-		s.UpdateProteinSeq()
+		s.UpdateExon()
+	})
+}
+
+// SetFivePrimeUtr sets the "five_prime_utr" field.
+func (u *TranscriptUpsertOne) SetFivePrimeUtr(v []gffio.GffRecord) *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetFivePrimeUtr(v)
+	})
+}
+
+// UpdateFivePrimeUtr sets the "five_prime_utr" field to the value that was provided on create.
+func (u *TranscriptUpsertOne) UpdateFivePrimeUtr() *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateFivePrimeUtr()
+	})
+}
+
+// SetThreePrimeUtr sets the "three_prime_utr" field.
+func (u *TranscriptUpsertOne) SetThreePrimeUtr(v []gffio.GffRecord) *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetThreePrimeUtr(v)
+	})
+}
+
+// UpdateThreePrimeUtr sets the "three_prime_utr" field to the value that was provided on create.
+func (u *TranscriptUpsertOne) UpdateThreePrimeUtr() *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateThreePrimeUtr()
+	})
+}
+
+// SetCds sets the "cds" field.
+func (u *TranscriptUpsertOne) SetCds(v []gffio.GffRecord) *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetCds(v)
+	})
+}
+
+// UpdateCds sets the "cds" field to the value that was provided on create.
+func (u *TranscriptUpsertOne) UpdateCds() *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateCds()
+	})
+}
+
+// SetGenomicSequence sets the "genomic_sequence" field.
+func (u *TranscriptUpsertOne) SetGenomicSequence(v string) *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetGenomicSequence(v)
+	})
+}
+
+// UpdateGenomicSequence sets the "genomic_sequence" field to the value that was provided on create.
+func (u *TranscriptUpsertOne) UpdateGenomicSequence() *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateGenomicSequence()
+	})
+}
+
+// SetExonSequence sets the "exon_sequence" field.
+func (u *TranscriptUpsertOne) SetExonSequence(v string) *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetExonSequence(v)
+	})
+}
+
+// UpdateExonSequence sets the "exon_sequence" field to the value that was provided on create.
+func (u *TranscriptUpsertOne) UpdateExonSequence() *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateExonSequence()
+	})
+}
+
+// SetCdsSequence sets the "cds_sequence" field.
+func (u *TranscriptUpsertOne) SetCdsSequence(v string) *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetCdsSequence(v)
+	})
+}
+
+// UpdateCdsSequence sets the "cds_sequence" field to the value that was provided on create.
+func (u *TranscriptUpsertOne) UpdateCdsSequence() *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateCdsSequence()
+	})
+}
+
+// SetProteinSequence sets the "protein_sequence" field.
+func (u *TranscriptUpsertOne) SetProteinSequence(v string) *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetProteinSequence(v)
+	})
+}
+
+// UpdateProteinSequence sets the "protein_sequence" field to the value that was provided on create.
+func (u *TranscriptUpsertOne) UpdateProteinSequence() *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateProteinSequence()
 	})
 }
 
@@ -786,7 +956,7 @@ func (tcb *TranscriptCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.TranscriptUpsert) {
-//			SetStrand(v+v).
+//			SetSeqname(v+v).
 //		}).
 //		Exec(ctx)
 func (tcb *TranscriptCreateBulk) OnConflict(opts ...sql.ConflictOption) *TranscriptUpsertBulk {
@@ -865,6 +1035,20 @@ func (u *TranscriptUpsertBulk) Update(set func(*TranscriptUpsert)) *TranscriptUp
 	return u
 }
 
+// SetSeqname sets the "seqname" field.
+func (u *TranscriptUpsertBulk) SetSeqname(v string) *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetSeqname(v)
+	})
+}
+
+// UpdateSeqname sets the "seqname" field to the value that was provided on create.
+func (u *TranscriptUpsertBulk) UpdateSeqname() *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateSeqname()
+	})
+}
+
 // SetStrand sets the "strand" field.
 func (u *TranscriptUpsertBulk) SetStrand(v string) *TranscriptUpsertBulk {
 	return u.Update(func(s *TranscriptUpsert) {
@@ -893,59 +1077,157 @@ func (u *TranscriptUpsertBulk) UpdateType() *TranscriptUpsertBulk {
 	})
 }
 
-// SetGenomeSeq sets the "genome_seq" field.
-func (u *TranscriptUpsertBulk) SetGenomeSeq(v string) *TranscriptUpsertBulk {
+// SetStart sets the "start" field.
+func (u *TranscriptUpsertBulk) SetStart(v int32) *TranscriptUpsertBulk {
 	return u.Update(func(s *TranscriptUpsert) {
-		s.SetGenomeSeq(v)
+		s.SetStart(v)
 	})
 }
 
-// UpdateGenomeSeq sets the "genome_seq" field to the value that was provided on create.
-func (u *TranscriptUpsertBulk) UpdateGenomeSeq() *TranscriptUpsertBulk {
+// AddStart adds v to the "start" field.
+func (u *TranscriptUpsertBulk) AddStart(v int32) *TranscriptUpsertBulk {
 	return u.Update(func(s *TranscriptUpsert) {
-		s.UpdateGenomeSeq()
+		s.AddStart(v)
 	})
 }
 
-// SetTranscriptSeq sets the "transcript_seq" field.
-func (u *TranscriptUpsertBulk) SetTranscriptSeq(v string) *TranscriptUpsertBulk {
+// UpdateStart sets the "start" field to the value that was provided on create.
+func (u *TranscriptUpsertBulk) UpdateStart() *TranscriptUpsertBulk {
 	return u.Update(func(s *TranscriptUpsert) {
-		s.SetTranscriptSeq(v)
+		s.UpdateStart()
 	})
 }
 
-// UpdateTranscriptSeq sets the "transcript_seq" field to the value that was provided on create.
-func (u *TranscriptUpsertBulk) UpdateTranscriptSeq() *TranscriptUpsertBulk {
+// SetEnd sets the "end" field.
+func (u *TranscriptUpsertBulk) SetEnd(v int32) *TranscriptUpsertBulk {
 	return u.Update(func(s *TranscriptUpsert) {
-		s.UpdateTranscriptSeq()
+		s.SetEnd(v)
 	})
 }
 
-// SetCdsSeq sets the "cds_seq" field.
-func (u *TranscriptUpsertBulk) SetCdsSeq(v string) *TranscriptUpsertBulk {
+// AddEnd adds v to the "end" field.
+func (u *TranscriptUpsertBulk) AddEnd(v int32) *TranscriptUpsertBulk {
 	return u.Update(func(s *TranscriptUpsert) {
-		s.SetCdsSeq(v)
+		s.AddEnd(v)
 	})
 }
 
-// UpdateCdsSeq sets the "cds_seq" field to the value that was provided on create.
-func (u *TranscriptUpsertBulk) UpdateCdsSeq() *TranscriptUpsertBulk {
+// UpdateEnd sets the "end" field to the value that was provided on create.
+func (u *TranscriptUpsertBulk) UpdateEnd() *TranscriptUpsertBulk {
 	return u.Update(func(s *TranscriptUpsert) {
-		s.UpdateCdsSeq()
+		s.UpdateEnd()
 	})
 }
 
-// SetProteinSeq sets the "protein_seq" field.
-func (u *TranscriptUpsertBulk) SetProteinSeq(v string) *TranscriptUpsertBulk {
+// SetExon sets the "exon" field.
+func (u *TranscriptUpsertBulk) SetExon(v []gffio.GffRecord) *TranscriptUpsertBulk {
 	return u.Update(func(s *TranscriptUpsert) {
-		s.SetProteinSeq(v)
+		s.SetExon(v)
 	})
 }
 
-// UpdateProteinSeq sets the "protein_seq" field to the value that was provided on create.
-func (u *TranscriptUpsertBulk) UpdateProteinSeq() *TranscriptUpsertBulk {
+// UpdateExon sets the "exon" field to the value that was provided on create.
+func (u *TranscriptUpsertBulk) UpdateExon() *TranscriptUpsertBulk {
 	return u.Update(func(s *TranscriptUpsert) {
-		s.UpdateProteinSeq()
+		s.UpdateExon()
+	})
+}
+
+// SetFivePrimeUtr sets the "five_prime_utr" field.
+func (u *TranscriptUpsertBulk) SetFivePrimeUtr(v []gffio.GffRecord) *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetFivePrimeUtr(v)
+	})
+}
+
+// UpdateFivePrimeUtr sets the "five_prime_utr" field to the value that was provided on create.
+func (u *TranscriptUpsertBulk) UpdateFivePrimeUtr() *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateFivePrimeUtr()
+	})
+}
+
+// SetThreePrimeUtr sets the "three_prime_utr" field.
+func (u *TranscriptUpsertBulk) SetThreePrimeUtr(v []gffio.GffRecord) *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetThreePrimeUtr(v)
+	})
+}
+
+// UpdateThreePrimeUtr sets the "three_prime_utr" field to the value that was provided on create.
+func (u *TranscriptUpsertBulk) UpdateThreePrimeUtr() *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateThreePrimeUtr()
+	})
+}
+
+// SetCds sets the "cds" field.
+func (u *TranscriptUpsertBulk) SetCds(v []gffio.GffRecord) *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetCds(v)
+	})
+}
+
+// UpdateCds sets the "cds" field to the value that was provided on create.
+func (u *TranscriptUpsertBulk) UpdateCds() *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateCds()
+	})
+}
+
+// SetGenomicSequence sets the "genomic_sequence" field.
+func (u *TranscriptUpsertBulk) SetGenomicSequence(v string) *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetGenomicSequence(v)
+	})
+}
+
+// UpdateGenomicSequence sets the "genomic_sequence" field to the value that was provided on create.
+func (u *TranscriptUpsertBulk) UpdateGenomicSequence() *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateGenomicSequence()
+	})
+}
+
+// SetExonSequence sets the "exon_sequence" field.
+func (u *TranscriptUpsertBulk) SetExonSequence(v string) *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetExonSequence(v)
+	})
+}
+
+// UpdateExonSequence sets the "exon_sequence" field to the value that was provided on create.
+func (u *TranscriptUpsertBulk) UpdateExonSequence() *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateExonSequence()
+	})
+}
+
+// SetCdsSequence sets the "cds_sequence" field.
+func (u *TranscriptUpsertBulk) SetCdsSequence(v string) *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetCdsSequence(v)
+	})
+}
+
+// UpdateCdsSequence sets the "cds_sequence" field to the value that was provided on create.
+func (u *TranscriptUpsertBulk) UpdateCdsSequence() *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateCdsSequence()
+	})
+}
+
+// SetProteinSequence sets the "protein_sequence" field.
+func (u *TranscriptUpsertBulk) SetProteinSequence(v string) *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetProteinSequence(v)
+	})
+}
+
+// UpdateProteinSequence sets the "protein_sequence" field to the value that was provided on create.
+func (u *TranscriptUpsertBulk) UpdateProteinSequence() *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateProteinSequence()
 	})
 }
 

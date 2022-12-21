@@ -8,95 +8,6 @@ import (
 )
 
 var (
-	// CdsColumns holds the columns for the "cds" table.
-	CdsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "seqname", Type: field.TypeString},
-		{Name: "start", Type: field.TypeInt32},
-		{Name: "end", Type: field.TypeInt32},
-		{Name: "phase", Type: field.TypeInt8},
-		{Name: "strand", Type: field.TypeString},
-		{Name: "transcript_cds", Type: field.TypeString, Nullable: true},
-	}
-	// CdsTable holds the schema information for the "cds" table.
-	CdsTable = &schema.Table{
-		Name:       "cds",
-		Columns:    CdsColumns,
-		PrimaryKey: []*schema.Column{CdsColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "cds_transcripts_cds",
-				Columns:    []*schema.Column{CdsColumns[6]},
-				RefColumns: []*schema.Column{TranscriptsColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-		},
-	}
-	// ExonsColumns holds the columns for the "exons" table.
-	ExonsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "seqname", Type: field.TypeString},
-		{Name: "start", Type: field.TypeInt32},
-		{Name: "end", Type: field.TypeInt32},
-		{Name: "strand", Type: field.TypeString},
-		{Name: "transcript_exon", Type: field.TypeString, Nullable: true},
-	}
-	// ExonsTable holds the schema information for the "exons" table.
-	ExonsTable = &schema.Table{
-		Name:       "exons",
-		Columns:    ExonsColumns,
-		PrimaryKey: []*schema.Column{ExonsColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "exons_transcripts_exon",
-				Columns:    []*schema.Column{ExonsColumns[5]},
-				RefColumns: []*schema.Column{TranscriptsColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-		},
-	}
-	// FivePrimeUtrsColumns holds the columns for the "five_prime_utrs" table.
-	FivePrimeUtrsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "seqname", Type: field.TypeString},
-		{Name: "start", Type: field.TypeInt32},
-		{Name: "end", Type: field.TypeInt32},
-		{Name: "strand", Type: field.TypeString},
-		{Name: "transcript_five_prime_utr", Type: field.TypeString, Nullable: true},
-	}
-	// FivePrimeUtrsTable holds the schema information for the "five_prime_utrs" table.
-	FivePrimeUtrsTable = &schema.Table{
-		Name:       "five_prime_utrs",
-		Columns:    FivePrimeUtrsColumns,
-		PrimaryKey: []*schema.Column{FivePrimeUtrsColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "five_prime_utrs_transcripts_five_prime_utr",
-				Columns:    []*schema.Column{FivePrimeUtrsColumns[5]},
-				RefColumns: []*schema.Column{TranscriptsColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-		},
-	}
-	// GenesColumns holds the columns for the "genes" table.
-	GenesColumns = []*schema.Column{
-		{Name: "geneId", Type: field.TypeString},
-		{Name: "genome_genes", Type: field.TypeString, Nullable: true},
-	}
-	// GenesTable holds the schema information for the "genes" table.
-	GenesTable = &schema.Table{
-		Name:       "genes",
-		Columns:    GenesColumns,
-		PrimaryKey: []*schema.Column{GenesColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "genes_genomes_genes",
-				Columns:    []*schema.Column{GenesColumns[1]},
-				RefColumns: []*schema.Column{GenomesColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-		},
-	}
 	// GenomesColumns holds the columns for the "genomes" table.
 	GenomesColumns = []*schema.Column{
 		{Name: "name", Type: field.TypeString},
@@ -107,6 +18,25 @@ var (
 		Name:       "genomes",
 		Columns:    GenomesColumns,
 		PrimaryKey: []*schema.Column{GenomesColumns[0]},
+	}
+	// LocusColumns holds the columns for the "locus" table.
+	LocusColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString},
+		{Name: "genome_locuses", Type: field.TypeString, Nullable: true},
+	}
+	// LocusTable holds the schema information for the "locus" table.
+	LocusTable = &schema.Table{
+		Name:       "locus",
+		Columns:    LocusColumns,
+		PrimaryKey: []*schema.Column{LocusColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "locus_genomes_locuses",
+				Columns:    []*schema.Column{LocusColumns[1]},
+				RefColumns: []*schema.Column{GenomesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// ScaffoldsColumns holds the columns for the "scaffolds" table.
 	ScaffoldsColumns = []*schema.Column{
@@ -129,39 +59,23 @@ var (
 			},
 		},
 	}
-	// ThreePrimeUtrsColumns holds the columns for the "three_prime_utrs" table.
-	ThreePrimeUtrsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "seqname", Type: field.TypeString},
-		{Name: "start", Type: field.TypeInt32},
-		{Name: "end", Type: field.TypeInt32},
-		{Name: "strand", Type: field.TypeString},
-		{Name: "transcript_three_prime_utr", Type: field.TypeString, Nullable: true},
-	}
-	// ThreePrimeUtrsTable holds the schema information for the "three_prime_utrs" table.
-	ThreePrimeUtrsTable = &schema.Table{
-		Name:       "three_prime_utrs",
-		Columns:    ThreePrimeUtrsColumns,
-		PrimaryKey: []*schema.Column{ThreePrimeUtrsColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "three_prime_utrs_transcripts_three_prime_utr",
-				Columns:    []*schema.Column{ThreePrimeUtrsColumns[5]},
-				RefColumns: []*schema.Column{TranscriptsColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-		},
-	}
 	// TranscriptsColumns holds the columns for the "transcripts" table.
 	TranscriptsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString},
+		{Name: "seqname", Type: field.TypeString},
 		{Name: "strand", Type: field.TypeString},
 		{Name: "type", Type: field.TypeString},
-		{Name: "genome_seq", Type: field.TypeString, Size: 2147483647},
-		{Name: "transcript_seq", Type: field.TypeString, Size: 2147483647},
-		{Name: "cds_seq", Type: field.TypeString, Size: 2147483647},
-		{Name: "protein_seq", Type: field.TypeString, Size: 2147483647},
-		{Name: "gene_transcripts", Type: field.TypeString, Nullable: true},
+		{Name: "start", Type: field.TypeInt32},
+		{Name: "end", Type: field.TypeInt32},
+		{Name: "exon", Type: field.TypeJSON},
+		{Name: "five_prime_utr", Type: field.TypeJSON},
+		{Name: "three_prime_utr", Type: field.TypeJSON},
+		{Name: "cds", Type: field.TypeJSON},
+		{Name: "genomic_sequence", Type: field.TypeString, Size: 2147483647},
+		{Name: "exon_sequence", Type: field.TypeString, Size: 2147483647},
+		{Name: "cds_sequence", Type: field.TypeString, Size: 2147483647},
+		{Name: "protein_sequence", Type: field.TypeString, Size: 2147483647},
+		{Name: "locus_transcripts", Type: field.TypeString, Nullable: true},
 	}
 	// TranscriptsTable holds the schema information for the "transcripts" table.
 	TranscriptsTable = &schema.Table{
@@ -170,32 +84,24 @@ var (
 		PrimaryKey: []*schema.Column{TranscriptsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "transcripts_genes_transcripts",
-				Columns:    []*schema.Column{TranscriptsColumns[7]},
-				RefColumns: []*schema.Column{GenesColumns[0]},
+				Symbol:     "transcripts_locus_transcripts",
+				Columns:    []*schema.Column{TranscriptsColumns[14]},
+				RefColumns: []*schema.Column{LocusColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
-		CdsTable,
-		ExonsTable,
-		FivePrimeUtrsTable,
-		GenesTable,
 		GenomesTable,
+		LocusTable,
 		ScaffoldsTable,
-		ThreePrimeUtrsTable,
 		TranscriptsTable,
 	}
 )
 
 func init() {
-	CdsTable.ForeignKeys[0].RefTable = TranscriptsTable
-	ExonsTable.ForeignKeys[0].RefTable = TranscriptsTable
-	FivePrimeUtrsTable.ForeignKeys[0].RefTable = TranscriptsTable
-	GenesTable.ForeignKeys[0].RefTable = GenomesTable
+	LocusTable.ForeignKeys[0].RefTable = GenomesTable
 	ScaffoldsTable.ForeignKeys[0].RefTable = GenomesTable
-	ThreePrimeUtrsTable.ForeignKeys[0].RefTable = TranscriptsTable
-	TranscriptsTable.ForeignKeys[0].RefTable = GenesTable
+	TranscriptsTable.ForeignKeys[0].RefTable = LocusTable
 }

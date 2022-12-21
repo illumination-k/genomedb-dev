@@ -1,9 +1,9 @@
 package schema
 
 import (
-	"entgo.io/contrib/entproto"
+	"genomedb/gffio"
+
 	"entgo.io/ent"
-	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
@@ -16,31 +16,27 @@ type Transcript struct {
 // Fields of the Transcript.
 func (Transcript) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("id").Annotations(entproto.Field(1)),
-		field.String("strand").Annotations(entproto.Field(2)),
-		field.String("type").Annotations(entproto.Field(3)),
-		field.Text("genome_seq").Annotations(entproto.Field(4)),
-		field.Text("transcript_seq").Annotations(entproto.Field(5)),
-		field.Text("cds_seq").Annotations(entproto.Field(6)),
-		field.Text("protein_seq").Annotations(entproto.Field(7)),
+		field.String("id"),
+		field.String("seqname"),
+		field.String("strand"),
+		field.String("type"),
+		field.Int32("start").Positive(),
+		field.Int32("end").Positive(),
+		field.JSON("exon", []gffio.GffRecord{}),
+		field.JSON("five_prime_utr", []gffio.GffRecord{}),
+		field.JSON("three_prime_utr", []gffio.GffRecord{}),
+		field.JSON("cds", []gffio.GffRecord{}),
+
+		field.Text("genomic_sequence"),
+		field.Text("exon_sequence"),
+		field.Text("cds_sequence"),
+		field.Text("protein_sequence"),
 	}
 }
 
 // Edges of the Transcript.
 func (Transcript) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("gene", Gene.Type).Ref("transcripts").Unique().Annotations(entproto.Field(8)),
-		edge.To("cds", Cds.Type).Annotations(entproto.Field(9)),
-		edge.To("exon", Exon.Type).Annotations(entproto.Field(10)),
-		edge.To("five_prime_utr", FivePrimeUtr.Type).Annotations(entproto.Field(11)),
-		edge.To("three_prime_utr", ThreePrimeUtr.Type).Annotations(entproto.Field(12)),
-	}
-}
-
-// gRPC annotation
-func (Transcript) Annotations() []schema.Annotation {
-	return []schema.Annotation{
-		entproto.Message(),
-		entproto.Service(),
+		edge.From("locus", Locus.Type).Ref("transcripts").Unique(),
 	}
 }

@@ -3,9 +3,11 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
-	"genomedb/ent/gene"
+	"genomedb/ent/locus"
 	"genomedb/ent/transcript"
+	"genomedb/gffio"
 	"strings"
 
 	"entgo.io/ent/dialect/sql"
@@ -16,88 +18,58 @@ type Transcript struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID string `json:"id,omitempty"`
+	// Seqname holds the value of the "seqname" field.
+	Seqname string `json:"seqname,omitempty"`
 	// Strand holds the value of the "strand" field.
 	Strand string `json:"strand,omitempty"`
 	// Type holds the value of the "type" field.
 	Type string `json:"type,omitempty"`
-	// GenomeSeq holds the value of the "genome_seq" field.
-	GenomeSeq string `json:"genome_seq,omitempty"`
-	// TranscriptSeq holds the value of the "transcript_seq" field.
-	TranscriptSeq string `json:"transcript_seq,omitempty"`
-	// CdsSeq holds the value of the "cds_seq" field.
-	CdsSeq string `json:"cds_seq,omitempty"`
-	// ProteinSeq holds the value of the "protein_seq" field.
-	ProteinSeq string `json:"protein_seq,omitempty"`
+	// Start holds the value of the "start" field.
+	Start int32 `json:"start,omitempty"`
+	// End holds the value of the "end" field.
+	End int32 `json:"end,omitempty"`
+	// Exon holds the value of the "exon" field.
+	Exon []gffio.GffRecord `json:"exon,omitempty"`
+	// FivePrimeUtr holds the value of the "five_prime_utr" field.
+	FivePrimeUtr []gffio.GffRecord `json:"five_prime_utr,omitempty"`
+	// ThreePrimeUtr holds the value of the "three_prime_utr" field.
+	ThreePrimeUtr []gffio.GffRecord `json:"three_prime_utr,omitempty"`
+	// Cds holds the value of the "cds" field.
+	Cds []gffio.GffRecord `json:"cds,omitempty"`
+	// GenomicSequence holds the value of the "genomic_sequence" field.
+	GenomicSequence string `json:"genomic_sequence,omitempty"`
+	// ExonSequence holds the value of the "exon_sequence" field.
+	ExonSequence string `json:"exon_sequence,omitempty"`
+	// CdsSequence holds the value of the "cds_sequence" field.
+	CdsSequence string `json:"cds_sequence,omitempty"`
+	// ProteinSequence holds the value of the "protein_sequence" field.
+	ProteinSequence string `json:"protein_sequence,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TranscriptQuery when eager-loading is set.
-	Edges            TranscriptEdges `json:"edges"`
-	gene_transcripts *string
+	Edges             TranscriptEdges `json:"edges"`
+	locus_transcripts *string
 }
 
 // TranscriptEdges holds the relations/edges for other nodes in the graph.
 type TranscriptEdges struct {
-	// Gene holds the value of the gene edge.
-	Gene *Gene `json:"gene,omitempty"`
-	// Cds holds the value of the cds edge.
-	Cds []*Cds `json:"cds,omitempty"`
-	// Exon holds the value of the exon edge.
-	Exon []*Exon `json:"exon,omitempty"`
-	// FivePrimeUtr holds the value of the five_prime_utr edge.
-	FivePrimeUtr []*FivePrimeUtr `json:"five_prime_utr,omitempty"`
-	// ThreePrimeUtr holds the value of the three_prime_utr edge.
-	ThreePrimeUtr []*ThreePrimeUtr `json:"three_prime_utr,omitempty"`
+	// Locus holds the value of the locus edge.
+	Locus *Locus `json:"locus,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [5]bool
+	loadedTypes [1]bool
 }
 
-// GeneOrErr returns the Gene value or an error if the edge
+// LocusOrErr returns the Locus value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e TranscriptEdges) GeneOrErr() (*Gene, error) {
+func (e TranscriptEdges) LocusOrErr() (*Locus, error) {
 	if e.loadedTypes[0] {
-		if e.Gene == nil {
+		if e.Locus == nil {
 			// Edge was loaded but was not found.
-			return nil, &NotFoundError{label: gene.Label}
+			return nil, &NotFoundError{label: locus.Label}
 		}
-		return e.Gene, nil
+		return e.Locus, nil
 	}
-	return nil, &NotLoadedError{edge: "gene"}
-}
-
-// CdsOrErr returns the Cds value or an error if the edge
-// was not loaded in eager-loading.
-func (e TranscriptEdges) CdsOrErr() ([]*Cds, error) {
-	if e.loadedTypes[1] {
-		return e.Cds, nil
-	}
-	return nil, &NotLoadedError{edge: "cds"}
-}
-
-// ExonOrErr returns the Exon value or an error if the edge
-// was not loaded in eager-loading.
-func (e TranscriptEdges) ExonOrErr() ([]*Exon, error) {
-	if e.loadedTypes[2] {
-		return e.Exon, nil
-	}
-	return nil, &NotLoadedError{edge: "exon"}
-}
-
-// FivePrimeUtrOrErr returns the FivePrimeUtr value or an error if the edge
-// was not loaded in eager-loading.
-func (e TranscriptEdges) FivePrimeUtrOrErr() ([]*FivePrimeUtr, error) {
-	if e.loadedTypes[3] {
-		return e.FivePrimeUtr, nil
-	}
-	return nil, &NotLoadedError{edge: "five_prime_utr"}
-}
-
-// ThreePrimeUtrOrErr returns the ThreePrimeUtr value or an error if the edge
-// was not loaded in eager-loading.
-func (e TranscriptEdges) ThreePrimeUtrOrErr() ([]*ThreePrimeUtr, error) {
-	if e.loadedTypes[4] {
-		return e.ThreePrimeUtr, nil
-	}
-	return nil, &NotLoadedError{edge: "three_prime_utr"}
+	return nil, &NotLoadedError{edge: "locus"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -105,9 +77,13 @@ func (*Transcript) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case transcript.FieldID, transcript.FieldStrand, transcript.FieldType, transcript.FieldGenomeSeq, transcript.FieldTranscriptSeq, transcript.FieldCdsSeq, transcript.FieldProteinSeq:
+		case transcript.FieldExon, transcript.FieldFivePrimeUtr, transcript.FieldThreePrimeUtr, transcript.FieldCds:
+			values[i] = new([]byte)
+		case transcript.FieldStart, transcript.FieldEnd:
+			values[i] = new(sql.NullInt64)
+		case transcript.FieldID, transcript.FieldSeqname, transcript.FieldStrand, transcript.FieldType, transcript.FieldGenomicSequence, transcript.FieldExonSequence, transcript.FieldCdsSequence, transcript.FieldProteinSequence:
 			values[i] = new(sql.NullString)
-		case transcript.ForeignKeys[0]: // gene_transcripts
+		case transcript.ForeignKeys[0]: // locus_transcripts
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Transcript", columns[i])
@@ -130,6 +106,12 @@ func (t *Transcript) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				t.ID = value.String
 			}
+		case transcript.FieldSeqname:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field seqname", values[i])
+			} else if value.Valid {
+				t.Seqname = value.String
+			}
 		case transcript.FieldStrand:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field strand", values[i])
@@ -142,65 +124,89 @@ func (t *Transcript) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				t.Type = value.String
 			}
-		case transcript.FieldGenomeSeq:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field genome_seq", values[i])
+		case transcript.FieldStart:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field start", values[i])
 			} else if value.Valid {
-				t.GenomeSeq = value.String
+				t.Start = int32(value.Int64)
 			}
-		case transcript.FieldTranscriptSeq:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field transcript_seq", values[i])
+		case transcript.FieldEnd:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field end", values[i])
 			} else if value.Valid {
-				t.TranscriptSeq = value.String
+				t.End = int32(value.Int64)
 			}
-		case transcript.FieldCdsSeq:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field cds_seq", values[i])
-			} else if value.Valid {
-				t.CdsSeq = value.String
+		case transcript.FieldExon:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field exon", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &t.Exon); err != nil {
+					return fmt.Errorf("unmarshal field exon: %w", err)
+				}
 			}
-		case transcript.FieldProteinSeq:
+		case transcript.FieldFivePrimeUtr:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field five_prime_utr", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &t.FivePrimeUtr); err != nil {
+					return fmt.Errorf("unmarshal field five_prime_utr: %w", err)
+				}
+			}
+		case transcript.FieldThreePrimeUtr:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field three_prime_utr", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &t.ThreePrimeUtr); err != nil {
+					return fmt.Errorf("unmarshal field three_prime_utr: %w", err)
+				}
+			}
+		case transcript.FieldCds:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field cds", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &t.Cds); err != nil {
+					return fmt.Errorf("unmarshal field cds: %w", err)
+				}
+			}
+		case transcript.FieldGenomicSequence:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field protein_seq", values[i])
+				return fmt.Errorf("unexpected type %T for field genomic_sequence", values[i])
 			} else if value.Valid {
-				t.ProteinSeq = value.String
+				t.GenomicSequence = value.String
+			}
+		case transcript.FieldExonSequence:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field exon_sequence", values[i])
+			} else if value.Valid {
+				t.ExonSequence = value.String
+			}
+		case transcript.FieldCdsSequence:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field cds_sequence", values[i])
+			} else if value.Valid {
+				t.CdsSequence = value.String
+			}
+		case transcript.FieldProteinSequence:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field protein_sequence", values[i])
+			} else if value.Valid {
+				t.ProteinSequence = value.String
 			}
 		case transcript.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field gene_transcripts", values[i])
+				return fmt.Errorf("unexpected type %T for field locus_transcripts", values[i])
 			} else if value.Valid {
-				t.gene_transcripts = new(string)
-				*t.gene_transcripts = value.String
+				t.locus_transcripts = new(string)
+				*t.locus_transcripts = value.String
 			}
 		}
 	}
 	return nil
 }
 
-// QueryGene queries the "gene" edge of the Transcript entity.
-func (t *Transcript) QueryGene() *GeneQuery {
-	return (&TranscriptClient{config: t.config}).QueryGene(t)
-}
-
-// QueryCds queries the "cds" edge of the Transcript entity.
-func (t *Transcript) QueryCds() *CdsQuery {
-	return (&TranscriptClient{config: t.config}).QueryCds(t)
-}
-
-// QueryExon queries the "exon" edge of the Transcript entity.
-func (t *Transcript) QueryExon() *ExonQuery {
-	return (&TranscriptClient{config: t.config}).QueryExon(t)
-}
-
-// QueryFivePrimeUtr queries the "five_prime_utr" edge of the Transcript entity.
-func (t *Transcript) QueryFivePrimeUtr() *FivePrimeUtrQuery {
-	return (&TranscriptClient{config: t.config}).QueryFivePrimeUtr(t)
-}
-
-// QueryThreePrimeUtr queries the "three_prime_utr" edge of the Transcript entity.
-func (t *Transcript) QueryThreePrimeUtr() *ThreePrimeUtrQuery {
-	return (&TranscriptClient{config: t.config}).QueryThreePrimeUtr(t)
+// QueryLocus queries the "locus" edge of the Transcript entity.
+func (t *Transcript) QueryLocus() *LocusQuery {
+	return (&TranscriptClient{config: t.config}).QueryLocus(t)
 }
 
 // Update returns a builder for updating this Transcript.
@@ -226,23 +232,44 @@ func (t *Transcript) String() string {
 	var builder strings.Builder
 	builder.WriteString("Transcript(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", t.ID))
+	builder.WriteString("seqname=")
+	builder.WriteString(t.Seqname)
+	builder.WriteString(", ")
 	builder.WriteString("strand=")
 	builder.WriteString(t.Strand)
 	builder.WriteString(", ")
 	builder.WriteString("type=")
 	builder.WriteString(t.Type)
 	builder.WriteString(", ")
-	builder.WriteString("genome_seq=")
-	builder.WriteString(t.GenomeSeq)
+	builder.WriteString("start=")
+	builder.WriteString(fmt.Sprintf("%v", t.Start))
 	builder.WriteString(", ")
-	builder.WriteString("transcript_seq=")
-	builder.WriteString(t.TranscriptSeq)
+	builder.WriteString("end=")
+	builder.WriteString(fmt.Sprintf("%v", t.End))
 	builder.WriteString(", ")
-	builder.WriteString("cds_seq=")
-	builder.WriteString(t.CdsSeq)
+	builder.WriteString("exon=")
+	builder.WriteString(fmt.Sprintf("%v", t.Exon))
 	builder.WriteString(", ")
-	builder.WriteString("protein_seq=")
-	builder.WriteString(t.ProteinSeq)
+	builder.WriteString("five_prime_utr=")
+	builder.WriteString(fmt.Sprintf("%v", t.FivePrimeUtr))
+	builder.WriteString(", ")
+	builder.WriteString("three_prime_utr=")
+	builder.WriteString(fmt.Sprintf("%v", t.ThreePrimeUtr))
+	builder.WriteString(", ")
+	builder.WriteString("cds=")
+	builder.WriteString(fmt.Sprintf("%v", t.Cds))
+	builder.WriteString(", ")
+	builder.WriteString("genomic_sequence=")
+	builder.WriteString(t.GenomicSequence)
+	builder.WriteString(", ")
+	builder.WriteString("exon_sequence=")
+	builder.WriteString(t.ExonSequence)
+	builder.WriteString(", ")
+	builder.WriteString("cds_sequence=")
+	builder.WriteString(t.CdsSequence)
+	builder.WriteString(", ")
+	builder.WriteString("protein_sequence=")
+	builder.WriteString(t.ProteinSequence)
 	builder.WriteByte(')')
 	return builder.String()
 }

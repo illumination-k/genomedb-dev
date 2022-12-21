@@ -151,25 +151,25 @@ func CodonTableLTE(v int32) predicate.Genome {
 	})
 }
 
-// HasGenes applies the HasEdge predicate on the "genes" edge.
-func HasGenes() predicate.Genome {
+// HasLocuses applies the HasEdge predicate on the "locuses" edge.
+func HasLocuses() predicate.Genome {
 	return predicate.Genome(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(GenesTable, GeneFieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, GenesTable, GenesColumn),
+			sqlgraph.To(LocusesTable, LocusFieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, LocusesTable, LocusesColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasGenesWith applies the HasEdge predicate on the "genes" edge with a given conditions (other predicates).
-func HasGenesWith(preds ...predicate.Gene) predicate.Genome {
+// HasLocusesWith applies the HasEdge predicate on the "locuses" edge with a given conditions (other predicates).
+func HasLocusesWith(preds ...predicate.Locus) predicate.Genome {
 	return predicate.Genome(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(GenesInverseTable, GeneFieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, GenesTable, GenesColumn),
+			sqlgraph.To(LocusesInverseTable, LocusFieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, LocusesTable, LocusesColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

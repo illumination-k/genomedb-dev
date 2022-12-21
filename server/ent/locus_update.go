@@ -6,8 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"genomedb/ent/gene"
 	"genomedb/ent/genome"
+	"genomedb/ent/locus"
 	"genomedb/ent/predicate"
 	"genomedb/ent/transcript"
 
@@ -16,111 +16,111 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// GeneUpdate is the builder for updating Gene entities.
-type GeneUpdate struct {
+// LocusUpdate is the builder for updating Locus entities.
+type LocusUpdate struct {
 	config
 	hooks    []Hook
-	mutation *GeneMutation
+	mutation *LocusMutation
 }
 
-// Where appends a list predicates to the GeneUpdate builder.
-func (gu *GeneUpdate) Where(ps ...predicate.Gene) *GeneUpdate {
-	gu.mutation.Where(ps...)
-	return gu
+// Where appends a list predicates to the LocusUpdate builder.
+func (lu *LocusUpdate) Where(ps ...predicate.Locus) *LocusUpdate {
+	lu.mutation.Where(ps...)
+	return lu
 }
 
 // AddTranscriptIDs adds the "transcripts" edge to the Transcript entity by IDs.
-func (gu *GeneUpdate) AddTranscriptIDs(ids ...string) *GeneUpdate {
-	gu.mutation.AddTranscriptIDs(ids...)
-	return gu
+func (lu *LocusUpdate) AddTranscriptIDs(ids ...string) *LocusUpdate {
+	lu.mutation.AddTranscriptIDs(ids...)
+	return lu
 }
 
 // AddTranscripts adds the "transcripts" edges to the Transcript entity.
-func (gu *GeneUpdate) AddTranscripts(t ...*Transcript) *GeneUpdate {
+func (lu *LocusUpdate) AddTranscripts(t ...*Transcript) *LocusUpdate {
 	ids := make([]string, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
-	return gu.AddTranscriptIDs(ids...)
+	return lu.AddTranscriptIDs(ids...)
 }
 
 // SetGenomeID sets the "genome" edge to the Genome entity by ID.
-func (gu *GeneUpdate) SetGenomeID(id string) *GeneUpdate {
-	gu.mutation.SetGenomeID(id)
-	return gu
+func (lu *LocusUpdate) SetGenomeID(id string) *LocusUpdate {
+	lu.mutation.SetGenomeID(id)
+	return lu
 }
 
 // SetNillableGenomeID sets the "genome" edge to the Genome entity by ID if the given value is not nil.
-func (gu *GeneUpdate) SetNillableGenomeID(id *string) *GeneUpdate {
+func (lu *LocusUpdate) SetNillableGenomeID(id *string) *LocusUpdate {
 	if id != nil {
-		gu = gu.SetGenomeID(*id)
+		lu = lu.SetGenomeID(*id)
 	}
-	return gu
+	return lu
 }
 
 // SetGenome sets the "genome" edge to the Genome entity.
-func (gu *GeneUpdate) SetGenome(g *Genome) *GeneUpdate {
-	return gu.SetGenomeID(g.ID)
+func (lu *LocusUpdate) SetGenome(g *Genome) *LocusUpdate {
+	return lu.SetGenomeID(g.ID)
 }
 
-// Mutation returns the GeneMutation object of the builder.
-func (gu *GeneUpdate) Mutation() *GeneMutation {
-	return gu.mutation
+// Mutation returns the LocusMutation object of the builder.
+func (lu *LocusUpdate) Mutation() *LocusMutation {
+	return lu.mutation
 }
 
 // ClearTranscripts clears all "transcripts" edges to the Transcript entity.
-func (gu *GeneUpdate) ClearTranscripts() *GeneUpdate {
-	gu.mutation.ClearTranscripts()
-	return gu
+func (lu *LocusUpdate) ClearTranscripts() *LocusUpdate {
+	lu.mutation.ClearTranscripts()
+	return lu
 }
 
 // RemoveTranscriptIDs removes the "transcripts" edge to Transcript entities by IDs.
-func (gu *GeneUpdate) RemoveTranscriptIDs(ids ...string) *GeneUpdate {
-	gu.mutation.RemoveTranscriptIDs(ids...)
-	return gu
+func (lu *LocusUpdate) RemoveTranscriptIDs(ids ...string) *LocusUpdate {
+	lu.mutation.RemoveTranscriptIDs(ids...)
+	return lu
 }
 
 // RemoveTranscripts removes "transcripts" edges to Transcript entities.
-func (gu *GeneUpdate) RemoveTranscripts(t ...*Transcript) *GeneUpdate {
+func (lu *LocusUpdate) RemoveTranscripts(t ...*Transcript) *LocusUpdate {
 	ids := make([]string, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
-	return gu.RemoveTranscriptIDs(ids...)
+	return lu.RemoveTranscriptIDs(ids...)
 }
 
 // ClearGenome clears the "genome" edge to the Genome entity.
-func (gu *GeneUpdate) ClearGenome() *GeneUpdate {
-	gu.mutation.ClearGenome()
-	return gu
+func (lu *LocusUpdate) ClearGenome() *LocusUpdate {
+	lu.mutation.ClearGenome()
+	return lu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (gu *GeneUpdate) Save(ctx context.Context) (int, error) {
+func (lu *LocusUpdate) Save(ctx context.Context) (int, error) {
 	var (
 		err      error
 		affected int
 	)
-	if len(gu.hooks) == 0 {
-		affected, err = gu.sqlSave(ctx)
+	if len(lu.hooks) == 0 {
+		affected, err = lu.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*GeneMutation)
+			mutation, ok := m.(*LocusMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
 			}
-			gu.mutation = mutation
-			affected, err = gu.sqlSave(ctx)
+			lu.mutation = mutation
+			affected, err = lu.sqlSave(ctx)
 			mutation.done = true
 			return affected, err
 		})
-		for i := len(gu.hooks) - 1; i >= 0; i-- {
-			if gu.hooks[i] == nil {
+		for i := len(lu.hooks) - 1; i >= 0; i-- {
+			if lu.hooks[i] == nil {
 				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
 			}
-			mut = gu.hooks[i](mut)
+			mut = lu.hooks[i](mut)
 		}
-		if _, err := mut.Mutate(ctx, gu.mutation); err != nil {
+		if _, err := mut.Mutate(ctx, lu.mutation); err != nil {
 			return 0, err
 		}
 	}
@@ -128,8 +128,8 @@ func (gu *GeneUpdate) Save(ctx context.Context) (int, error) {
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (gu *GeneUpdate) SaveX(ctx context.Context) int {
-	affected, err := gu.Save(ctx)
+func (lu *LocusUpdate) SaveX(ctx context.Context) int {
+	affected, err := lu.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -137,42 +137,42 @@ func (gu *GeneUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (gu *GeneUpdate) Exec(ctx context.Context) error {
-	_, err := gu.Save(ctx)
+func (lu *LocusUpdate) Exec(ctx context.Context) error {
+	_, err := lu.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (gu *GeneUpdate) ExecX(ctx context.Context) {
-	if err := gu.Exec(ctx); err != nil {
+func (lu *LocusUpdate) ExecX(ctx context.Context) {
+	if err := lu.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
-func (gu *GeneUpdate) sqlSave(ctx context.Context) (n int, err error) {
+func (lu *LocusUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
-			Table:   gene.Table,
-			Columns: gene.Columns,
+			Table:   locus.Table,
+			Columns: locus.Columns,
 			ID: &sqlgraph.FieldSpec{
 				Type:   field.TypeString,
-				Column: gene.FieldID,
+				Column: locus.FieldID,
 			},
 		},
 	}
-	if ps := gu.mutation.predicates; len(ps) > 0 {
+	if ps := lu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if gu.mutation.TranscriptsCleared() {
+	if lu.mutation.TranscriptsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   gene.TranscriptsTable,
-			Columns: []string{gene.TranscriptsColumn},
+			Table:   locus.TranscriptsTable,
+			Columns: []string{locus.TranscriptsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -183,12 +183,12 @@ func (gu *GeneUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.RemovedTranscriptsIDs(); len(nodes) > 0 && !gu.mutation.TranscriptsCleared() {
+	if nodes := lu.mutation.RemovedTranscriptsIDs(); len(nodes) > 0 && !lu.mutation.TranscriptsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   gene.TranscriptsTable,
-			Columns: []string{gene.TranscriptsColumn},
+			Table:   locus.TranscriptsTable,
+			Columns: []string{locus.TranscriptsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -202,12 +202,12 @@ func (gu *GeneUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.TranscriptsIDs(); len(nodes) > 0 {
+	if nodes := lu.mutation.TranscriptsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   gene.TranscriptsTable,
-			Columns: []string{gene.TranscriptsColumn},
+			Table:   locus.TranscriptsTable,
+			Columns: []string{locus.TranscriptsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -221,12 +221,12 @@ func (gu *GeneUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if gu.mutation.GenomeCleared() {
+	if lu.mutation.GenomeCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   gene.GenomeTable,
-			Columns: []string{gene.GenomeColumn},
+			Table:   locus.GenomeTable,
+			Columns: []string{locus.GenomeColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -237,12 +237,12 @@ func (gu *GeneUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.GenomeIDs(); len(nodes) > 0 {
+	if nodes := lu.mutation.GenomeIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   gene.GenomeTable,
-			Columns: []string{gene.GenomeColumn},
+			Table:   locus.GenomeTable,
+			Columns: []string{locus.GenomeColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -256,9 +256,9 @@ func (gu *GeneUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, gu.driver, _spec); err != nil {
+	if n, err = sqlgraph.UpdateNodes(ctx, lu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
-			err = &NotFoundError{gene.Label}
+			err = &NotFoundError{locus.Label}
 		} else if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -267,119 +267,119 @@ func (gu *GeneUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	return n, nil
 }
 
-// GeneUpdateOne is the builder for updating a single Gene entity.
-type GeneUpdateOne struct {
+// LocusUpdateOne is the builder for updating a single Locus entity.
+type LocusUpdateOne struct {
 	config
 	fields   []string
 	hooks    []Hook
-	mutation *GeneMutation
+	mutation *LocusMutation
 }
 
 // AddTranscriptIDs adds the "transcripts" edge to the Transcript entity by IDs.
-func (guo *GeneUpdateOne) AddTranscriptIDs(ids ...string) *GeneUpdateOne {
-	guo.mutation.AddTranscriptIDs(ids...)
-	return guo
+func (luo *LocusUpdateOne) AddTranscriptIDs(ids ...string) *LocusUpdateOne {
+	luo.mutation.AddTranscriptIDs(ids...)
+	return luo
 }
 
 // AddTranscripts adds the "transcripts" edges to the Transcript entity.
-func (guo *GeneUpdateOne) AddTranscripts(t ...*Transcript) *GeneUpdateOne {
+func (luo *LocusUpdateOne) AddTranscripts(t ...*Transcript) *LocusUpdateOne {
 	ids := make([]string, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
-	return guo.AddTranscriptIDs(ids...)
+	return luo.AddTranscriptIDs(ids...)
 }
 
 // SetGenomeID sets the "genome" edge to the Genome entity by ID.
-func (guo *GeneUpdateOne) SetGenomeID(id string) *GeneUpdateOne {
-	guo.mutation.SetGenomeID(id)
-	return guo
+func (luo *LocusUpdateOne) SetGenomeID(id string) *LocusUpdateOne {
+	luo.mutation.SetGenomeID(id)
+	return luo
 }
 
 // SetNillableGenomeID sets the "genome" edge to the Genome entity by ID if the given value is not nil.
-func (guo *GeneUpdateOne) SetNillableGenomeID(id *string) *GeneUpdateOne {
+func (luo *LocusUpdateOne) SetNillableGenomeID(id *string) *LocusUpdateOne {
 	if id != nil {
-		guo = guo.SetGenomeID(*id)
+		luo = luo.SetGenomeID(*id)
 	}
-	return guo
+	return luo
 }
 
 // SetGenome sets the "genome" edge to the Genome entity.
-func (guo *GeneUpdateOne) SetGenome(g *Genome) *GeneUpdateOne {
-	return guo.SetGenomeID(g.ID)
+func (luo *LocusUpdateOne) SetGenome(g *Genome) *LocusUpdateOne {
+	return luo.SetGenomeID(g.ID)
 }
 
-// Mutation returns the GeneMutation object of the builder.
-func (guo *GeneUpdateOne) Mutation() *GeneMutation {
-	return guo.mutation
+// Mutation returns the LocusMutation object of the builder.
+func (luo *LocusUpdateOne) Mutation() *LocusMutation {
+	return luo.mutation
 }
 
 // ClearTranscripts clears all "transcripts" edges to the Transcript entity.
-func (guo *GeneUpdateOne) ClearTranscripts() *GeneUpdateOne {
-	guo.mutation.ClearTranscripts()
-	return guo
+func (luo *LocusUpdateOne) ClearTranscripts() *LocusUpdateOne {
+	luo.mutation.ClearTranscripts()
+	return luo
 }
 
 // RemoveTranscriptIDs removes the "transcripts" edge to Transcript entities by IDs.
-func (guo *GeneUpdateOne) RemoveTranscriptIDs(ids ...string) *GeneUpdateOne {
-	guo.mutation.RemoveTranscriptIDs(ids...)
-	return guo
+func (luo *LocusUpdateOne) RemoveTranscriptIDs(ids ...string) *LocusUpdateOne {
+	luo.mutation.RemoveTranscriptIDs(ids...)
+	return luo
 }
 
 // RemoveTranscripts removes "transcripts" edges to Transcript entities.
-func (guo *GeneUpdateOne) RemoveTranscripts(t ...*Transcript) *GeneUpdateOne {
+func (luo *LocusUpdateOne) RemoveTranscripts(t ...*Transcript) *LocusUpdateOne {
 	ids := make([]string, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
-	return guo.RemoveTranscriptIDs(ids...)
+	return luo.RemoveTranscriptIDs(ids...)
 }
 
 // ClearGenome clears the "genome" edge to the Genome entity.
-func (guo *GeneUpdateOne) ClearGenome() *GeneUpdateOne {
-	guo.mutation.ClearGenome()
-	return guo
+func (luo *LocusUpdateOne) ClearGenome() *LocusUpdateOne {
+	luo.mutation.ClearGenome()
+	return luo
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (guo *GeneUpdateOne) Select(field string, fields ...string) *GeneUpdateOne {
-	guo.fields = append([]string{field}, fields...)
-	return guo
+func (luo *LocusUpdateOne) Select(field string, fields ...string) *LocusUpdateOne {
+	luo.fields = append([]string{field}, fields...)
+	return luo
 }
 
-// Save executes the query and returns the updated Gene entity.
-func (guo *GeneUpdateOne) Save(ctx context.Context) (*Gene, error) {
+// Save executes the query and returns the updated Locus entity.
+func (luo *LocusUpdateOne) Save(ctx context.Context) (*Locus, error) {
 	var (
 		err  error
-		node *Gene
+		node *Locus
 	)
-	if len(guo.hooks) == 0 {
-		node, err = guo.sqlSave(ctx)
+	if len(luo.hooks) == 0 {
+		node, err = luo.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*GeneMutation)
+			mutation, ok := m.(*LocusMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
 			}
-			guo.mutation = mutation
-			node, err = guo.sqlSave(ctx)
+			luo.mutation = mutation
+			node, err = luo.sqlSave(ctx)
 			mutation.done = true
 			return node, err
 		})
-		for i := len(guo.hooks) - 1; i >= 0; i-- {
-			if guo.hooks[i] == nil {
+		for i := len(luo.hooks) - 1; i >= 0; i-- {
+			if luo.hooks[i] == nil {
 				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
 			}
-			mut = guo.hooks[i](mut)
+			mut = luo.hooks[i](mut)
 		}
-		v, err := mut.Mutate(ctx, guo.mutation)
+		v, err := mut.Mutate(ctx, luo.mutation)
 		if err != nil {
 			return nil, err
 		}
-		nv, ok := v.(*Gene)
+		nv, ok := v.(*Locus)
 		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from GeneMutation", v)
+			return nil, fmt.Errorf("unexpected node type %T returned from LocusMutation", v)
 		}
 		node = nv
 	}
@@ -387,8 +387,8 @@ func (guo *GeneUpdateOne) Save(ctx context.Context) (*Gene, error) {
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (guo *GeneUpdateOne) SaveX(ctx context.Context) *Gene {
-	node, err := guo.Save(ctx)
+func (luo *LocusUpdateOne) SaveX(ctx context.Context) *Locus {
+	node, err := luo.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -396,59 +396,59 @@ func (guo *GeneUpdateOne) SaveX(ctx context.Context) *Gene {
 }
 
 // Exec executes the query on the entity.
-func (guo *GeneUpdateOne) Exec(ctx context.Context) error {
-	_, err := guo.Save(ctx)
+func (luo *LocusUpdateOne) Exec(ctx context.Context) error {
+	_, err := luo.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (guo *GeneUpdateOne) ExecX(ctx context.Context) {
-	if err := guo.Exec(ctx); err != nil {
+func (luo *LocusUpdateOne) ExecX(ctx context.Context) {
+	if err := luo.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
-func (guo *GeneUpdateOne) sqlSave(ctx context.Context) (_node *Gene, err error) {
+func (luo *LocusUpdateOne) sqlSave(ctx context.Context) (_node *Locus, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
-			Table:   gene.Table,
-			Columns: gene.Columns,
+			Table:   locus.Table,
+			Columns: locus.Columns,
 			ID: &sqlgraph.FieldSpec{
 				Type:   field.TypeString,
-				Column: gene.FieldID,
+				Column: locus.FieldID,
 			},
 		},
 	}
-	id, ok := guo.mutation.ID()
+	id, ok := luo.mutation.ID()
 	if !ok {
-		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Gene.id" for update`)}
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Locus.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := guo.fields; len(fields) > 0 {
+	if fields := luo.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, gene.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, locus.FieldID)
 		for _, f := range fields {
-			if !gene.ValidColumn(f) {
+			if !locus.ValidColumn(f) {
 				return nil, &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 			}
-			if f != gene.FieldID {
+			if f != locus.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, f)
 			}
 		}
 	}
-	if ps := guo.mutation.predicates; len(ps) > 0 {
+	if ps := luo.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if guo.mutation.TranscriptsCleared() {
+	if luo.mutation.TranscriptsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   gene.TranscriptsTable,
-			Columns: []string{gene.TranscriptsColumn},
+			Table:   locus.TranscriptsTable,
+			Columns: []string{locus.TranscriptsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -459,12 +459,12 @@ func (guo *GeneUpdateOne) sqlSave(ctx context.Context) (_node *Gene, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.RemovedTranscriptsIDs(); len(nodes) > 0 && !guo.mutation.TranscriptsCleared() {
+	if nodes := luo.mutation.RemovedTranscriptsIDs(); len(nodes) > 0 && !luo.mutation.TranscriptsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   gene.TranscriptsTable,
-			Columns: []string{gene.TranscriptsColumn},
+			Table:   locus.TranscriptsTable,
+			Columns: []string{locus.TranscriptsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -478,12 +478,12 @@ func (guo *GeneUpdateOne) sqlSave(ctx context.Context) (_node *Gene, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.TranscriptsIDs(); len(nodes) > 0 {
+	if nodes := luo.mutation.TranscriptsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   gene.TranscriptsTable,
-			Columns: []string{gene.TranscriptsColumn},
+			Table:   locus.TranscriptsTable,
+			Columns: []string{locus.TranscriptsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -497,12 +497,12 @@ func (guo *GeneUpdateOne) sqlSave(ctx context.Context) (_node *Gene, err error) 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if guo.mutation.GenomeCleared() {
+	if luo.mutation.GenomeCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   gene.GenomeTable,
-			Columns: []string{gene.GenomeColumn},
+			Table:   locus.GenomeTable,
+			Columns: []string{locus.GenomeColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -513,12 +513,12 @@ func (guo *GeneUpdateOne) sqlSave(ctx context.Context) (_node *Gene, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.GenomeIDs(); len(nodes) > 0 {
+	if nodes := luo.mutation.GenomeIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   gene.GenomeTable,
-			Columns: []string{gene.GenomeColumn},
+			Table:   locus.GenomeTable,
+			Columns: []string{locus.GenomeColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -532,12 +532,12 @@ func (guo *GeneUpdateOne) sqlSave(ctx context.Context) (_node *Gene, err error) 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_node = &Gene{config: guo.config}
+	_node = &Locus{config: luo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, guo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, luo.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
-			err = &NotFoundError{gene.Label}
+			err = &NotFoundError{locus.Label}
 		} else if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}

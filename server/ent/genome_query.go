@@ -6,8 +6,8 @@ import (
 	"context"
 	"database/sql/driver"
 	"fmt"
-	"genomedb/ent/gene"
 	"genomedb/ent/genome"
+	"genomedb/ent/locus"
 	"genomedb/ent/predicate"
 	"genomedb/ent/scaffold"
 	"math"
@@ -26,7 +26,7 @@ type GenomeQuery struct {
 	order         []OrderFunc
 	fields        []string
 	predicates    []predicate.Genome
-	withGenes     *GeneQuery
+	withLocuses   *LocusQuery
 	withScaffolds *ScaffoldQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -64,9 +64,9 @@ func (gq *GenomeQuery) Order(o ...OrderFunc) *GenomeQuery {
 	return gq
 }
 
-// QueryGenes chains the current query on the "genes" edge.
-func (gq *GenomeQuery) QueryGenes() *GeneQuery {
-	query := &GeneQuery{config: gq.config}
+// QueryLocuses chains the current query on the "locuses" edge.
+func (gq *GenomeQuery) QueryLocuses() *LocusQuery {
+	query := &LocusQuery{config: gq.config}
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := gq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -77,8 +77,8 @@ func (gq *GenomeQuery) QueryGenes() *GeneQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(genome.Table, genome.FieldID, selector),
-			sqlgraph.To(gene.Table, gene.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, genome.GenesTable, genome.GenesColumn),
+			sqlgraph.To(locus.Table, locus.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, genome.LocusesTable, genome.LocusesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
 		return fromU, nil
@@ -289,7 +289,7 @@ func (gq *GenomeQuery) Clone() *GenomeQuery {
 		offset:        gq.offset,
 		order:         append([]OrderFunc{}, gq.order...),
 		predicates:    append([]predicate.Genome{}, gq.predicates...),
-		withGenes:     gq.withGenes.Clone(),
+		withLocuses:   gq.withLocuses.Clone(),
 		withScaffolds: gq.withScaffolds.Clone(),
 		// clone intermediate query.
 		sql:    gq.sql.Clone(),
@@ -298,14 +298,14 @@ func (gq *GenomeQuery) Clone() *GenomeQuery {
 	}
 }
 
-// WithGenes tells the query-builder to eager-load the nodes that are connected to
-// the "genes" edge. The optional arguments are used to configure the query builder of the edge.
-func (gq *GenomeQuery) WithGenes(opts ...func(*GeneQuery)) *GenomeQuery {
-	query := &GeneQuery{config: gq.config}
+// WithLocuses tells the query-builder to eager-load the nodes that are connected to
+// the "locuses" edge. The optional arguments are used to configure the query builder of the edge.
+func (gq *GenomeQuery) WithLocuses(opts ...func(*LocusQuery)) *GenomeQuery {
+	query := &LocusQuery{config: gq.config}
 	for _, opt := range opts {
 		opt(query)
 	}
-	gq.withGenes = query
+	gq.withLocuses = query
 	return gq
 }
 
@@ -394,7 +394,7 @@ func (gq *GenomeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Genom
 		nodes       = []*Genome{}
 		_spec       = gq.querySpec()
 		loadedTypes = [2]bool{
-			gq.withGenes != nil,
+			gq.withLocuses != nil,
 			gq.withScaffolds != nil,
 		}
 	)
@@ -416,10 +416,10 @@ func (gq *GenomeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Genom
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := gq.withGenes; query != nil {
-		if err := gq.loadGenes(ctx, query, nodes,
-			func(n *Genome) { n.Edges.Genes = []*Gene{} },
-			func(n *Genome, e *Gene) { n.Edges.Genes = append(n.Edges.Genes, e) }); err != nil {
+	if query := gq.withLocuses; query != nil {
+		if err := gq.loadLocuses(ctx, query, nodes,
+			func(n *Genome) { n.Edges.Locuses = []*Locus{} },
+			func(n *Genome, e *Locus) { n.Edges.Locuses = append(n.Edges.Locuses, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -433,7 +433,7 @@ func (gq *GenomeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Genom
 	return nodes, nil
 }
 
-func (gq *GenomeQuery) loadGenes(ctx context.Context, query *GeneQuery, nodes []*Genome, init func(*Genome), assign func(*Genome, *Gene)) error {
+func (gq *GenomeQuery) loadLocuses(ctx context.Context, query *LocusQuery, nodes []*Genome, init func(*Genome), assign func(*Genome, *Locus)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[string]*Genome)
 	for i := range nodes {
@@ -444,21 +444,21 @@ func (gq *GenomeQuery) loadGenes(ctx context.Context, query *GeneQuery, nodes []
 		}
 	}
 	query.withFKs = true
-	query.Where(predicate.Gene(func(s *sql.Selector) {
-		s.Where(sql.InValues(genome.GenesColumn, fks...))
+	query.Where(predicate.Locus(func(s *sql.Selector) {
+		s.Where(sql.InValues(genome.LocusesColumn, fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.genome_genes
+		fk := n.genome_locuses
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "genome_genes" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "genome_locuses" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "genome_genes" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "genome_locuses" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

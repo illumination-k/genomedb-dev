@@ -6,8 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"genomedb/ent/gene"
 	"genomedb/ent/genome"
+	"genomedb/ent/locus"
 	"genomedb/ent/scaffold"
 
 	"entgo.io/ent/dialect"
@@ -36,19 +36,19 @@ func (gc *GenomeCreate) SetID(s string) *GenomeCreate {
 	return gc
 }
 
-// AddGeneIDs adds the "genes" edge to the Gene entity by IDs.
-func (gc *GenomeCreate) AddGeneIDs(ids ...string) *GenomeCreate {
-	gc.mutation.AddGeneIDs(ids...)
+// AddLocuseIDs adds the "locuses" edge to the Locus entity by IDs.
+func (gc *GenomeCreate) AddLocuseIDs(ids ...string) *GenomeCreate {
+	gc.mutation.AddLocuseIDs(ids...)
 	return gc
 }
 
-// AddGenes adds the "genes" edges to the Gene entity.
-func (gc *GenomeCreate) AddGenes(g ...*Gene) *GenomeCreate {
-	ids := make([]string, len(g))
-	for i := range g {
-		ids[i] = g[i].ID
+// AddLocuses adds the "locuses" edges to the Locus entity.
+func (gc *GenomeCreate) AddLocuses(l ...*Locus) *GenomeCreate {
+	ids := make([]string, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
 	}
-	return gc.AddGeneIDs(ids...)
+	return gc.AddLocuseIDs(ids...)
 }
 
 // AddScaffoldIDs adds the "scaffolds" edge to the Scaffold entity by IDs.
@@ -191,17 +191,17 @@ func (gc *GenomeCreate) createSpec() (*Genome, *sqlgraph.CreateSpec) {
 		_spec.SetField(genome.FieldCodonTable, field.TypeInt32, value)
 		_node.CodonTable = value
 	}
-	if nodes := gc.mutation.GenesIDs(); len(nodes) > 0 {
+	if nodes := gc.mutation.LocusesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   genome.GenesTable,
-			Columns: []string{genome.GenesColumn},
+			Table:   genome.LocusesTable,
+			Columns: []string{genome.LocusesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
-					Column: gene.FieldID,
+					Column: locus.FieldID,
 				},
 			},
 		}

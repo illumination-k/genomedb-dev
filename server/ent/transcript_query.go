@@ -4,14 +4,9 @@ package ent
 
 import (
 	"context"
-	"database/sql/driver"
 	"fmt"
-	"genomedb/ent/cds"
-	"genomedb/ent/exon"
-	"genomedb/ent/fiveprimeutr"
-	"genomedb/ent/gene"
+	"genomedb/ent/locus"
 	"genomedb/ent/predicate"
-	"genomedb/ent/threeprimeutr"
 	"genomedb/ent/transcript"
 	"math"
 
@@ -23,18 +18,14 @@ import (
 // TranscriptQuery is the builder for querying Transcript entities.
 type TranscriptQuery struct {
 	config
-	limit             *int
-	offset            *int
-	unique            *bool
-	order             []OrderFunc
-	fields            []string
-	predicates        []predicate.Transcript
-	withGene          *GeneQuery
-	withCds           *CdsQuery
-	withExon          *ExonQuery
-	withFivePrimeUtr  *FivePrimeUtrQuery
-	withThreePrimeUtr *ThreePrimeUtrQuery
-	withFKs           bool
+	limit      *int
+	offset     *int
+	unique     *bool
+	order      []OrderFunc
+	fields     []string
+	predicates []predicate.Transcript
+	withLocus  *LocusQuery
+	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -71,9 +62,9 @@ func (tq *TranscriptQuery) Order(o ...OrderFunc) *TranscriptQuery {
 	return tq
 }
 
-// QueryGene chains the current query on the "gene" edge.
-func (tq *TranscriptQuery) QueryGene() *GeneQuery {
-	query := &GeneQuery{config: tq.config}
+// QueryLocus chains the current query on the "locus" edge.
+func (tq *TranscriptQuery) QueryLocus() *LocusQuery {
+	query := &LocusQuery{config: tq.config}
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := tq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -84,96 +75,8 @@ func (tq *TranscriptQuery) QueryGene() *GeneQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(transcript.Table, transcript.FieldID, selector),
-			sqlgraph.To(gene.Table, gene.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, transcript.GeneTable, transcript.GeneColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryCds chains the current query on the "cds" edge.
-func (tq *TranscriptQuery) QueryCds() *CdsQuery {
-	query := &CdsQuery{config: tq.config}
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := tq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := tq.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(transcript.Table, transcript.FieldID, selector),
-			sqlgraph.To(cds.Table, cds.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, transcript.CdsTable, transcript.CdsColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryExon chains the current query on the "exon" edge.
-func (tq *TranscriptQuery) QueryExon() *ExonQuery {
-	query := &ExonQuery{config: tq.config}
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := tq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := tq.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(transcript.Table, transcript.FieldID, selector),
-			sqlgraph.To(exon.Table, exon.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, transcript.ExonTable, transcript.ExonColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryFivePrimeUtr chains the current query on the "five_prime_utr" edge.
-func (tq *TranscriptQuery) QueryFivePrimeUtr() *FivePrimeUtrQuery {
-	query := &FivePrimeUtrQuery{config: tq.config}
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := tq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := tq.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(transcript.Table, transcript.FieldID, selector),
-			sqlgraph.To(fiveprimeutr.Table, fiveprimeutr.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, transcript.FivePrimeUtrTable, transcript.FivePrimeUtrColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryThreePrimeUtr chains the current query on the "three_prime_utr" edge.
-func (tq *TranscriptQuery) QueryThreePrimeUtr() *ThreePrimeUtrQuery {
-	query := &ThreePrimeUtrQuery{config: tq.config}
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := tq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := tq.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(transcript.Table, transcript.FieldID, selector),
-			sqlgraph.To(threeprimeutr.Table, threeprimeutr.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, transcript.ThreePrimeUtrTable, transcript.ThreePrimeUtrColumn),
+			sqlgraph.To(locus.Table, locus.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, transcript.LocusTable, transcript.LocusColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -357,16 +260,12 @@ func (tq *TranscriptQuery) Clone() *TranscriptQuery {
 		return nil
 	}
 	return &TranscriptQuery{
-		config:            tq.config,
-		limit:             tq.limit,
-		offset:            tq.offset,
-		order:             append([]OrderFunc{}, tq.order...),
-		predicates:        append([]predicate.Transcript{}, tq.predicates...),
-		withGene:          tq.withGene.Clone(),
-		withCds:           tq.withCds.Clone(),
-		withExon:          tq.withExon.Clone(),
-		withFivePrimeUtr:  tq.withFivePrimeUtr.Clone(),
-		withThreePrimeUtr: tq.withThreePrimeUtr.Clone(),
+		config:     tq.config,
+		limit:      tq.limit,
+		offset:     tq.offset,
+		order:      append([]OrderFunc{}, tq.order...),
+		predicates: append([]predicate.Transcript{}, tq.predicates...),
+		withLocus:  tq.withLocus.Clone(),
 		// clone intermediate query.
 		sql:    tq.sql.Clone(),
 		path:   tq.path,
@@ -374,58 +273,14 @@ func (tq *TranscriptQuery) Clone() *TranscriptQuery {
 	}
 }
 
-// WithGene tells the query-builder to eager-load the nodes that are connected to
-// the "gene" edge. The optional arguments are used to configure the query builder of the edge.
-func (tq *TranscriptQuery) WithGene(opts ...func(*GeneQuery)) *TranscriptQuery {
-	query := &GeneQuery{config: tq.config}
+// WithLocus tells the query-builder to eager-load the nodes that are connected to
+// the "locus" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TranscriptQuery) WithLocus(opts ...func(*LocusQuery)) *TranscriptQuery {
+	query := &LocusQuery{config: tq.config}
 	for _, opt := range opts {
 		opt(query)
 	}
-	tq.withGene = query
-	return tq
-}
-
-// WithCds tells the query-builder to eager-load the nodes that are connected to
-// the "cds" edge. The optional arguments are used to configure the query builder of the edge.
-func (tq *TranscriptQuery) WithCds(opts ...func(*CdsQuery)) *TranscriptQuery {
-	query := &CdsQuery{config: tq.config}
-	for _, opt := range opts {
-		opt(query)
-	}
-	tq.withCds = query
-	return tq
-}
-
-// WithExon tells the query-builder to eager-load the nodes that are connected to
-// the "exon" edge. The optional arguments are used to configure the query builder of the edge.
-func (tq *TranscriptQuery) WithExon(opts ...func(*ExonQuery)) *TranscriptQuery {
-	query := &ExonQuery{config: tq.config}
-	for _, opt := range opts {
-		opt(query)
-	}
-	tq.withExon = query
-	return tq
-}
-
-// WithFivePrimeUtr tells the query-builder to eager-load the nodes that are connected to
-// the "five_prime_utr" edge. The optional arguments are used to configure the query builder of the edge.
-func (tq *TranscriptQuery) WithFivePrimeUtr(opts ...func(*FivePrimeUtrQuery)) *TranscriptQuery {
-	query := &FivePrimeUtrQuery{config: tq.config}
-	for _, opt := range opts {
-		opt(query)
-	}
-	tq.withFivePrimeUtr = query
-	return tq
-}
-
-// WithThreePrimeUtr tells the query-builder to eager-load the nodes that are connected to
-// the "three_prime_utr" edge. The optional arguments are used to configure the query builder of the edge.
-func (tq *TranscriptQuery) WithThreePrimeUtr(opts ...func(*ThreePrimeUtrQuery)) *TranscriptQuery {
-	query := &ThreePrimeUtrQuery{config: tq.config}
-	for _, opt := range opts {
-		opt(query)
-	}
-	tq.withThreePrimeUtr = query
+	tq.withLocus = query
 	return tq
 }
 
@@ -435,12 +290,12 @@ func (tq *TranscriptQuery) WithThreePrimeUtr(opts ...func(*ThreePrimeUtrQuery)) 
 // Example:
 //
 //	var v []struct {
-//		Strand string `json:"strand,omitempty"`
+//		Seqname string `json:"seqname,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Transcript.Query().
-//		GroupBy(transcript.FieldStrand).
+//		GroupBy(transcript.FieldSeqname).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (tq *TranscriptQuery) GroupBy(field string, fields ...string) *TranscriptGroupBy {
@@ -463,11 +318,11 @@ func (tq *TranscriptQuery) GroupBy(field string, fields ...string) *TranscriptGr
 // Example:
 //
 //	var v []struct {
-//		Strand string `json:"strand,omitempty"`
+//		Seqname string `json:"seqname,omitempty"`
 //	}
 //
 //	client.Transcript.Query().
-//		Select(transcript.FieldStrand).
+//		Select(transcript.FieldSeqname).
 //		Scan(ctx, &v)
 func (tq *TranscriptQuery) Select(fields ...string) *TranscriptSelect {
 	tq.fields = append(tq.fields, fields...)
@@ -503,15 +358,11 @@ func (tq *TranscriptQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*T
 		nodes       = []*Transcript{}
 		withFKs     = tq.withFKs
 		_spec       = tq.querySpec()
-		loadedTypes = [5]bool{
-			tq.withGene != nil,
-			tq.withCds != nil,
-			tq.withExon != nil,
-			tq.withFivePrimeUtr != nil,
-			tq.withThreePrimeUtr != nil,
+		loadedTypes = [1]bool{
+			tq.withLocus != nil,
 		}
 	)
-	if tq.withGene != nil {
+	if tq.withLocus != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -535,57 +386,29 @@ func (tq *TranscriptQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*T
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := tq.withGene; query != nil {
-		if err := tq.loadGene(ctx, query, nodes, nil,
-			func(n *Transcript, e *Gene) { n.Edges.Gene = e }); err != nil {
-			return nil, err
-		}
-	}
-	if query := tq.withCds; query != nil {
-		if err := tq.loadCds(ctx, query, nodes,
-			func(n *Transcript) { n.Edges.Cds = []*Cds{} },
-			func(n *Transcript, e *Cds) { n.Edges.Cds = append(n.Edges.Cds, e) }); err != nil {
-			return nil, err
-		}
-	}
-	if query := tq.withExon; query != nil {
-		if err := tq.loadExon(ctx, query, nodes,
-			func(n *Transcript) { n.Edges.Exon = []*Exon{} },
-			func(n *Transcript, e *Exon) { n.Edges.Exon = append(n.Edges.Exon, e) }); err != nil {
-			return nil, err
-		}
-	}
-	if query := tq.withFivePrimeUtr; query != nil {
-		if err := tq.loadFivePrimeUtr(ctx, query, nodes,
-			func(n *Transcript) { n.Edges.FivePrimeUtr = []*FivePrimeUtr{} },
-			func(n *Transcript, e *FivePrimeUtr) { n.Edges.FivePrimeUtr = append(n.Edges.FivePrimeUtr, e) }); err != nil {
-			return nil, err
-		}
-	}
-	if query := tq.withThreePrimeUtr; query != nil {
-		if err := tq.loadThreePrimeUtr(ctx, query, nodes,
-			func(n *Transcript) { n.Edges.ThreePrimeUtr = []*ThreePrimeUtr{} },
-			func(n *Transcript, e *ThreePrimeUtr) { n.Edges.ThreePrimeUtr = append(n.Edges.ThreePrimeUtr, e) }); err != nil {
+	if query := tq.withLocus; query != nil {
+		if err := tq.loadLocus(ctx, query, nodes, nil,
+			func(n *Transcript, e *Locus) { n.Edges.Locus = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (tq *TranscriptQuery) loadGene(ctx context.Context, query *GeneQuery, nodes []*Transcript, init func(*Transcript), assign func(*Transcript, *Gene)) error {
+func (tq *TranscriptQuery) loadLocus(ctx context.Context, query *LocusQuery, nodes []*Transcript, init func(*Transcript), assign func(*Transcript, *Locus)) error {
 	ids := make([]string, 0, len(nodes))
 	nodeids := make(map[string][]*Transcript)
 	for i := range nodes {
-		if nodes[i].gene_transcripts == nil {
+		if nodes[i].locus_transcripts == nil {
 			continue
 		}
-		fk := *nodes[i].gene_transcripts
+		fk := *nodes[i].locus_transcripts
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
 		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	query.Where(gene.IDIn(ids...))
+	query.Where(locus.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
@@ -593,135 +416,11 @@ func (tq *TranscriptQuery) loadGene(ctx context.Context, query *GeneQuery, nodes
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "gene_transcripts" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "locus_transcripts" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
-	}
-	return nil
-}
-func (tq *TranscriptQuery) loadCds(ctx context.Context, query *CdsQuery, nodes []*Transcript, init func(*Transcript), assign func(*Transcript, *Cds)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[string]*Transcript)
-	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
-	}
-	query.withFKs = true
-	query.Where(predicate.Cds(func(s *sql.Selector) {
-		s.Where(sql.InValues(transcript.CdsColumn, fks...))
-	}))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		fk := n.transcript_cds
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "transcript_cds" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "transcript_cds" returned %v for node %v`, *fk, n.ID)
-		}
-		assign(node, n)
-	}
-	return nil
-}
-func (tq *TranscriptQuery) loadExon(ctx context.Context, query *ExonQuery, nodes []*Transcript, init func(*Transcript), assign func(*Transcript, *Exon)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[string]*Transcript)
-	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
-	}
-	query.withFKs = true
-	query.Where(predicate.Exon(func(s *sql.Selector) {
-		s.Where(sql.InValues(transcript.ExonColumn, fks...))
-	}))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		fk := n.transcript_exon
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "transcript_exon" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "transcript_exon" returned %v for node %v`, *fk, n.ID)
-		}
-		assign(node, n)
-	}
-	return nil
-}
-func (tq *TranscriptQuery) loadFivePrimeUtr(ctx context.Context, query *FivePrimeUtrQuery, nodes []*Transcript, init func(*Transcript), assign func(*Transcript, *FivePrimeUtr)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[string]*Transcript)
-	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
-	}
-	query.withFKs = true
-	query.Where(predicate.FivePrimeUtr(func(s *sql.Selector) {
-		s.Where(sql.InValues(transcript.FivePrimeUtrColumn, fks...))
-	}))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		fk := n.transcript_five_prime_utr
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "transcript_five_prime_utr" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "transcript_five_prime_utr" returned %v for node %v`, *fk, n.ID)
-		}
-		assign(node, n)
-	}
-	return nil
-}
-func (tq *TranscriptQuery) loadThreePrimeUtr(ctx context.Context, query *ThreePrimeUtrQuery, nodes []*Transcript, init func(*Transcript), assign func(*Transcript, *ThreePrimeUtr)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[string]*Transcript)
-	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
-	}
-	query.withFKs = true
-	query.Where(predicate.ThreePrimeUtr(func(s *sql.Selector) {
-		s.Where(sql.InValues(transcript.ThreePrimeUtrColumn, fks...))
-	}))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		fk := n.transcript_three_prime_utr
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "transcript_three_prime_utr" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "transcript_three_prime_utr" returned %v for node %v`, *fk, n.ID)
-		}
-		assign(node, n)
 	}
 	return nil
 }

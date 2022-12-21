@@ -5,7 +5,7 @@ package ent
 import (
 	"context"
 	"fmt"
-	"genomedb/ent/cds"
+	"genomedb/ent/locus"
 	"genomedb/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
@@ -13,45 +13,45 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// CdsDelete is the builder for deleting a Cds entity.
-type CdsDelete struct {
+// LocusDelete is the builder for deleting a Locus entity.
+type LocusDelete struct {
 	config
 	hooks    []Hook
-	mutation *CdsMutation
+	mutation *LocusMutation
 }
 
-// Where appends a list predicates to the CdsDelete builder.
-func (cd *CdsDelete) Where(ps ...predicate.Cds) *CdsDelete {
-	cd.mutation.Where(ps...)
-	return cd
+// Where appends a list predicates to the LocusDelete builder.
+func (ld *LocusDelete) Where(ps ...predicate.Locus) *LocusDelete {
+	ld.mutation.Where(ps...)
+	return ld
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (cd *CdsDelete) Exec(ctx context.Context) (int, error) {
+func (ld *LocusDelete) Exec(ctx context.Context) (int, error) {
 	var (
 		err      error
 		affected int
 	)
-	if len(cd.hooks) == 0 {
-		affected, err = cd.sqlExec(ctx)
+	if len(ld.hooks) == 0 {
+		affected, err = ld.sqlExec(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*CdsMutation)
+			mutation, ok := m.(*LocusMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
 			}
-			cd.mutation = mutation
-			affected, err = cd.sqlExec(ctx)
+			ld.mutation = mutation
+			affected, err = ld.sqlExec(ctx)
 			mutation.done = true
 			return affected, err
 		})
-		for i := len(cd.hooks) - 1; i >= 0; i-- {
-			if cd.hooks[i] == nil {
+		for i := len(ld.hooks) - 1; i >= 0; i-- {
+			if ld.hooks[i] == nil {
 				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
 			}
-			mut = cd.hooks[i](mut)
+			mut = ld.hooks[i](mut)
 		}
-		if _, err := mut.Mutate(ctx, cd.mutation); err != nil {
+		if _, err := mut.Mutate(ctx, ld.mutation); err != nil {
 			return 0, err
 		}
 	}
@@ -59,57 +59,57 @@ func (cd *CdsDelete) Exec(ctx context.Context) (int, error) {
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (cd *CdsDelete) ExecX(ctx context.Context) int {
-	n, err := cd.Exec(ctx)
+func (ld *LocusDelete) ExecX(ctx context.Context) int {
+	n, err := ld.Exec(ctx)
 	if err != nil {
 		panic(err)
 	}
 	return n
 }
 
-func (cd *CdsDelete) sqlExec(ctx context.Context) (int, error) {
+func (ld *LocusDelete) sqlExec(ctx context.Context) (int, error) {
 	_spec := &sqlgraph.DeleteSpec{
 		Node: &sqlgraph.NodeSpec{
-			Table: cds.Table,
+			Table: locus.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: cds.FieldID,
+				Type:   field.TypeString,
+				Column: locus.FieldID,
 			},
 		},
 	}
-	if ps := cd.mutation.predicates; len(ps) > 0 {
+	if ps := ld.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	affected, err := sqlgraph.DeleteNodes(ctx, cd.driver, _spec)
+	affected, err := sqlgraph.DeleteNodes(ctx, ld.driver, _spec)
 	if err != nil && sqlgraph.IsConstraintError(err) {
 		err = &ConstraintError{msg: err.Error(), wrap: err}
 	}
 	return affected, err
 }
 
-// CdsDeleteOne is the builder for deleting a single Cds entity.
-type CdsDeleteOne struct {
-	cd *CdsDelete
+// LocusDeleteOne is the builder for deleting a single Locus entity.
+type LocusDeleteOne struct {
+	ld *LocusDelete
 }
 
 // Exec executes the deletion query.
-func (cdo *CdsDeleteOne) Exec(ctx context.Context) error {
-	n, err := cdo.cd.Exec(ctx)
+func (ldo *LocusDeleteOne) Exec(ctx context.Context) error {
+	n, err := ldo.ld.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
 	case n == 0:
-		return &NotFoundError{cds.Label}
+		return &NotFoundError{locus.Label}
 	default:
 		return nil
 	}
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (cdo *CdsDeleteOne) ExecX(ctx context.Context) {
-	cdo.cd.ExecX(ctx)
+func (ldo *LocusDeleteOne) ExecX(ctx context.Context) {
+	ldo.ld.ExecX(ctx)
 }
