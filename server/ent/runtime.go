@@ -35,11 +35,11 @@ func init() {
 	transcriptFields := schema.Transcript{}.Fields()
 	_ = transcriptFields
 	// transcriptDescStart is the schema descriptor for start field.
-	transcriptDescStart := transcriptFields[4].Descriptor()
+	transcriptDescStart := transcriptFields[5].Descriptor()
 	// transcript.StartValidator is a validator for the "start" field. It is called by the builders before save.
 	transcript.StartValidator = transcriptDescStart.Validators[0].(func(int32) error)
 	// transcriptDescEnd is the schema descriptor for end field.
-	transcriptDescEnd := transcriptFields[5].Descriptor()
+	transcriptDescEnd := transcriptFields[6].Descriptor()
 	// transcript.EndValidator is a validator for the "end" field. It is called by the builders before save.
 	transcript.EndValidator = transcriptDescEnd.Validators[0].(func(int32) error)
 }

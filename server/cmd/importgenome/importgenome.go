@@ -75,6 +75,7 @@ func Run(genomeName string, genomeFasta string, genomeGff string, databaseUri st
 				SetID(transcriptId).
 				SetStrand(rec.Strand).
 				SetType(rec.Type).
+				SetSource(rec.Source).
 				SetSeqname(rec.SeqName).
 				SetStart(rec.Start).
 				SetEnd(rec.End).
@@ -164,6 +165,7 @@ func ReadGenomeFasta(fastaPath string) (map[string]string, error) {
 // reading a gff file
 type TranscriptRecords struct {
 	LocusId              string
+	Source               string
 	Type                 string
 	SeqName              string
 	Strand               string
@@ -189,6 +191,7 @@ func NewTranscriptRecords(record gffio.GffRecord) (TranscriptRecords, error) {
 	}
 
 	transcriptRecord.LocusId = geneId
+	transcriptRecord.Source = record.Source
 	transcriptRecord.Type = record.Type
 	transcriptRecord.SeqName = record.Seqname
 	transcriptRecord.Start = record.Start

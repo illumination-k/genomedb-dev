@@ -20,6 +20,7 @@ func (Transcript) Fields() []ent.Field {
 		field.String("seqname"),
 		field.String("strand"),
 		field.String("type"),
+		field.String("source"),
 		field.Int32("start").Positive(),
 		field.Int32("end").Positive(),
 		field.JSON("exon", []gffio.GffRecord{}),

@@ -101,6 +101,13 @@ func Type(v string) predicate.Transcript {
 	})
 }
 
+// Source applies equality check predicate on the "source" field. It's identical to SourceEQ.
+func Source(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSource), v))
+	})
+}
+
 // Start applies equality check predicate on the "start" field. It's identical to StartEQ.
 func Start(v int32) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
@@ -437,6 +444,105 @@ func TypeEqualFold(v string) predicate.Transcript {
 func TypeContainsFold(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldType), v))
+	})
+}
+
+// SourceEQ applies the EQ predicate on the "source" field.
+func SourceEQ(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSource), v))
+	})
+}
+
+// SourceNEQ applies the NEQ predicate on the "source" field.
+func SourceNEQ(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldSource), v))
+	})
+}
+
+// SourceIn applies the In predicate on the "source" field.
+func SourceIn(vs ...string) predicate.Transcript {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.In(s.C(FieldSource), v...))
+	})
+}
+
+// SourceNotIn applies the NotIn predicate on the "source" field.
+func SourceNotIn(vs ...string) predicate.Transcript {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.NotIn(s.C(FieldSource), v...))
+	})
+}
+
+// SourceGT applies the GT predicate on the "source" field.
+func SourceGT(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldSource), v))
+	})
+}
+
+// SourceGTE applies the GTE predicate on the "source" field.
+func SourceGTE(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldSource), v))
+	})
+}
+
+// SourceLT applies the LT predicate on the "source" field.
+func SourceLT(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldSource), v))
+	})
+}
+
+// SourceLTE applies the LTE predicate on the "source" field.
+func SourceLTE(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldSource), v))
+	})
+}
+
+// SourceContains applies the Contains predicate on the "source" field.
+func SourceContains(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldSource), v))
+	})
+}
+
+// SourceHasPrefix applies the HasPrefix predicate on the "source" field.
+func SourceHasPrefix(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldSource), v))
+	})
+}
+
+// SourceHasSuffix applies the HasSuffix predicate on the "source" field.
+func SourceHasSuffix(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldSource), v))
+	})
+}
+
+// SourceEqualFold applies the EqualFold predicate on the "source" field.
+func SourceEqualFold(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldSource), v))
+	})
+}
+
+// SourceContainsFold applies the ContainsFold predicate on the "source" field.
+func SourceContainsFold(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldSource), v))
 	})
 }
 

@@ -42,6 +42,12 @@ func (tc *TranscriptCreate) SetType(s string) *TranscriptCreate {
 	return tc
 }
 
+// SetSource sets the "source" field.
+func (tc *TranscriptCreate) SetSource(s string) *TranscriptCreate {
+	tc.mutation.SetSource(s)
+	return tc
+}
+
 // SetStart sets the "start" field.
 func (tc *TranscriptCreate) SetStart(i int32) *TranscriptCreate {
 	tc.mutation.SetStart(i)
@@ -212,6 +218,9 @@ func (tc *TranscriptCreate) check() error {
 	if _, ok := tc.mutation.GetType(); !ok {
 		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "Transcript.type"`)}
 	}
+	if _, ok := tc.mutation.Source(); !ok {
+		return &ValidationError{Name: "source", err: errors.New(`ent: missing required field "Transcript.source"`)}
+	}
 	if _, ok := tc.mutation.Start(); !ok {
 		return &ValidationError{Name: "start", err: errors.New(`ent: missing required field "Transcript.start"`)}
 	}
@@ -300,6 +309,10 @@ func (tc *TranscriptCreate) createSpec() (*Transcript, *sqlgraph.CreateSpec) {
 	if value, ok := tc.mutation.GetType(); ok {
 		_spec.SetField(transcript.FieldType, field.TypeString, value)
 		_node.Type = value
+	}
+	if value, ok := tc.mutation.Source(); ok {
+		_spec.SetField(transcript.FieldSource, field.TypeString, value)
+		_node.Source = value
 	}
 	if value, ok := tc.mutation.Start(); ok {
 		_spec.SetField(transcript.FieldStart, field.TypeInt32, value)
@@ -446,6 +459,18 @@ func (u *TranscriptUpsert) SetType(v string) *TranscriptUpsert {
 // UpdateType sets the "type" field to the value that was provided on create.
 func (u *TranscriptUpsert) UpdateType() *TranscriptUpsert {
 	u.SetExcluded(transcript.FieldType)
+	return u
+}
+
+// SetSource sets the "source" field.
+func (u *TranscriptUpsert) SetSource(v string) *TranscriptUpsert {
+	u.Set(transcript.FieldSource, v)
+	return u
+}
+
+// UpdateSource sets the "source" field to the value that was provided on create.
+func (u *TranscriptUpsert) UpdateSource() *TranscriptUpsert {
+	u.SetExcluded(transcript.FieldSource)
 	return u
 }
 
@@ -668,6 +693,20 @@ func (u *TranscriptUpsertOne) SetType(v string) *TranscriptUpsertOne {
 func (u *TranscriptUpsertOne) UpdateType() *TranscriptUpsertOne {
 	return u.Update(func(s *TranscriptUpsert) {
 		s.UpdateType()
+	})
+}
+
+// SetSource sets the "source" field.
+func (u *TranscriptUpsertOne) SetSource(v string) *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetSource(v)
+	})
+}
+
+// UpdateSource sets the "source" field to the value that was provided on create.
+func (u *TranscriptUpsertOne) UpdateSource() *TranscriptUpsertOne {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateSource()
 	})
 }
 
@@ -1074,6 +1113,20 @@ func (u *TranscriptUpsertBulk) SetType(v string) *TranscriptUpsertBulk {
 func (u *TranscriptUpsertBulk) UpdateType() *TranscriptUpsertBulk {
 	return u.Update(func(s *TranscriptUpsert) {
 		s.UpdateType()
+	})
+}
+
+// SetSource sets the "source" field.
+func (u *TranscriptUpsertBulk) SetSource(v string) *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.SetSource(v)
+	})
+}
+
+// UpdateSource sets the "source" field to the value that was provided on create.
+func (u *TranscriptUpsertBulk) UpdateSource() *TranscriptUpsertBulk {
+	return u.Update(func(s *TranscriptUpsert) {
+		s.UpdateSource()
 	})
 }
 

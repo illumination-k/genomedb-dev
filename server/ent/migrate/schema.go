@@ -65,6 +65,7 @@ var (
 		{Name: "seqname", Type: field.TypeString},
 		{Name: "strand", Type: field.TypeString},
 		{Name: "type", Type: field.TypeString},
+		{Name: "source", Type: field.TypeString},
 		{Name: "start", Type: field.TypeInt32},
 		{Name: "end", Type: field.TypeInt32},
 		{Name: "exon", Type: field.TypeJSON},
@@ -85,7 +86,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "transcripts_locus_transcripts",
-				Columns:    []*schema.Column{TranscriptsColumns[14]},
+				Columns:    []*schema.Column{TranscriptsColumns[15]},
 				RefColumns: []*schema.Column{LocusColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

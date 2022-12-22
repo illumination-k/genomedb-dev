@@ -13,6 +13,8 @@ const (
 	FieldStrand = "strand"
 	// FieldType holds the string denoting the type field in the database.
 	FieldType = "type"
+	// FieldSource holds the string denoting the source field in the database.
+	FieldSource = "source"
 	// FieldStart holds the string denoting the start field in the database.
 	FieldStart = "start"
 	// FieldEnd holds the string denoting the end field in the database.
@@ -52,6 +54,7 @@ var Columns = []string{
 	FieldSeqname,
 	FieldStrand,
 	FieldType,
+	FieldSource,
 	FieldStart,
 	FieldEnd,
 	FieldExon,

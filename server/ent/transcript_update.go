@@ -48,6 +48,12 @@ func (tu *TranscriptUpdate) SetType(s string) *TranscriptUpdate {
 	return tu
 }
 
+// SetSource sets the "source" field.
+func (tu *TranscriptUpdate) SetSource(s string) *TranscriptUpdate {
+	tu.mutation.SetSource(s)
+	return tu
+}
+
 // SetStart sets the "start" field.
 func (tu *TranscriptUpdate) SetStart(i int32) *TranscriptUpdate {
 	tu.mutation.ResetStart()
@@ -278,6 +284,9 @@ func (tu *TranscriptUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := tu.mutation.GetType(); ok {
 		_spec.SetField(transcript.FieldType, field.TypeString, value)
 	}
+	if value, ok := tu.mutation.Source(); ok {
+		_spec.SetField(transcript.FieldSource, field.TypeString, value)
+	}
 	if value, ok := tu.mutation.Start(); ok {
 		_spec.SetField(transcript.FieldStart, field.TypeInt32, value)
 	}
@@ -403,6 +412,12 @@ func (tuo *TranscriptUpdateOne) SetStrand(s string) *TranscriptUpdateOne {
 // SetType sets the "type" field.
 func (tuo *TranscriptUpdateOne) SetType(s string) *TranscriptUpdateOne {
 	tuo.mutation.SetType(s)
+	return tuo
+}
+
+// SetSource sets the "source" field.
+func (tuo *TranscriptUpdateOne) SetSource(s string) *TranscriptUpdateOne {
+	tuo.mutation.SetSource(s)
 	return tuo
 }
 
@@ -665,6 +680,9 @@ func (tuo *TranscriptUpdateOne) sqlSave(ctx context.Context) (_node *Transcript,
 	}
 	if value, ok := tuo.mutation.GetType(); ok {
 		_spec.SetField(transcript.FieldType, field.TypeString, value)
+	}
+	if value, ok := tuo.mutation.Source(); ok {
+		_spec.SetField(transcript.FieldSource, field.TypeString, value)
 	}
 	if value, ok := tuo.mutation.Start(); ok {
 		_spec.SetField(transcript.FieldStart, field.TypeInt32, value)

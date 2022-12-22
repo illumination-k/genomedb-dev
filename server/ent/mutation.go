@@ -1409,6 +1409,7 @@ type TranscriptMutation struct {
 	seqname               *string
 	strand                *string
 	_type                 *string
+	source                *string
 	start                 *int32
 	addstart              *int32
 	end                   *int32
@@ -1643,6 +1644,42 @@ func (m *TranscriptMutation) OldType(ctx context.Context) (v string, err error) 
 // ResetType resets all changes to the "type" field.
 func (m *TranscriptMutation) ResetType() {
 	m._type = nil
+}
+
+// SetSource sets the "source" field.
+func (m *TranscriptMutation) SetSource(s string) {
+	m.source = &s
+}
+
+// Source returns the value of the "source" field in the mutation.
+func (m *TranscriptMutation) Source() (r string, exists bool) {
+	v := m.source
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSource returns the old "source" field's value of the Transcript entity.
+// If the Transcript object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TranscriptMutation) OldSource(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSource is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSource requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSource: %w", err)
+	}
+	return oldValue.Source, nil
+}
+
+// ResetSource resets all changes to the "source" field.
+func (m *TranscriptMutation) ResetSource() {
+	m.source = nil
 }
 
 // SetStart sets the "start" field.
@@ -2163,7 +2200,7 @@ func (m *TranscriptMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TranscriptMutation) Fields() []string {
-	fields := make([]string, 0, 13)
+	fields := make([]string, 0, 14)
 	if m.seqname != nil {
 		fields = append(fields, transcript.FieldSeqname)
 	}
@@ -2172,6 +2209,9 @@ func (m *TranscriptMutation) Fields() []string {
 	}
 	if m._type != nil {
 		fields = append(fields, transcript.FieldType)
+	}
+	if m.source != nil {
+		fields = append(fields, transcript.FieldSource)
 	}
 	if m.start != nil {
 		fields = append(fields, transcript.FieldStart)
@@ -2217,6 +2257,8 @@ func (m *TranscriptMutation) Field(name string) (ent.Value, bool) {
 		return m.Strand()
 	case transcript.FieldType:
 		return m.GetType()
+	case transcript.FieldSource:
+		return m.Source()
 	case transcript.FieldStart:
 		return m.Start()
 	case transcript.FieldEnd:
@@ -2252,6 +2294,8 @@ func (m *TranscriptMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldStrand(ctx)
 	case transcript.FieldType:
 		return m.OldType(ctx)
+	case transcript.FieldSource:
+		return m.OldSource(ctx)
 	case transcript.FieldStart:
 		return m.OldStart(ctx)
 	case transcript.FieldEnd:
@@ -2301,6 +2345,13 @@ func (m *TranscriptMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetType(v)
+		return nil
+	case transcript.FieldSource:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSource(v)
 		return nil
 	case transcript.FieldStart:
 		v, ok := value.(int32)
@@ -2456,6 +2507,9 @@ func (m *TranscriptMutation) ResetField(name string) error {
 		return nil
 	case transcript.FieldType:
 		m.ResetType()
+		return nil
+	case transcript.FieldSource:
+		m.ResetSource()
 		return nil
 	case transcript.FieldStart:
 		m.ResetStart()

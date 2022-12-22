@@ -24,6 +24,8 @@ type Transcript struct {
 	Strand string `json:"strand,omitempty"`
 	// Type holds the value of the "type" field.
 	Type string `json:"type,omitempty"`
+	// Source holds the value of the "source" field.
+	Source string `json:"source,omitempty"`
 	// Start holds the value of the "start" field.
 	Start int32 `json:"start,omitempty"`
 	// End holds the value of the "end" field.
@@ -81,7 +83,7 @@ func (*Transcript) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case transcript.FieldStart, transcript.FieldEnd:
 			values[i] = new(sql.NullInt64)
-		case transcript.FieldID, transcript.FieldSeqname, transcript.FieldStrand, transcript.FieldType, transcript.FieldGenomicSequence, transcript.FieldExonSequence, transcript.FieldCdsSequence, transcript.FieldProteinSequence:
+		case transcript.FieldID, transcript.FieldSeqname, transcript.FieldStrand, transcript.FieldType, transcript.FieldSource, transcript.FieldGenomicSequence, transcript.FieldExonSequence, transcript.FieldCdsSequence, transcript.FieldProteinSequence:
 			values[i] = new(sql.NullString)
 		case transcript.ForeignKeys[0]: // locus_transcripts
 			values[i] = new(sql.NullString)
@@ -123,6 +125,12 @@ func (t *Transcript) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field type", values[i])
 			} else if value.Valid {
 				t.Type = value.String
+			}
+		case transcript.FieldSource:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field source", values[i])
+			} else if value.Valid {
+				t.Source = value.String
 			}
 		case transcript.FieldStart:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -240,6 +248,9 @@ func (t *Transcript) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("type=")
 	builder.WriteString(t.Type)
+	builder.WriteString(", ")
+	builder.WriteString("source=")
+	builder.WriteString(t.Source)
 	builder.WriteString(", ")
 	builder.WriteString("start=")
 	builder.WriteString(fmt.Sprintf("%v", t.Start))
