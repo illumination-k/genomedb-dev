@@ -24,8 +24,8 @@ type Genome struct {
 
 // GenomeEdges holds the relations/edges for other nodes in the graph.
 type GenomeEdges struct {
-	// Genes holds the value of the genes edge.
-	Genes []*Gene `json:"genes,omitempty"`
+	// Locuses holds the value of the locuses edge.
+	Locuses []*Locus `json:"locuses,omitempty"`
 	// Scaffolds holds the value of the scaffolds edge.
 	Scaffolds []*Scaffold `json:"scaffolds,omitempty"`
 	// loadedTypes holds the information for reporting if a
@@ -33,13 +33,13 @@ type GenomeEdges struct {
 	loadedTypes [2]bool
 }
 
-// GenesOrErr returns the Genes value or an error if the edge
+// LocusesOrErr returns the Locuses value or an error if the edge
 // was not loaded in eager-loading.
-func (e GenomeEdges) GenesOrErr() ([]*Gene, error) {
+func (e GenomeEdges) LocusesOrErr() ([]*Locus, error) {
 	if e.loadedTypes[0] {
-		return e.Genes, nil
+		return e.Locuses, nil
 	}
-	return nil, &NotLoadedError{edge: "genes"}
+	return nil, &NotLoadedError{edge: "locuses"}
 }
 
 // ScaffoldsOrErr returns the Scaffolds value or an error if the edge
@@ -92,9 +92,9 @@ func (ge *Genome) assignValues(columns []string, values []any) error {
 	return nil
 }
 
-// QueryGenes queries the "genes" edge of the Genome entity.
-func (ge *Genome) QueryGenes() *GeneQuery {
-	return (&GenomeClient{config: ge.config}).QueryGenes(ge)
+// QueryLocuses queries the "locuses" edge of the Genome entity.
+func (ge *Genome) QueryLocuses() *LocusQuery {
+	return (&GenomeClient{config: ge.config}).QueryLocuses(ge)
 }
 
 // QueryScaffolds queries the "scaffolds" edge of the Genome entity.

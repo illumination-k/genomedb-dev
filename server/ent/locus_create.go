@@ -6,8 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"genomedb/ent/gene"
 	"genomedb/ent/genome"
+	"genomedb/ent/locus"
 	"genomedb/ent/transcript"
 
 	"entgo.io/ent/dialect"
@@ -16,100 +16,100 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// GeneCreate is the builder for creating a Gene entity.
-type GeneCreate struct {
+// LocusCreate is the builder for creating a Locus entity.
+type LocusCreate struct {
 	config
-	mutation *GeneMutation
+	mutation *LocusMutation
 	hooks    []Hook
 	conflict []sql.ConflictOption
 }
 
 // SetID sets the "id" field.
-func (gc *GeneCreate) SetID(s string) *GeneCreate {
-	gc.mutation.SetID(s)
-	return gc
+func (lc *LocusCreate) SetID(s string) *LocusCreate {
+	lc.mutation.SetID(s)
+	return lc
 }
 
 // AddTranscriptIDs adds the "transcripts" edge to the Transcript entity by IDs.
-func (gc *GeneCreate) AddTranscriptIDs(ids ...string) *GeneCreate {
-	gc.mutation.AddTranscriptIDs(ids...)
-	return gc
+func (lc *LocusCreate) AddTranscriptIDs(ids ...string) *LocusCreate {
+	lc.mutation.AddTranscriptIDs(ids...)
+	return lc
 }
 
 // AddTranscripts adds the "transcripts" edges to the Transcript entity.
-func (gc *GeneCreate) AddTranscripts(t ...*Transcript) *GeneCreate {
+func (lc *LocusCreate) AddTranscripts(t ...*Transcript) *LocusCreate {
 	ids := make([]string, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
-	return gc.AddTranscriptIDs(ids...)
+	return lc.AddTranscriptIDs(ids...)
 }
 
 // SetGenomeID sets the "genome" edge to the Genome entity by ID.
-func (gc *GeneCreate) SetGenomeID(id string) *GeneCreate {
-	gc.mutation.SetGenomeID(id)
-	return gc
+func (lc *LocusCreate) SetGenomeID(id string) *LocusCreate {
+	lc.mutation.SetGenomeID(id)
+	return lc
 }
 
 // SetNillableGenomeID sets the "genome" edge to the Genome entity by ID if the given value is not nil.
-func (gc *GeneCreate) SetNillableGenomeID(id *string) *GeneCreate {
+func (lc *LocusCreate) SetNillableGenomeID(id *string) *LocusCreate {
 	if id != nil {
-		gc = gc.SetGenomeID(*id)
+		lc = lc.SetGenomeID(*id)
 	}
-	return gc
+	return lc
 }
 
 // SetGenome sets the "genome" edge to the Genome entity.
-func (gc *GeneCreate) SetGenome(g *Genome) *GeneCreate {
-	return gc.SetGenomeID(g.ID)
+func (lc *LocusCreate) SetGenome(g *Genome) *LocusCreate {
+	return lc.SetGenomeID(g.ID)
 }
 
-// Mutation returns the GeneMutation object of the builder.
-func (gc *GeneCreate) Mutation() *GeneMutation {
-	return gc.mutation
+// Mutation returns the LocusMutation object of the builder.
+func (lc *LocusCreate) Mutation() *LocusMutation {
+	return lc.mutation
 }
 
-// Save creates the Gene in the database.
-func (gc *GeneCreate) Save(ctx context.Context) (*Gene, error) {
+// Save creates the Locus in the database.
+func (lc *LocusCreate) Save(ctx context.Context) (*Locus, error) {
 	var (
 		err  error
-		node *Gene
+		node *Locus
 	)
-	if len(gc.hooks) == 0 {
-		if err = gc.check(); err != nil {
+	if len(lc.hooks) == 0 {
+		if err = lc.check(); err != nil {
 			return nil, err
 		}
-		node, err = gc.sqlSave(ctx)
+		node, err = lc.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*GeneMutation)
+			mutation, ok := m.(*LocusMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
 			}
-			if err = gc.check(); err != nil {
+			if err = lc.check(); err != nil {
 				return nil, err
 			}
-			gc.mutation = mutation
-			if node, err = gc.sqlSave(ctx); err != nil {
+			lc.mutation = mutation
+			if node, err = lc.sqlSave(ctx); err != nil {
 				return nil, err
 			}
 			mutation.id = &node.ID
 			mutation.done = true
 			return node, err
 		})
-		for i := len(gc.hooks) - 1; i >= 0; i-- {
-			if gc.hooks[i] == nil {
+		for i := len(lc.hooks) - 1; i >= 0; i-- {
+			if lc.hooks[i] == nil {
 				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
 			}
-			mut = gc.hooks[i](mut)
+			mut = lc.hooks[i](mut)
 		}
-		v, err := mut.Mutate(ctx, gc.mutation)
+		v, err := mut.Mutate(ctx, lc.mutation)
 		if err != nil {
 			return nil, err
 		}
-		nv, ok := v.(*Gene)
+		nv, ok := v.(*Locus)
 		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from GeneMutation", v)
+			return nil, fmt.Errorf("unexpected node type %T returned from LocusMutation", v)
 		}
 		node = nv
 	}
@@ -117,8 +117,8 @@ func (gc *GeneCreate) Save(ctx context.Context) (*Gene, error) {
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (gc *GeneCreate) SaveX(ctx context.Context) *Gene {
-	v, err := gc.Save(ctx)
+func (lc *LocusCreate) SaveX(ctx context.Context) *Locus {
+	v, err := lc.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -126,26 +126,26 @@ func (gc *GeneCreate) SaveX(ctx context.Context) *Gene {
 }
 
 // Exec executes the query.
-func (gc *GeneCreate) Exec(ctx context.Context) error {
-	_, err := gc.Save(ctx)
+func (lc *LocusCreate) Exec(ctx context.Context) error {
+	_, err := lc.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (gc *GeneCreate) ExecX(ctx context.Context) {
-	if err := gc.Exec(ctx); err != nil {
+func (lc *LocusCreate) ExecX(ctx context.Context) {
+	if err := lc.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (gc *GeneCreate) check() error {
+func (lc *LocusCreate) check() error {
 	return nil
 }
 
-func (gc *GeneCreate) sqlSave(ctx context.Context) (*Gene, error) {
-	_node, _spec := gc.createSpec()
-	if err := sqlgraph.CreateNode(ctx, gc.driver, _spec); err != nil {
+func (lc *LocusCreate) sqlSave(ctx context.Context) (*Locus, error) {
+	_node, _spec := lc.createSpec()
+	if err := sqlgraph.CreateNode(ctx, lc.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -155,34 +155,34 @@ func (gc *GeneCreate) sqlSave(ctx context.Context) (*Gene, error) {
 		if id, ok := _spec.ID.Value.(string); ok {
 			_node.ID = id
 		} else {
-			return nil, fmt.Errorf("unexpected Gene.ID type: %T", _spec.ID.Value)
+			return nil, fmt.Errorf("unexpected Locus.ID type: %T", _spec.ID.Value)
 		}
 	}
 	return _node, nil
 }
 
-func (gc *GeneCreate) createSpec() (*Gene, *sqlgraph.CreateSpec) {
+func (lc *LocusCreate) createSpec() (*Locus, *sqlgraph.CreateSpec) {
 	var (
-		_node = &Gene{config: gc.config}
+		_node = &Locus{config: lc.config}
 		_spec = &sqlgraph.CreateSpec{
-			Table: gene.Table,
+			Table: locus.Table,
 			ID: &sqlgraph.FieldSpec{
 				Type:   field.TypeString,
-				Column: gene.FieldID,
+				Column: locus.FieldID,
 			},
 		}
 	)
-	_spec.OnConflict = gc.conflict
-	if id, ok := gc.mutation.ID(); ok {
+	_spec.OnConflict = lc.conflict
+	if id, ok := lc.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
-	if nodes := gc.mutation.TranscriptsIDs(); len(nodes) > 0 {
+	if nodes := lc.mutation.TranscriptsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   gene.TranscriptsTable,
-			Columns: []string{gene.TranscriptsColumn},
+			Table:   locus.TranscriptsTable,
+			Columns: []string{locus.TranscriptsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -196,12 +196,12 @@ func (gc *GeneCreate) createSpec() (*Gene, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := gc.mutation.GenomeIDs(); len(nodes) > 0 {
+	if nodes := lc.mutation.GenomeIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   gene.GenomeTable,
-			Columns: []string{gene.GenomeColumn},
+			Table:   locus.GenomeTable,
+			Columns: []string{locus.GenomeColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -213,7 +213,7 @@ func (gc *GeneCreate) createSpec() (*Gene, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.genome_genes = &nodes[0]
+		_node.genome_locuses = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -222,42 +222,42 @@ func (gc *GeneCreate) createSpec() (*Gene, *sqlgraph.CreateSpec) {
 // OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
 // of the `INSERT` statement. For example:
 //
-//	client.Gene.Create().
+//	client.Locus.Create().
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
 //			sql.ResolveWithNewValues(),
 //		).
 //		Exec(ctx)
-func (gc *GeneCreate) OnConflict(opts ...sql.ConflictOption) *GeneUpsertOne {
-	gc.conflict = opts
-	return &GeneUpsertOne{
-		create: gc,
+func (lc *LocusCreate) OnConflict(opts ...sql.ConflictOption) *LocusUpsertOne {
+	lc.conflict = opts
+	return &LocusUpsertOne{
+		create: lc,
 	}
 }
 
 // OnConflictColumns calls `OnConflict` and configures the columns
 // as conflict target. Using this option is equivalent to using:
 //
-//	client.Gene.Create().
+//	client.Locus.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-func (gc *GeneCreate) OnConflictColumns(columns ...string) *GeneUpsertOne {
-	gc.conflict = append(gc.conflict, sql.ConflictColumns(columns...))
-	return &GeneUpsertOne{
-		create: gc,
+func (lc *LocusCreate) OnConflictColumns(columns ...string) *LocusUpsertOne {
+	lc.conflict = append(lc.conflict, sql.ConflictColumns(columns...))
+	return &LocusUpsertOne{
+		create: lc,
 	}
 }
 
 type (
-	// GeneUpsertOne is the builder for "upsert"-ing
-	//  one Gene node.
-	GeneUpsertOne struct {
-		create *GeneCreate
+	// LocusUpsertOne is the builder for "upsert"-ing
+	//  one Locus node.
+	LocusUpsertOne struct {
+		create *LocusCreate
 	}
 
-	// GeneUpsert is the "OnConflict" setter.
-	GeneUpsert struct {
+	// LocusUpsert is the "OnConflict" setter.
+	LocusUpsert struct {
 		*sql.UpdateSet
 	}
 )
@@ -265,19 +265,19 @@ type (
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
-//	client.Gene.Create().
+//	client.Locus.Create().
 //		OnConflict(
 //			sql.ResolveWithNewValues(),
 //			sql.ResolveWith(func(u *sql.UpdateSet) {
-//				u.SetIgnore(gene.FieldID)
+//				u.SetIgnore(locus.FieldID)
 //			}),
 //		).
 //		Exec(ctx)
-func (u *GeneUpsertOne) UpdateNewValues() *GeneUpsertOne {
+func (u *LocusUpsertOne) UpdateNewValues() *LocusUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		if _, exists := u.create.mutation.ID(); exists {
-			s.SetIgnore(gene.FieldID)
+			s.SetIgnore(locus.FieldID)
 		}
 	}))
 	return u
@@ -286,51 +286,51 @@ func (u *GeneUpsertOne) UpdateNewValues() *GeneUpsertOne {
 // Ignore sets each column to itself in case of conflict.
 // Using this option is equivalent to using:
 //
-//	client.Gene.Create().
+//	client.Locus.Create().
 //	    OnConflict(sql.ResolveWithIgnore()).
 //	    Exec(ctx)
-func (u *GeneUpsertOne) Ignore() *GeneUpsertOne {
+func (u *LocusUpsertOne) Ignore() *LocusUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
 	return u
 }
 
 // DoNothing configures the conflict_action to `DO NOTHING`.
 // Supported only by SQLite and PostgreSQL.
-func (u *GeneUpsertOne) DoNothing() *GeneUpsertOne {
+func (u *LocusUpsertOne) DoNothing() *LocusUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.DoNothing())
 	return u
 }
 
-// Update allows overriding fields `UPDATE` values. See the GeneCreate.OnConflict
+// Update allows overriding fields `UPDATE` values. See the LocusCreate.OnConflict
 // documentation for more info.
-func (u *GeneUpsertOne) Update(set func(*GeneUpsert)) *GeneUpsertOne {
+func (u *LocusUpsertOne) Update(set func(*LocusUpsert)) *LocusUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
-		set(&GeneUpsert{UpdateSet: update})
+		set(&LocusUpsert{UpdateSet: update})
 	}))
 	return u
 }
 
 // Exec executes the query.
-func (u *GeneUpsertOne) Exec(ctx context.Context) error {
+func (u *LocusUpsertOne) Exec(ctx context.Context) error {
 	if len(u.create.conflict) == 0 {
-		return errors.New("ent: missing options for GeneCreate.OnConflict")
+		return errors.New("ent: missing options for LocusCreate.OnConflict")
 	}
 	return u.create.Exec(ctx)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (u *GeneUpsertOne) ExecX(ctx context.Context) {
+func (u *LocusUpsertOne) ExecX(ctx context.Context) {
 	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // Exec executes the UPSERT query and returns the inserted/updated ID.
-func (u *GeneUpsertOne) ID(ctx context.Context) (id string, err error) {
+func (u *LocusUpsertOne) ID(ctx context.Context) (id string, err error) {
 	if u.create.driver.Dialect() == dialect.MySQL {
 		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
 		// fields from the database since MySQL does not support the RETURNING clause.
-		return id, errors.New("ent: GeneUpsertOne.ID is not supported by MySQL driver. Use GeneUpsertOne.Exec instead")
+		return id, errors.New("ent: LocusUpsertOne.ID is not supported by MySQL driver. Use LocusUpsertOne.Exec instead")
 	}
 	node, err := u.create.Save(ctx)
 	if err != nil {
@@ -340,7 +340,7 @@ func (u *GeneUpsertOne) ID(ctx context.Context) (id string, err error) {
 }
 
 // IDX is like ID, but panics if an error occurs.
-func (u *GeneUpsertOne) IDX(ctx context.Context) string {
+func (u *LocusUpsertOne) IDX(ctx context.Context) string {
 	id, err := u.ID(ctx)
 	if err != nil {
 		panic(err)
@@ -348,23 +348,23 @@ func (u *GeneUpsertOne) IDX(ctx context.Context) string {
 	return id
 }
 
-// GeneCreateBulk is the builder for creating many Gene entities in bulk.
-type GeneCreateBulk struct {
+// LocusCreateBulk is the builder for creating many Locus entities in bulk.
+type LocusCreateBulk struct {
 	config
-	builders []*GeneCreate
+	builders []*LocusCreate
 	conflict []sql.ConflictOption
 }
 
-// Save creates the Gene entities in the database.
-func (gcb *GeneCreateBulk) Save(ctx context.Context) ([]*Gene, error) {
-	specs := make([]*sqlgraph.CreateSpec, len(gcb.builders))
-	nodes := make([]*Gene, len(gcb.builders))
-	mutators := make([]Mutator, len(gcb.builders))
-	for i := range gcb.builders {
+// Save creates the Locus entities in the database.
+func (lcb *LocusCreateBulk) Save(ctx context.Context) ([]*Locus, error) {
+	specs := make([]*sqlgraph.CreateSpec, len(lcb.builders))
+	nodes := make([]*Locus, len(lcb.builders))
+	mutators := make([]Mutator, len(lcb.builders))
+	for i := range lcb.builders {
 		func(i int, root context.Context) {
-			builder := gcb.builders[i]
+			builder := lcb.builders[i]
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-				mutation, ok := m.(*GeneMutation)
+				mutation, ok := m.(*LocusMutation)
 				if !ok {
 					return nil, fmt.Errorf("unexpected mutation type %T", m)
 				}
@@ -375,12 +375,12 @@ func (gcb *GeneCreateBulk) Save(ctx context.Context) ([]*Gene, error) {
 				nodes[i], specs[i] = builder.createSpec()
 				var err error
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, gcb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, lcb.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
-					spec.OnConflict = gcb.conflict
+					spec.OnConflict = lcb.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, gcb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, lcb.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -400,7 +400,7 @@ func (gcb *GeneCreateBulk) Save(ctx context.Context) ([]*Gene, error) {
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, gcb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, lcb.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -408,8 +408,8 @@ func (gcb *GeneCreateBulk) Save(ctx context.Context) ([]*Gene, error) {
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (gcb *GeneCreateBulk) SaveX(ctx context.Context) []*Gene {
-	v, err := gcb.Save(ctx)
+func (lcb *LocusCreateBulk) SaveX(ctx context.Context) []*Locus {
+	v, err := lcb.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -417,14 +417,14 @@ func (gcb *GeneCreateBulk) SaveX(ctx context.Context) []*Gene {
 }
 
 // Exec executes the query.
-func (gcb *GeneCreateBulk) Exec(ctx context.Context) error {
-	_, err := gcb.Save(ctx)
+func (lcb *LocusCreateBulk) Exec(ctx context.Context) error {
+	_, err := lcb.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (gcb *GeneCreateBulk) ExecX(ctx context.Context) {
-	if err := gcb.Exec(ctx); err != nil {
+func (lcb *LocusCreateBulk) ExecX(ctx context.Context) {
+	if err := lcb.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
@@ -432,56 +432,56 @@ func (gcb *GeneCreateBulk) ExecX(ctx context.Context) {
 // OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
 // of the `INSERT` statement. For example:
 //
-//	client.Gene.CreateBulk(builders...).
+//	client.Locus.CreateBulk(builders...).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
 //			sql.ResolveWithNewValues(),
 //		).
 //		Exec(ctx)
-func (gcb *GeneCreateBulk) OnConflict(opts ...sql.ConflictOption) *GeneUpsertBulk {
-	gcb.conflict = opts
-	return &GeneUpsertBulk{
-		create: gcb,
+func (lcb *LocusCreateBulk) OnConflict(opts ...sql.ConflictOption) *LocusUpsertBulk {
+	lcb.conflict = opts
+	return &LocusUpsertBulk{
+		create: lcb,
 	}
 }
 
 // OnConflictColumns calls `OnConflict` and configures the columns
 // as conflict target. Using this option is equivalent to using:
 //
-//	client.Gene.Create().
+//	client.Locus.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-func (gcb *GeneCreateBulk) OnConflictColumns(columns ...string) *GeneUpsertBulk {
-	gcb.conflict = append(gcb.conflict, sql.ConflictColumns(columns...))
-	return &GeneUpsertBulk{
-		create: gcb,
+func (lcb *LocusCreateBulk) OnConflictColumns(columns ...string) *LocusUpsertBulk {
+	lcb.conflict = append(lcb.conflict, sql.ConflictColumns(columns...))
+	return &LocusUpsertBulk{
+		create: lcb,
 	}
 }
 
-// GeneUpsertBulk is the builder for "upsert"-ing
-// a bulk of Gene nodes.
-type GeneUpsertBulk struct {
-	create *GeneCreateBulk
+// LocusUpsertBulk is the builder for "upsert"-ing
+// a bulk of Locus nodes.
+type LocusUpsertBulk struct {
+	create *LocusCreateBulk
 }
 
 // UpdateNewValues updates the mutable fields using the new values that
 // were set on create. Using this option is equivalent to using:
 //
-//	client.Gene.Create().
+//	client.Locus.Create().
 //		OnConflict(
 //			sql.ResolveWithNewValues(),
 //			sql.ResolveWith(func(u *sql.UpdateSet) {
-//				u.SetIgnore(gene.FieldID)
+//				u.SetIgnore(locus.FieldID)
 //			}),
 //		).
 //		Exec(ctx)
-func (u *GeneUpsertBulk) UpdateNewValues() *GeneUpsertBulk {
+func (u *LocusUpsertBulk) UpdateNewValues() *LocusUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		for _, b := range u.create.builders {
 			if _, exists := b.mutation.ID(); exists {
-				s.SetIgnore(gene.FieldID)
+				s.SetIgnore(locus.FieldID)
 			}
 		}
 	}))
@@ -491,45 +491,45 @@ func (u *GeneUpsertBulk) UpdateNewValues() *GeneUpsertBulk {
 // Ignore sets each column to itself in case of conflict.
 // Using this option is equivalent to using:
 //
-//	client.Gene.Create().
+//	client.Locus.Create().
 //		OnConflict(sql.ResolveWithIgnore()).
 //		Exec(ctx)
-func (u *GeneUpsertBulk) Ignore() *GeneUpsertBulk {
+func (u *LocusUpsertBulk) Ignore() *LocusUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
 	return u
 }
 
 // DoNothing configures the conflict_action to `DO NOTHING`.
 // Supported only by SQLite and PostgreSQL.
-func (u *GeneUpsertBulk) DoNothing() *GeneUpsertBulk {
+func (u *LocusUpsertBulk) DoNothing() *LocusUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.DoNothing())
 	return u
 }
 
-// Update allows overriding fields `UPDATE` values. See the GeneCreateBulk.OnConflict
+// Update allows overriding fields `UPDATE` values. See the LocusCreateBulk.OnConflict
 // documentation for more info.
-func (u *GeneUpsertBulk) Update(set func(*GeneUpsert)) *GeneUpsertBulk {
+func (u *LocusUpsertBulk) Update(set func(*LocusUpsert)) *LocusUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
-		set(&GeneUpsert{UpdateSet: update})
+		set(&LocusUpsert{UpdateSet: update})
 	}))
 	return u
 }
 
 // Exec executes the query.
-func (u *GeneUpsertBulk) Exec(ctx context.Context) error {
+func (u *LocusUpsertBulk) Exec(ctx context.Context) error {
 	for i, b := range u.create.builders {
 		if len(b.conflict) != 0 {
-			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the GeneCreateBulk instead", i)
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the LocusCreateBulk instead", i)
 		}
 	}
 	if len(u.create.conflict) == 0 {
-		return errors.New("ent: missing options for GeneCreateBulk.OnConflict")
+		return errors.New("ent: missing options for LocusCreateBulk.OnConflict")
 	}
 	return u.create.Exec(ctx)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (u *GeneUpsertBulk) ExecX(ctx context.Context) {
+func (u *LocusUpsertBulk) ExecX(ctx context.Context) {
 	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}

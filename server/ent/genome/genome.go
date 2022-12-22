@@ -9,23 +9,23 @@ const (
 	FieldID = "name"
 	// FieldCodonTable holds the string denoting the codon_table field in the database.
 	FieldCodonTable = "codon_table"
-	// EdgeGenes holds the string denoting the genes edge name in mutations.
-	EdgeGenes = "genes"
+	// EdgeLocuses holds the string denoting the locuses edge name in mutations.
+	EdgeLocuses = "locuses"
 	// EdgeScaffolds holds the string denoting the scaffolds edge name in mutations.
 	EdgeScaffolds = "scaffolds"
-	// GeneFieldID holds the string denoting the ID field of the Gene.
-	GeneFieldID = "geneId"
+	// LocusFieldID holds the string denoting the ID field of the Locus.
+	LocusFieldID = "id"
 	// ScaffoldFieldID holds the string denoting the ID field of the Scaffold.
 	ScaffoldFieldID = "id"
 	// Table holds the table name of the genome in the database.
 	Table = "genomes"
-	// GenesTable is the table that holds the genes relation/edge.
-	GenesTable = "genes"
-	// GenesInverseTable is the table name for the Gene entity.
-	// It exists in this package in order to avoid circular dependency with the "gene" package.
-	GenesInverseTable = "genes"
-	// GenesColumn is the table column denoting the genes relation/edge.
-	GenesColumn = "genome_genes"
+	// LocusesTable is the table that holds the locuses relation/edge.
+	LocusesTable = "locus"
+	// LocusesInverseTable is the table name for the Locus entity.
+	// It exists in this package in order to avoid circular dependency with the "locus" package.
+	LocusesInverseTable = "locus"
+	// LocusesColumn is the table column denoting the locuses relation/edge.
+	LocusesColumn = "genome_locuses"
 	// ScaffoldsTable is the table that holds the scaffolds relation/edge.
 	ScaffoldsTable = "scaffolds"
 	// ScaffoldsInverseTable is the table name for the Scaffold entity.

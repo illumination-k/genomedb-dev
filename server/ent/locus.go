@@ -4,26 +4,26 @@ package ent
 
 import (
 	"fmt"
-	"genomedb/ent/gene"
 	"genomedb/ent/genome"
+	"genomedb/ent/locus"
 	"strings"
 
 	"entgo.io/ent/dialect/sql"
 )
 
-// Gene is the model entity for the Gene schema.
-type Gene struct {
+// Locus is the model entity for the Locus schema.
+type Locus struct {
 	config
 	// ID of the ent.
 	ID string `json:"id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
-	// The values are being populated by the GeneQuery when eager-loading is set.
-	Edges        GeneEdges `json:"edges"`
-	genome_genes *string
+	// The values are being populated by the LocusQuery when eager-loading is set.
+	Edges          LocusEdges `json:"edges"`
+	genome_locuses *string
 }
 
-// GeneEdges holds the relations/edges for other nodes in the graph.
-type GeneEdges struct {
+// LocusEdges holds the relations/edges for other nodes in the graph.
+type LocusEdges struct {
 	// Transcripts holds the value of the transcripts edge.
 	Transcripts []*Transcript `json:"transcripts,omitempty"`
 	// Genome holds the value of the genome edge.
@@ -35,7 +35,7 @@ type GeneEdges struct {
 
 // TranscriptsOrErr returns the Transcripts value or an error if the edge
 // was not loaded in eager-loading.
-func (e GeneEdges) TranscriptsOrErr() ([]*Transcript, error) {
+func (e LocusEdges) TranscriptsOrErr() ([]*Transcript, error) {
 	if e.loadedTypes[0] {
 		return e.Transcripts, nil
 	}
@@ -44,7 +44,7 @@ func (e GeneEdges) TranscriptsOrErr() ([]*Transcript, error) {
 
 // GenomeOrErr returns the Genome value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e GeneEdges) GenomeOrErr() (*Genome, error) {
+func (e LocusEdges) GenomeOrErr() (*Genome, error) {
 	if e.loadedTypes[1] {
 		if e.Genome == nil {
 			// Edge was loaded but was not found.
@@ -56,89 +56,89 @@ func (e GeneEdges) GenomeOrErr() (*Genome, error) {
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Gene) scanValues(columns []string) ([]any, error) {
+func (*Locus) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case gene.FieldID:
+		case locus.FieldID:
 			values[i] = new(sql.NullString)
-		case gene.ForeignKeys[0]: // genome_genes
+		case locus.ForeignKeys[0]: // genome_locuses
 			values[i] = new(sql.NullString)
 		default:
-			return nil, fmt.Errorf("unexpected column %q for type Gene", columns[i])
+			return nil, fmt.Errorf("unexpected column %q for type Locus", columns[i])
 		}
 	}
 	return values, nil
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
-// to the Gene fields.
-func (ge *Gene) assignValues(columns []string, values []any) error {
+// to the Locus fields.
+func (l *Locus) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	for i := range columns {
 		switch columns[i] {
-		case gene.FieldID:
+		case locus.FieldID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value.Valid {
-				ge.ID = value.String
+				l.ID = value.String
 			}
-		case gene.ForeignKeys[0]:
+		case locus.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field genome_genes", values[i])
+				return fmt.Errorf("unexpected type %T for field genome_locuses", values[i])
 			} else if value.Valid {
-				ge.genome_genes = new(string)
-				*ge.genome_genes = value.String
+				l.genome_locuses = new(string)
+				*l.genome_locuses = value.String
 			}
 		}
 	}
 	return nil
 }
 
-// QueryTranscripts queries the "transcripts" edge of the Gene entity.
-func (ge *Gene) QueryTranscripts() *TranscriptQuery {
-	return (&GeneClient{config: ge.config}).QueryTranscripts(ge)
+// QueryTranscripts queries the "transcripts" edge of the Locus entity.
+func (l *Locus) QueryTranscripts() *TranscriptQuery {
+	return (&LocusClient{config: l.config}).QueryTranscripts(l)
 }
 
-// QueryGenome queries the "genome" edge of the Gene entity.
-func (ge *Gene) QueryGenome() *GenomeQuery {
-	return (&GeneClient{config: ge.config}).QueryGenome(ge)
+// QueryGenome queries the "genome" edge of the Locus entity.
+func (l *Locus) QueryGenome() *GenomeQuery {
+	return (&LocusClient{config: l.config}).QueryGenome(l)
 }
 
-// Update returns a builder for updating this Gene.
-// Note that you need to call Gene.Unwrap() before calling this method if this Gene
+// Update returns a builder for updating this Locus.
+// Note that you need to call Locus.Unwrap() before calling this method if this Locus
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (ge *Gene) Update() *GeneUpdateOne {
-	return (&GeneClient{config: ge.config}).UpdateOne(ge)
+func (l *Locus) Update() *LocusUpdateOne {
+	return (&LocusClient{config: l.config}).UpdateOne(l)
 }
 
-// Unwrap unwraps the Gene entity that was returned from a transaction after it was closed,
+// Unwrap unwraps the Locus entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (ge *Gene) Unwrap() *Gene {
-	_tx, ok := ge.config.driver.(*txDriver)
+func (l *Locus) Unwrap() *Locus {
+	_tx, ok := l.config.driver.(*txDriver)
 	if !ok {
-		panic("ent: Gene is not a transactional entity")
+		panic("ent: Locus is not a transactional entity")
 	}
-	ge.config.driver = _tx.drv
-	return ge
+	l.config.driver = _tx.drv
+	return l
 }
 
 // String implements the fmt.Stringer.
-func (ge *Gene) String() string {
+func (l *Locus) String() string {
 	var builder strings.Builder
-	builder.WriteString("Gene(")
-	builder.WriteString(fmt.Sprintf("id=%v", ge.ID))
+	builder.WriteString("Locus(")
+	builder.WriteString(fmt.Sprintf("id=%v", l.ID))
 	builder.WriteByte(')')
 	return builder.String()
 }
 
-// Genes is a parsable slice of Gene.
-type Genes []*Gene
+// LocusSlice is a parsable slice of Locus.
+type LocusSlice []*Locus
 
-func (ge Genes) config(cfg config) {
-	for _i := range ge {
-		ge[_i].config = cfg
+func (l LocusSlice) config(cfg config) {
+	for _i := range l {
+		l[_i].config = cfg
 	}
 }

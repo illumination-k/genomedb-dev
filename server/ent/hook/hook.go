@@ -8,58 +8,6 @@ import (
 	"genomedb/ent"
 )
 
-// The CdsFunc type is an adapter to allow the use of ordinary
-// function as Cds mutator.
-type CdsFunc func(context.Context, *ent.CdsMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f CdsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	mv, ok := m.(*ent.CdsMutation)
-	if !ok {
-		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CdsMutation", m)
-	}
-	return f(ctx, mv)
-}
-
-// The ExonFunc type is an adapter to allow the use of ordinary
-// function as Exon mutator.
-type ExonFunc func(context.Context, *ent.ExonMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f ExonFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	mv, ok := m.(*ent.ExonMutation)
-	if !ok {
-		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ExonMutation", m)
-	}
-	return f(ctx, mv)
-}
-
-// The FivePrimeUtrFunc type is an adapter to allow the use of ordinary
-// function as FivePrimeUtr mutator.
-type FivePrimeUtrFunc func(context.Context, *ent.FivePrimeUtrMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f FivePrimeUtrFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	mv, ok := m.(*ent.FivePrimeUtrMutation)
-	if !ok {
-		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.FivePrimeUtrMutation", m)
-	}
-	return f(ctx, mv)
-}
-
-// The GeneFunc type is an adapter to allow the use of ordinary
-// function as Gene mutator.
-type GeneFunc func(context.Context, *ent.GeneMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f GeneFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	mv, ok := m.(*ent.GeneMutation)
-	if !ok {
-		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GeneMutation", m)
-	}
-	return f(ctx, mv)
-}
-
 // The GenomeFunc type is an adapter to allow the use of ordinary
 // function as Genome mutator.
 type GenomeFunc func(context.Context, *ent.GenomeMutation) (ent.Value, error)
@@ -73,6 +21,19 @@ func (f GenomeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return f(ctx, mv)
 }
 
+// The LocusFunc type is an adapter to allow the use of ordinary
+// function as Locus mutator.
+type LocusFunc func(context.Context, *ent.LocusMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f LocusFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.LocusMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.LocusMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The ScaffoldFunc type is an adapter to allow the use of ordinary
 // function as Scaffold mutator.
 type ScaffoldFunc func(context.Context, *ent.ScaffoldMutation) (ent.Value, error)
@@ -82,19 +43,6 @@ func (f ScaffoldFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	mv, ok := m.(*ent.ScaffoldMutation)
 	if !ok {
 		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ScaffoldMutation", m)
-	}
-	return f(ctx, mv)
-}
-
-// The ThreePrimeUtrFunc type is an adapter to allow the use of ordinary
-// function as ThreePrimeUtr mutator.
-type ThreePrimeUtrFunc func(context.Context, *ent.ThreePrimeUtrMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f ThreePrimeUtrFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	mv, ok := m.(*ent.ThreePrimeUtrMutation)
-	if !ok {
-		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ThreePrimeUtrMutation", m)
 	}
 	return f(ctx, mv)
 }

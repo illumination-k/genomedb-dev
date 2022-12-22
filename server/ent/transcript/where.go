@@ -80,6 +80,13 @@ func IDLTE(id string) predicate.Transcript {
 	})
 }
 
+// Seqname applies equality check predicate on the "seqname" field. It's identical to SeqnameEQ.
+func Seqname(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSeqname), v))
+	})
+}
+
 // Strand applies equality check predicate on the "strand" field. It's identical to StrandEQ.
 func Strand(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
@@ -94,31 +101,151 @@ func Type(v string) predicate.Transcript {
 	})
 }
 
-// GenomeSeq applies equality check predicate on the "genome_seq" field. It's identical to GenomeSeqEQ.
-func GenomeSeq(v string) predicate.Transcript {
+// Source applies equality check predicate on the "source" field. It's identical to SourceEQ.
+func Source(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldGenomeSeq), v))
+		s.Where(sql.EQ(s.C(FieldSource), v))
 	})
 }
 
-// TranscriptSeq applies equality check predicate on the "transcript_seq" field. It's identical to TranscriptSeqEQ.
-func TranscriptSeq(v string) predicate.Transcript {
+// Start applies equality check predicate on the "start" field. It's identical to StartEQ.
+func Start(v int32) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldTranscriptSeq), v))
+		s.Where(sql.EQ(s.C(FieldStart), v))
 	})
 }
 
-// CdsSeq applies equality check predicate on the "cds_seq" field. It's identical to CdsSeqEQ.
-func CdsSeq(v string) predicate.Transcript {
+// End applies equality check predicate on the "end" field. It's identical to EndEQ.
+func End(v int32) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldCdsSeq), v))
+		s.Where(sql.EQ(s.C(FieldEnd), v))
 	})
 }
 
-// ProteinSeq applies equality check predicate on the "protein_seq" field. It's identical to ProteinSeqEQ.
-func ProteinSeq(v string) predicate.Transcript {
+// GenomicSequence applies equality check predicate on the "genomic_sequence" field. It's identical to GenomicSequenceEQ.
+func GenomicSequence(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldProteinSeq), v))
+		s.Where(sql.EQ(s.C(FieldGenomicSequence), v))
+	})
+}
+
+// ExonSequence applies equality check predicate on the "exon_sequence" field. It's identical to ExonSequenceEQ.
+func ExonSequence(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldExonSequence), v))
+	})
+}
+
+// CdsSequence applies equality check predicate on the "cds_sequence" field. It's identical to CdsSequenceEQ.
+func CdsSequence(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldCdsSequence), v))
+	})
+}
+
+// ProteinSequence applies equality check predicate on the "protein_sequence" field. It's identical to ProteinSequenceEQ.
+func ProteinSequence(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldProteinSequence), v))
+	})
+}
+
+// SeqnameEQ applies the EQ predicate on the "seqname" field.
+func SeqnameEQ(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSeqname), v))
+	})
+}
+
+// SeqnameNEQ applies the NEQ predicate on the "seqname" field.
+func SeqnameNEQ(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldSeqname), v))
+	})
+}
+
+// SeqnameIn applies the In predicate on the "seqname" field.
+func SeqnameIn(vs ...string) predicate.Transcript {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.In(s.C(FieldSeqname), v...))
+	})
+}
+
+// SeqnameNotIn applies the NotIn predicate on the "seqname" field.
+func SeqnameNotIn(vs ...string) predicate.Transcript {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.NotIn(s.C(FieldSeqname), v...))
+	})
+}
+
+// SeqnameGT applies the GT predicate on the "seqname" field.
+func SeqnameGT(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldSeqname), v))
+	})
+}
+
+// SeqnameGTE applies the GTE predicate on the "seqname" field.
+func SeqnameGTE(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldSeqname), v))
+	})
+}
+
+// SeqnameLT applies the LT predicate on the "seqname" field.
+func SeqnameLT(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldSeqname), v))
+	})
+}
+
+// SeqnameLTE applies the LTE predicate on the "seqname" field.
+func SeqnameLTE(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldSeqname), v))
+	})
+}
+
+// SeqnameContains applies the Contains predicate on the "seqname" field.
+func SeqnameContains(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldSeqname), v))
+	})
+}
+
+// SeqnameHasPrefix applies the HasPrefix predicate on the "seqname" field.
+func SeqnameHasPrefix(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldSeqname), v))
+	})
+}
+
+// SeqnameHasSuffix applies the HasSuffix predicate on the "seqname" field.
+func SeqnameHasSuffix(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldSeqname), v))
+	})
+}
+
+// SeqnameEqualFold applies the EqualFold predicate on the "seqname" field.
+func SeqnameEqualFold(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldSeqname), v))
+	})
+}
+
+// SeqnameContainsFold applies the ContainsFold predicate on the "seqname" field.
+func SeqnameContainsFold(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldSeqname), v))
 	})
 }
 
@@ -320,533 +447,648 @@ func TypeContainsFold(v string) predicate.Transcript {
 	})
 }
 
-// GenomeSeqEQ applies the EQ predicate on the "genome_seq" field.
-func GenomeSeqEQ(v string) predicate.Transcript {
+// SourceEQ applies the EQ predicate on the "source" field.
+func SourceEQ(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldGenomeSeq), v))
+		s.Where(sql.EQ(s.C(FieldSource), v))
 	})
 }
 
-// GenomeSeqNEQ applies the NEQ predicate on the "genome_seq" field.
-func GenomeSeqNEQ(v string) predicate.Transcript {
+// SourceNEQ applies the NEQ predicate on the "source" field.
+func SourceNEQ(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldGenomeSeq), v))
+		s.Where(sql.NEQ(s.C(FieldSource), v))
 	})
 }
 
-// GenomeSeqIn applies the In predicate on the "genome_seq" field.
-func GenomeSeqIn(vs ...string) predicate.Transcript {
+// SourceIn applies the In predicate on the "source" field.
+func SourceIn(vs ...string) predicate.Transcript {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
 	}
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldGenomeSeq), v...))
+		s.Where(sql.In(s.C(FieldSource), v...))
 	})
 }
 
-// GenomeSeqNotIn applies the NotIn predicate on the "genome_seq" field.
-func GenomeSeqNotIn(vs ...string) predicate.Transcript {
+// SourceNotIn applies the NotIn predicate on the "source" field.
+func SourceNotIn(vs ...string) predicate.Transcript {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
 	}
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldGenomeSeq), v...))
+		s.Where(sql.NotIn(s.C(FieldSource), v...))
 	})
 }
 
-// GenomeSeqGT applies the GT predicate on the "genome_seq" field.
-func GenomeSeqGT(v string) predicate.Transcript {
+// SourceGT applies the GT predicate on the "source" field.
+func SourceGT(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldGenomeSeq), v))
+		s.Where(sql.GT(s.C(FieldSource), v))
 	})
 }
 
-// GenomeSeqGTE applies the GTE predicate on the "genome_seq" field.
-func GenomeSeqGTE(v string) predicate.Transcript {
+// SourceGTE applies the GTE predicate on the "source" field.
+func SourceGTE(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldGenomeSeq), v))
+		s.Where(sql.GTE(s.C(FieldSource), v))
 	})
 }
 
-// GenomeSeqLT applies the LT predicate on the "genome_seq" field.
-func GenomeSeqLT(v string) predicate.Transcript {
+// SourceLT applies the LT predicate on the "source" field.
+func SourceLT(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldGenomeSeq), v))
+		s.Where(sql.LT(s.C(FieldSource), v))
 	})
 }
 
-// GenomeSeqLTE applies the LTE predicate on the "genome_seq" field.
-func GenomeSeqLTE(v string) predicate.Transcript {
+// SourceLTE applies the LTE predicate on the "source" field.
+func SourceLTE(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldGenomeSeq), v))
+		s.Where(sql.LTE(s.C(FieldSource), v))
 	})
 }
 
-// GenomeSeqContains applies the Contains predicate on the "genome_seq" field.
-func GenomeSeqContains(v string) predicate.Transcript {
+// SourceContains applies the Contains predicate on the "source" field.
+func SourceContains(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldGenomeSeq), v))
+		s.Where(sql.Contains(s.C(FieldSource), v))
 	})
 }
 
-// GenomeSeqHasPrefix applies the HasPrefix predicate on the "genome_seq" field.
-func GenomeSeqHasPrefix(v string) predicate.Transcript {
+// SourceHasPrefix applies the HasPrefix predicate on the "source" field.
+func SourceHasPrefix(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldGenomeSeq), v))
+		s.Where(sql.HasPrefix(s.C(FieldSource), v))
 	})
 }
 
-// GenomeSeqHasSuffix applies the HasSuffix predicate on the "genome_seq" field.
-func GenomeSeqHasSuffix(v string) predicate.Transcript {
+// SourceHasSuffix applies the HasSuffix predicate on the "source" field.
+func SourceHasSuffix(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldGenomeSeq), v))
+		s.Where(sql.HasSuffix(s.C(FieldSource), v))
 	})
 }
 
-// GenomeSeqEqualFold applies the EqualFold predicate on the "genome_seq" field.
-func GenomeSeqEqualFold(v string) predicate.Transcript {
+// SourceEqualFold applies the EqualFold predicate on the "source" field.
+func SourceEqualFold(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldGenomeSeq), v))
+		s.Where(sql.EqualFold(s.C(FieldSource), v))
 	})
 }
 
-// GenomeSeqContainsFold applies the ContainsFold predicate on the "genome_seq" field.
-func GenomeSeqContainsFold(v string) predicate.Transcript {
+// SourceContainsFold applies the ContainsFold predicate on the "source" field.
+func SourceContainsFold(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldGenomeSeq), v))
+		s.Where(sql.ContainsFold(s.C(FieldSource), v))
 	})
 }
 
-// TranscriptSeqEQ applies the EQ predicate on the "transcript_seq" field.
-func TranscriptSeqEQ(v string) predicate.Transcript {
+// StartEQ applies the EQ predicate on the "start" field.
+func StartEQ(v int32) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldTranscriptSeq), v))
+		s.Where(sql.EQ(s.C(FieldStart), v))
 	})
 }
 
-// TranscriptSeqNEQ applies the NEQ predicate on the "transcript_seq" field.
-func TranscriptSeqNEQ(v string) predicate.Transcript {
+// StartNEQ applies the NEQ predicate on the "start" field.
+func StartNEQ(v int32) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldTranscriptSeq), v))
+		s.Where(sql.NEQ(s.C(FieldStart), v))
 	})
 }
 
-// TranscriptSeqIn applies the In predicate on the "transcript_seq" field.
-func TranscriptSeqIn(vs ...string) predicate.Transcript {
+// StartIn applies the In predicate on the "start" field.
+func StartIn(vs ...int32) predicate.Transcript {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
 	}
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldTranscriptSeq), v...))
+		s.Where(sql.In(s.C(FieldStart), v...))
 	})
 }
 
-// TranscriptSeqNotIn applies the NotIn predicate on the "transcript_seq" field.
-func TranscriptSeqNotIn(vs ...string) predicate.Transcript {
+// StartNotIn applies the NotIn predicate on the "start" field.
+func StartNotIn(vs ...int32) predicate.Transcript {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
 	}
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldTranscriptSeq), v...))
+		s.Where(sql.NotIn(s.C(FieldStart), v...))
 	})
 }
 
-// TranscriptSeqGT applies the GT predicate on the "transcript_seq" field.
-func TranscriptSeqGT(v string) predicate.Transcript {
+// StartGT applies the GT predicate on the "start" field.
+func StartGT(v int32) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldTranscriptSeq), v))
+		s.Where(sql.GT(s.C(FieldStart), v))
 	})
 }
 
-// TranscriptSeqGTE applies the GTE predicate on the "transcript_seq" field.
-func TranscriptSeqGTE(v string) predicate.Transcript {
+// StartGTE applies the GTE predicate on the "start" field.
+func StartGTE(v int32) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldTranscriptSeq), v))
+		s.Where(sql.GTE(s.C(FieldStart), v))
 	})
 }
 
-// TranscriptSeqLT applies the LT predicate on the "transcript_seq" field.
-func TranscriptSeqLT(v string) predicate.Transcript {
+// StartLT applies the LT predicate on the "start" field.
+func StartLT(v int32) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldTranscriptSeq), v))
+		s.Where(sql.LT(s.C(FieldStart), v))
 	})
 }
 
-// TranscriptSeqLTE applies the LTE predicate on the "transcript_seq" field.
-func TranscriptSeqLTE(v string) predicate.Transcript {
+// StartLTE applies the LTE predicate on the "start" field.
+func StartLTE(v int32) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldTranscriptSeq), v))
+		s.Where(sql.LTE(s.C(FieldStart), v))
 	})
 }
 
-// TranscriptSeqContains applies the Contains predicate on the "transcript_seq" field.
-func TranscriptSeqContains(v string) predicate.Transcript {
+// EndEQ applies the EQ predicate on the "end" field.
+func EndEQ(v int32) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldTranscriptSeq), v))
+		s.Where(sql.EQ(s.C(FieldEnd), v))
 	})
 }
 
-// TranscriptSeqHasPrefix applies the HasPrefix predicate on the "transcript_seq" field.
-func TranscriptSeqHasPrefix(v string) predicate.Transcript {
+// EndNEQ applies the NEQ predicate on the "end" field.
+func EndNEQ(v int32) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldTranscriptSeq), v))
+		s.Where(sql.NEQ(s.C(FieldEnd), v))
 	})
 }
 
-// TranscriptSeqHasSuffix applies the HasSuffix predicate on the "transcript_seq" field.
-func TranscriptSeqHasSuffix(v string) predicate.Transcript {
-	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldTranscriptSeq), v))
-	})
-}
-
-// TranscriptSeqEqualFold applies the EqualFold predicate on the "transcript_seq" field.
-func TranscriptSeqEqualFold(v string) predicate.Transcript {
-	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldTranscriptSeq), v))
-	})
-}
-
-// TranscriptSeqContainsFold applies the ContainsFold predicate on the "transcript_seq" field.
-func TranscriptSeqContainsFold(v string) predicate.Transcript {
-	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldTranscriptSeq), v))
-	})
-}
-
-// CdsSeqEQ applies the EQ predicate on the "cds_seq" field.
-func CdsSeqEQ(v string) predicate.Transcript {
-	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldCdsSeq), v))
-	})
-}
-
-// CdsSeqNEQ applies the NEQ predicate on the "cds_seq" field.
-func CdsSeqNEQ(v string) predicate.Transcript {
-	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldCdsSeq), v))
-	})
-}
-
-// CdsSeqIn applies the In predicate on the "cds_seq" field.
-func CdsSeqIn(vs ...string) predicate.Transcript {
+// EndIn applies the In predicate on the "end" field.
+func EndIn(vs ...int32) predicate.Transcript {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
 	}
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldCdsSeq), v...))
+		s.Where(sql.In(s.C(FieldEnd), v...))
 	})
 }
 
-// CdsSeqNotIn applies the NotIn predicate on the "cds_seq" field.
-func CdsSeqNotIn(vs ...string) predicate.Transcript {
+// EndNotIn applies the NotIn predicate on the "end" field.
+func EndNotIn(vs ...int32) predicate.Transcript {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
 	}
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldCdsSeq), v...))
+		s.Where(sql.NotIn(s.C(FieldEnd), v...))
 	})
 }
 
-// CdsSeqGT applies the GT predicate on the "cds_seq" field.
-func CdsSeqGT(v string) predicate.Transcript {
+// EndGT applies the GT predicate on the "end" field.
+func EndGT(v int32) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldCdsSeq), v))
+		s.Where(sql.GT(s.C(FieldEnd), v))
 	})
 }
 
-// CdsSeqGTE applies the GTE predicate on the "cds_seq" field.
-func CdsSeqGTE(v string) predicate.Transcript {
+// EndGTE applies the GTE predicate on the "end" field.
+func EndGTE(v int32) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldCdsSeq), v))
+		s.Where(sql.GTE(s.C(FieldEnd), v))
 	})
 }
 
-// CdsSeqLT applies the LT predicate on the "cds_seq" field.
-func CdsSeqLT(v string) predicate.Transcript {
+// EndLT applies the LT predicate on the "end" field.
+func EndLT(v int32) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldCdsSeq), v))
+		s.Where(sql.LT(s.C(FieldEnd), v))
 	})
 }
 
-// CdsSeqLTE applies the LTE predicate on the "cds_seq" field.
-func CdsSeqLTE(v string) predicate.Transcript {
+// EndLTE applies the LTE predicate on the "end" field.
+func EndLTE(v int32) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldCdsSeq), v))
+		s.Where(sql.LTE(s.C(FieldEnd), v))
 	})
 }
 
-// CdsSeqContains applies the Contains predicate on the "cds_seq" field.
-func CdsSeqContains(v string) predicate.Transcript {
+// GenomicSequenceEQ applies the EQ predicate on the "genomic_sequence" field.
+func GenomicSequenceEQ(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldCdsSeq), v))
+		s.Where(sql.EQ(s.C(FieldGenomicSequence), v))
 	})
 }
 
-// CdsSeqHasPrefix applies the HasPrefix predicate on the "cds_seq" field.
-func CdsSeqHasPrefix(v string) predicate.Transcript {
+// GenomicSequenceNEQ applies the NEQ predicate on the "genomic_sequence" field.
+func GenomicSequenceNEQ(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldCdsSeq), v))
+		s.Where(sql.NEQ(s.C(FieldGenomicSequence), v))
 	})
 }
 
-// CdsSeqHasSuffix applies the HasSuffix predicate on the "cds_seq" field.
-func CdsSeqHasSuffix(v string) predicate.Transcript {
-	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldCdsSeq), v))
-	})
-}
-
-// CdsSeqEqualFold applies the EqualFold predicate on the "cds_seq" field.
-func CdsSeqEqualFold(v string) predicate.Transcript {
-	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldCdsSeq), v))
-	})
-}
-
-// CdsSeqContainsFold applies the ContainsFold predicate on the "cds_seq" field.
-func CdsSeqContainsFold(v string) predicate.Transcript {
-	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldCdsSeq), v))
-	})
-}
-
-// ProteinSeqEQ applies the EQ predicate on the "protein_seq" field.
-func ProteinSeqEQ(v string) predicate.Transcript {
-	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldProteinSeq), v))
-	})
-}
-
-// ProteinSeqNEQ applies the NEQ predicate on the "protein_seq" field.
-func ProteinSeqNEQ(v string) predicate.Transcript {
-	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldProteinSeq), v))
-	})
-}
-
-// ProteinSeqIn applies the In predicate on the "protein_seq" field.
-func ProteinSeqIn(vs ...string) predicate.Transcript {
+// GenomicSequenceIn applies the In predicate on the "genomic_sequence" field.
+func GenomicSequenceIn(vs ...string) predicate.Transcript {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
 	}
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldProteinSeq), v...))
+		s.Where(sql.In(s.C(FieldGenomicSequence), v...))
 	})
 }
 
-// ProteinSeqNotIn applies the NotIn predicate on the "protein_seq" field.
-func ProteinSeqNotIn(vs ...string) predicate.Transcript {
+// GenomicSequenceNotIn applies the NotIn predicate on the "genomic_sequence" field.
+func GenomicSequenceNotIn(vs ...string) predicate.Transcript {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
 	}
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldProteinSeq), v...))
+		s.Where(sql.NotIn(s.C(FieldGenomicSequence), v...))
 	})
 }
 
-// ProteinSeqGT applies the GT predicate on the "protein_seq" field.
-func ProteinSeqGT(v string) predicate.Transcript {
+// GenomicSequenceGT applies the GT predicate on the "genomic_sequence" field.
+func GenomicSequenceGT(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldProteinSeq), v))
+		s.Where(sql.GT(s.C(FieldGenomicSequence), v))
 	})
 }
 
-// ProteinSeqGTE applies the GTE predicate on the "protein_seq" field.
-func ProteinSeqGTE(v string) predicate.Transcript {
+// GenomicSequenceGTE applies the GTE predicate on the "genomic_sequence" field.
+func GenomicSequenceGTE(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldProteinSeq), v))
+		s.Where(sql.GTE(s.C(FieldGenomicSequence), v))
 	})
 }
 
-// ProteinSeqLT applies the LT predicate on the "protein_seq" field.
-func ProteinSeqLT(v string) predicate.Transcript {
+// GenomicSequenceLT applies the LT predicate on the "genomic_sequence" field.
+func GenomicSequenceLT(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldProteinSeq), v))
+		s.Where(sql.LT(s.C(FieldGenomicSequence), v))
 	})
 }
 
-// ProteinSeqLTE applies the LTE predicate on the "protein_seq" field.
-func ProteinSeqLTE(v string) predicate.Transcript {
+// GenomicSequenceLTE applies the LTE predicate on the "genomic_sequence" field.
+func GenomicSequenceLTE(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldProteinSeq), v))
+		s.Where(sql.LTE(s.C(FieldGenomicSequence), v))
 	})
 }
 
-// ProteinSeqContains applies the Contains predicate on the "protein_seq" field.
-func ProteinSeqContains(v string) predicate.Transcript {
+// GenomicSequenceContains applies the Contains predicate on the "genomic_sequence" field.
+func GenomicSequenceContains(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldProteinSeq), v))
+		s.Where(sql.Contains(s.C(FieldGenomicSequence), v))
 	})
 }
 
-// ProteinSeqHasPrefix applies the HasPrefix predicate on the "protein_seq" field.
-func ProteinSeqHasPrefix(v string) predicate.Transcript {
+// GenomicSequenceHasPrefix applies the HasPrefix predicate on the "genomic_sequence" field.
+func GenomicSequenceHasPrefix(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldProteinSeq), v))
+		s.Where(sql.HasPrefix(s.C(FieldGenomicSequence), v))
 	})
 }
 
-// ProteinSeqHasSuffix applies the HasSuffix predicate on the "protein_seq" field.
-func ProteinSeqHasSuffix(v string) predicate.Transcript {
+// GenomicSequenceHasSuffix applies the HasSuffix predicate on the "genomic_sequence" field.
+func GenomicSequenceHasSuffix(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldProteinSeq), v))
+		s.Where(sql.HasSuffix(s.C(FieldGenomicSequence), v))
 	})
 }
 
-// ProteinSeqEqualFold applies the EqualFold predicate on the "protein_seq" field.
-func ProteinSeqEqualFold(v string) predicate.Transcript {
+// GenomicSequenceEqualFold applies the EqualFold predicate on the "genomic_sequence" field.
+func GenomicSequenceEqualFold(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldProteinSeq), v))
+		s.Where(sql.EqualFold(s.C(FieldGenomicSequence), v))
 	})
 }
 
-// ProteinSeqContainsFold applies the ContainsFold predicate on the "protein_seq" field.
-func ProteinSeqContainsFold(v string) predicate.Transcript {
+// GenomicSequenceContainsFold applies the ContainsFold predicate on the "genomic_sequence" field.
+func GenomicSequenceContainsFold(v string) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldProteinSeq), v))
+		s.Where(sql.ContainsFold(s.C(FieldGenomicSequence), v))
 	})
 }
 
-// HasGene applies the HasEdge predicate on the "gene" edge.
-func HasGene() predicate.Transcript {
+// ExonSequenceEQ applies the EQ predicate on the "exon_sequence" field.
+func ExonSequenceEQ(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldExonSequence), v))
+	})
+}
+
+// ExonSequenceNEQ applies the NEQ predicate on the "exon_sequence" field.
+func ExonSequenceNEQ(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldExonSequence), v))
+	})
+}
+
+// ExonSequenceIn applies the In predicate on the "exon_sequence" field.
+func ExonSequenceIn(vs ...string) predicate.Transcript {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.In(s.C(FieldExonSequence), v...))
+	})
+}
+
+// ExonSequenceNotIn applies the NotIn predicate on the "exon_sequence" field.
+func ExonSequenceNotIn(vs ...string) predicate.Transcript {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.NotIn(s.C(FieldExonSequence), v...))
+	})
+}
+
+// ExonSequenceGT applies the GT predicate on the "exon_sequence" field.
+func ExonSequenceGT(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldExonSequence), v))
+	})
+}
+
+// ExonSequenceGTE applies the GTE predicate on the "exon_sequence" field.
+func ExonSequenceGTE(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldExonSequence), v))
+	})
+}
+
+// ExonSequenceLT applies the LT predicate on the "exon_sequence" field.
+func ExonSequenceLT(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldExonSequence), v))
+	})
+}
+
+// ExonSequenceLTE applies the LTE predicate on the "exon_sequence" field.
+func ExonSequenceLTE(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldExonSequence), v))
+	})
+}
+
+// ExonSequenceContains applies the Contains predicate on the "exon_sequence" field.
+func ExonSequenceContains(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldExonSequence), v))
+	})
+}
+
+// ExonSequenceHasPrefix applies the HasPrefix predicate on the "exon_sequence" field.
+func ExonSequenceHasPrefix(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldExonSequence), v))
+	})
+}
+
+// ExonSequenceHasSuffix applies the HasSuffix predicate on the "exon_sequence" field.
+func ExonSequenceHasSuffix(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldExonSequence), v))
+	})
+}
+
+// ExonSequenceEqualFold applies the EqualFold predicate on the "exon_sequence" field.
+func ExonSequenceEqualFold(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldExonSequence), v))
+	})
+}
+
+// ExonSequenceContainsFold applies the ContainsFold predicate on the "exon_sequence" field.
+func ExonSequenceContainsFold(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldExonSequence), v))
+	})
+}
+
+// CdsSequenceEQ applies the EQ predicate on the "cds_sequence" field.
+func CdsSequenceEQ(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldCdsSequence), v))
+	})
+}
+
+// CdsSequenceNEQ applies the NEQ predicate on the "cds_sequence" field.
+func CdsSequenceNEQ(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldCdsSequence), v))
+	})
+}
+
+// CdsSequenceIn applies the In predicate on the "cds_sequence" field.
+func CdsSequenceIn(vs ...string) predicate.Transcript {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.In(s.C(FieldCdsSequence), v...))
+	})
+}
+
+// CdsSequenceNotIn applies the NotIn predicate on the "cds_sequence" field.
+func CdsSequenceNotIn(vs ...string) predicate.Transcript {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.NotIn(s.C(FieldCdsSequence), v...))
+	})
+}
+
+// CdsSequenceGT applies the GT predicate on the "cds_sequence" field.
+func CdsSequenceGT(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldCdsSequence), v))
+	})
+}
+
+// CdsSequenceGTE applies the GTE predicate on the "cds_sequence" field.
+func CdsSequenceGTE(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldCdsSequence), v))
+	})
+}
+
+// CdsSequenceLT applies the LT predicate on the "cds_sequence" field.
+func CdsSequenceLT(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldCdsSequence), v))
+	})
+}
+
+// CdsSequenceLTE applies the LTE predicate on the "cds_sequence" field.
+func CdsSequenceLTE(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldCdsSequence), v))
+	})
+}
+
+// CdsSequenceContains applies the Contains predicate on the "cds_sequence" field.
+func CdsSequenceContains(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldCdsSequence), v))
+	})
+}
+
+// CdsSequenceHasPrefix applies the HasPrefix predicate on the "cds_sequence" field.
+func CdsSequenceHasPrefix(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldCdsSequence), v))
+	})
+}
+
+// CdsSequenceHasSuffix applies the HasSuffix predicate on the "cds_sequence" field.
+func CdsSequenceHasSuffix(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldCdsSequence), v))
+	})
+}
+
+// CdsSequenceEqualFold applies the EqualFold predicate on the "cds_sequence" field.
+func CdsSequenceEqualFold(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldCdsSequence), v))
+	})
+}
+
+// CdsSequenceContainsFold applies the ContainsFold predicate on the "cds_sequence" field.
+func CdsSequenceContainsFold(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldCdsSequence), v))
+	})
+}
+
+// ProteinSequenceEQ applies the EQ predicate on the "protein_sequence" field.
+func ProteinSequenceEQ(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldProteinSequence), v))
+	})
+}
+
+// ProteinSequenceNEQ applies the NEQ predicate on the "protein_sequence" field.
+func ProteinSequenceNEQ(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldProteinSequence), v))
+	})
+}
+
+// ProteinSequenceIn applies the In predicate on the "protein_sequence" field.
+func ProteinSequenceIn(vs ...string) predicate.Transcript {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.In(s.C(FieldProteinSequence), v...))
+	})
+}
+
+// ProteinSequenceNotIn applies the NotIn predicate on the "protein_sequence" field.
+func ProteinSequenceNotIn(vs ...string) predicate.Transcript {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.NotIn(s.C(FieldProteinSequence), v...))
+	})
+}
+
+// ProteinSequenceGT applies the GT predicate on the "protein_sequence" field.
+func ProteinSequenceGT(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldProteinSequence), v))
+	})
+}
+
+// ProteinSequenceGTE applies the GTE predicate on the "protein_sequence" field.
+func ProteinSequenceGTE(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldProteinSequence), v))
+	})
+}
+
+// ProteinSequenceLT applies the LT predicate on the "protein_sequence" field.
+func ProteinSequenceLT(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldProteinSequence), v))
+	})
+}
+
+// ProteinSequenceLTE applies the LTE predicate on the "protein_sequence" field.
+func ProteinSequenceLTE(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldProteinSequence), v))
+	})
+}
+
+// ProteinSequenceContains applies the Contains predicate on the "protein_sequence" field.
+func ProteinSequenceContains(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldProteinSequence), v))
+	})
+}
+
+// ProteinSequenceHasPrefix applies the HasPrefix predicate on the "protein_sequence" field.
+func ProteinSequenceHasPrefix(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldProteinSequence), v))
+	})
+}
+
+// ProteinSequenceHasSuffix applies the HasSuffix predicate on the "protein_sequence" field.
+func ProteinSequenceHasSuffix(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldProteinSequence), v))
+	})
+}
+
+// ProteinSequenceEqualFold applies the EqualFold predicate on the "protein_sequence" field.
+func ProteinSequenceEqualFold(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldProteinSequence), v))
+	})
+}
+
+// ProteinSequenceContainsFold applies the ContainsFold predicate on the "protein_sequence" field.
+func ProteinSequenceContainsFold(v string) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldProteinSequence), v))
+	})
+}
+
+// HasLocus applies the HasEdge predicate on the "locus" edge.
+func HasLocus() predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(GeneTable, GeneFieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, GeneTable, GeneColumn),
+			sqlgraph.To(LocusTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, LocusTable, LocusColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasGeneWith applies the HasEdge predicate on the "gene" edge with a given conditions (other predicates).
-func HasGeneWith(preds ...predicate.Gene) predicate.Transcript {
+// HasLocusWith applies the HasEdge predicate on the "locus" edge with a given conditions (other predicates).
+func HasLocusWith(preds ...predicate.Locus) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(GeneInverseTable, GeneFieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, GeneTable, GeneColumn),
-		)
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
-// HasCds applies the HasEdge predicate on the "cds" edge.
-func HasCds() predicate.Transcript {
-	return predicate.Transcript(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(CdsTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, CdsTable, CdsColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasCdsWith applies the HasEdge predicate on the "cds" edge with a given conditions (other predicates).
-func HasCdsWith(preds ...predicate.Cds) predicate.Transcript {
-	return predicate.Transcript(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(CdsInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, CdsTable, CdsColumn),
-		)
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
-// HasExon applies the HasEdge predicate on the "exon" edge.
-func HasExon() predicate.Transcript {
-	return predicate.Transcript(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(ExonTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, ExonTable, ExonColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasExonWith applies the HasEdge predicate on the "exon" edge with a given conditions (other predicates).
-func HasExonWith(preds ...predicate.Exon) predicate.Transcript {
-	return predicate.Transcript(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(ExonInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, ExonTable, ExonColumn),
-		)
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
-// HasFivePrimeUtr applies the HasEdge predicate on the "five_prime_utr" edge.
-func HasFivePrimeUtr() predicate.Transcript {
-	return predicate.Transcript(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(FivePrimeUtrTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, FivePrimeUtrTable, FivePrimeUtrColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasFivePrimeUtrWith applies the HasEdge predicate on the "five_prime_utr" edge with a given conditions (other predicates).
-func HasFivePrimeUtrWith(preds ...predicate.FivePrimeUtr) predicate.Transcript {
-	return predicate.Transcript(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(FivePrimeUtrInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, FivePrimeUtrTable, FivePrimeUtrColumn),
-		)
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
-// HasThreePrimeUtr applies the HasEdge predicate on the "three_prime_utr" edge.
-func HasThreePrimeUtr() predicate.Transcript {
-	return predicate.Transcript(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(ThreePrimeUtrTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, ThreePrimeUtrTable, ThreePrimeUtrColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasThreePrimeUtrWith applies the HasEdge predicate on the "three_prime_utr" edge with a given conditions (other predicates).
-func HasThreePrimeUtrWith(preds ...predicate.ThreePrimeUtr) predicate.Transcript {
-	return predicate.Transcript(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(ThreePrimeUtrInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, ThreePrimeUtrTable, ThreePrimeUtrColumn),
+			sqlgraph.To(LocusInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, LocusTable, LocusColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

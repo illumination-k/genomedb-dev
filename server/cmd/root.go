@@ -4,10 +4,15 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
+	"genomedb/ent"
 	"os"
 
 	"github.com/spf13/cobra"
 )
+
+var databaseUri string
+var client ent.Client
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -21,6 +26,16 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		var err error
+		databaseUri, err = GetDatabaseUri(databaseUri)
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+	},
 	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
@@ -43,4 +58,19 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().StringVarP(&databaseUri, "database-uri", "d", "", "database uri")
+}
+
+// common function in cmd
+
+func GetDatabaseUri(databaseUri string) (string, error) {
+	if databaseUri == "" {
+		databaseUri = os.Getenv("DATABASE_URI")
+	}
+
+	if databaseUri == "" {
+		return "", fmt.Errorf("You should specify DATABASE URI by enviroment variables or flag")
+	}
+
+	return databaseUri, nil
 }

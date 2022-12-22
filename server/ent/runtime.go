@@ -3,48 +3,15 @@
 package ent
 
 import (
-	"genomedb/ent/cds"
-	"genomedb/ent/exon"
-	"genomedb/ent/fiveprimeutr"
 	"genomedb/ent/genome"
 	"genomedb/ent/schema"
-	"genomedb/ent/threeprimeutr"
+	"genomedb/ent/transcript"
 )
 
 // The init function reads all schema descriptors with runtime code
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
-	cdsFields := schema.Cds{}.Fields()
-	_ = cdsFields
-	// cdsDescStart is the schema descriptor for start field.
-	cdsDescStart := cdsFields[1].Descriptor()
-	// cds.StartValidator is a validator for the "start" field. It is called by the builders before save.
-	cds.StartValidator = cdsDescStart.Validators[0].(func(int32) error)
-	// cdsDescEnd is the schema descriptor for end field.
-	cdsDescEnd := cdsFields[2].Descriptor()
-	// cds.EndValidator is a validator for the "end" field. It is called by the builders before save.
-	cds.EndValidator = cdsDescEnd.Validators[0].(func(int32) error)
-	exonFields := schema.Exon{}.Fields()
-	_ = exonFields
-	// exonDescStart is the schema descriptor for start field.
-	exonDescStart := exonFields[1].Descriptor()
-	// exon.StartValidator is a validator for the "start" field. It is called by the builders before save.
-	exon.StartValidator = exonDescStart.Validators[0].(func(int32) error)
-	// exonDescEnd is the schema descriptor for end field.
-	exonDescEnd := exonFields[2].Descriptor()
-	// exon.EndValidator is a validator for the "end" field. It is called by the builders before save.
-	exon.EndValidator = exonDescEnd.Validators[0].(func(int32) error)
-	fiveprimeutrFields := schema.FivePrimeUtr{}.Fields()
-	_ = fiveprimeutrFields
-	// fiveprimeutrDescStart is the schema descriptor for start field.
-	fiveprimeutrDescStart := fiveprimeutrFields[1].Descriptor()
-	// fiveprimeutr.StartValidator is a validator for the "start" field. It is called by the builders before save.
-	fiveprimeutr.StartValidator = fiveprimeutrDescStart.Validators[0].(func(int32) error)
-	// fiveprimeutrDescEnd is the schema descriptor for end field.
-	fiveprimeutrDescEnd := fiveprimeutrFields[2].Descriptor()
-	// fiveprimeutr.EndValidator is a validator for the "end" field. It is called by the builders before save.
-	fiveprimeutr.EndValidator = fiveprimeutrDescEnd.Validators[0].(func(int32) error)
 	genomeFields := schema.Genome{}.Fields()
 	_ = genomeFields
 	// genomeDescCodonTable is the schema descriptor for codon_table field.
@@ -65,14 +32,14 @@ func init() {
 			return nil
 		}
 	}()
-	threeprimeutrFields := schema.ThreePrimeUtr{}.Fields()
-	_ = threeprimeutrFields
-	// threeprimeutrDescStart is the schema descriptor for start field.
-	threeprimeutrDescStart := threeprimeutrFields[1].Descriptor()
-	// threeprimeutr.StartValidator is a validator for the "start" field. It is called by the builders before save.
-	threeprimeutr.StartValidator = threeprimeutrDescStart.Validators[0].(func(int32) error)
-	// threeprimeutrDescEnd is the schema descriptor for end field.
-	threeprimeutrDescEnd := threeprimeutrFields[2].Descriptor()
-	// threeprimeutr.EndValidator is a validator for the "end" field. It is called by the builders before save.
-	threeprimeutr.EndValidator = threeprimeutrDescEnd.Validators[0].(func(int32) error)
+	transcriptFields := schema.Transcript{}.Fields()
+	_ = transcriptFields
+	// transcriptDescStart is the schema descriptor for start field.
+	transcriptDescStart := transcriptFields[5].Descriptor()
+	// transcript.StartValidator is a validator for the "start" field. It is called by the builders before save.
+	transcript.StartValidator = transcriptDescStart.Validators[0].(func(int32) error)
+	// transcriptDescEnd is the schema descriptor for end field.
+	transcriptDescEnd := transcriptFields[6].Descriptor()
+	// transcript.EndValidator is a validator for the "end" field. It is called by the builders before save.
+	transcript.EndValidator = transcriptDescEnd.Validators[0].(func(int32) error)
 }
