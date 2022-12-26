@@ -4,7 +4,7 @@ package gffio
 
 import (
 	"fmt"
-	"genomedb/seq"
+	"genomedb/bio/seq"
 	"strconv"
 	"strings"
 )

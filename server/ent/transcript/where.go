@@ -1098,6 +1098,62 @@ func HasLocusWith(preds ...predicate.Locus) predicate.Transcript {
 	})
 }
 
+// HasGoterms applies the HasEdge predicate on the "goterms" edge.
+func HasGoterms() predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(GotermsTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, GotermsTable, GotermsPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasGotermsWith applies the HasEdge predicate on the "goterms" edge with a given conditions (other predicates).
+func HasGotermsWith(preds ...predicate.GoTerm) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(GotermsInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, GotermsTable, GotermsPrimaryKey...),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasGotermTranscript applies the HasEdge predicate on the "goterm_transcript" edge.
+func HasGotermTranscript() predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(GotermTranscriptTable, GotermTranscriptColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, GotermTranscriptTable, GotermTranscriptColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasGotermTranscriptWith applies the HasEdge predicate on the "goterm_transcript" edge with a given conditions (other predicates).
+func HasGotermTranscriptWith(preds ...predicate.GoTermOnTranscripts) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(GotermTranscriptInverseTable, GotermTranscriptColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, GotermTranscriptTable, GotermTranscriptColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Transcript) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {

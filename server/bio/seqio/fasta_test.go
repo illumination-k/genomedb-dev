@@ -1,7 +1,7 @@
 package seqio_test
 
 import (
-	"genomedb/seqio"
+	"genomedb/bio/seqio"
 	"strings"
 	"testing"
 )

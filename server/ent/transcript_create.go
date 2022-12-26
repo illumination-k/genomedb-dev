@@ -6,9 +6,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"genomedb/bio/gffio"
+	"genomedb/ent/goterm"
 	"genomedb/ent/locus"
 	"genomedb/ent/transcript"
-	"genomedb/gffio"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
@@ -131,6 +132,21 @@ func (tc *TranscriptCreate) SetNillableLocusID(id *string) *TranscriptCreate {
 // SetLocus sets the "locus" edge to the Locus entity.
 func (tc *TranscriptCreate) SetLocus(l *Locus) *TranscriptCreate {
 	return tc.SetLocusID(l.ID)
+}
+
+// AddGotermIDs adds the "goterms" edge to the GoTerm entity by IDs.
+func (tc *TranscriptCreate) AddGotermIDs(ids ...string) *TranscriptCreate {
+	tc.mutation.AddGotermIDs(ids...)
+	return tc
+}
+
+// AddGoterms adds the "goterms" edges to the GoTerm entity.
+func (tc *TranscriptCreate) AddGoterms(g ...*GoTerm) *TranscriptCreate {
+	ids := make([]string, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return tc.AddGotermIDs(ids...)
 }
 
 // Mutation returns the TranscriptMutation object of the builder.
@@ -372,6 +388,25 @@ func (tc *TranscriptCreate) createSpec() (*Transcript, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.locus_transcripts = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := tc.mutation.GotermsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   transcript.GotermsTable,
+			Columns: transcript.GotermsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: goterm.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

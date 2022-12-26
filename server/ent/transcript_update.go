@@ -6,10 +6,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"genomedb/bio/gffio"
+	"genomedb/ent/goterm"
 	"genomedb/ent/locus"
 	"genomedb/ent/predicate"
 	"genomedb/ent/transcript"
-	"genomedb/gffio"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -171,6 +172,21 @@ func (tu *TranscriptUpdate) SetLocus(l *Locus) *TranscriptUpdate {
 	return tu.SetLocusID(l.ID)
 }
 
+// AddGotermIDs adds the "goterms" edge to the GoTerm entity by IDs.
+func (tu *TranscriptUpdate) AddGotermIDs(ids ...string) *TranscriptUpdate {
+	tu.mutation.AddGotermIDs(ids...)
+	return tu
+}
+
+// AddGoterms adds the "goterms" edges to the GoTerm entity.
+func (tu *TranscriptUpdate) AddGoterms(g ...*GoTerm) *TranscriptUpdate {
+	ids := make([]string, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return tu.AddGotermIDs(ids...)
+}
+
 // Mutation returns the TranscriptMutation object of the builder.
 func (tu *TranscriptUpdate) Mutation() *TranscriptMutation {
 	return tu.mutation
@@ -180,6 +196,27 @@ func (tu *TranscriptUpdate) Mutation() *TranscriptMutation {
 func (tu *TranscriptUpdate) ClearLocus() *TranscriptUpdate {
 	tu.mutation.ClearLocus()
 	return tu
+}
+
+// ClearGoterms clears all "goterms" edges to the GoTerm entity.
+func (tu *TranscriptUpdate) ClearGoterms() *TranscriptUpdate {
+	tu.mutation.ClearGoterms()
+	return tu
+}
+
+// RemoveGotermIDs removes the "goterms" edge to GoTerm entities by IDs.
+func (tu *TranscriptUpdate) RemoveGotermIDs(ids ...string) *TranscriptUpdate {
+	tu.mutation.RemoveGotermIDs(ids...)
+	return tu
+}
+
+// RemoveGoterms removes "goterms" edges to GoTerm entities.
+func (tu *TranscriptUpdate) RemoveGoterms(g ...*GoTerm) *TranscriptUpdate {
+	ids := make([]string, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return tu.RemoveGotermIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -378,6 +415,60 @@ func (tu *TranscriptUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if tu.mutation.GotermsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   transcript.GotermsTable,
+			Columns: transcript.GotermsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: goterm.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.RemovedGotermsIDs(); len(nodes) > 0 && !tu.mutation.GotermsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   transcript.GotermsTable,
+			Columns: transcript.GotermsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: goterm.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.GotermsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   transcript.GotermsTable,
+			Columns: transcript.GotermsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: goterm.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{transcript.Label}
@@ -538,6 +629,21 @@ func (tuo *TranscriptUpdateOne) SetLocus(l *Locus) *TranscriptUpdateOne {
 	return tuo.SetLocusID(l.ID)
 }
 
+// AddGotermIDs adds the "goterms" edge to the GoTerm entity by IDs.
+func (tuo *TranscriptUpdateOne) AddGotermIDs(ids ...string) *TranscriptUpdateOne {
+	tuo.mutation.AddGotermIDs(ids...)
+	return tuo
+}
+
+// AddGoterms adds the "goterms" edges to the GoTerm entity.
+func (tuo *TranscriptUpdateOne) AddGoterms(g ...*GoTerm) *TranscriptUpdateOne {
+	ids := make([]string, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return tuo.AddGotermIDs(ids...)
+}
+
 // Mutation returns the TranscriptMutation object of the builder.
 func (tuo *TranscriptUpdateOne) Mutation() *TranscriptMutation {
 	return tuo.mutation
@@ -547,6 +653,27 @@ func (tuo *TranscriptUpdateOne) Mutation() *TranscriptMutation {
 func (tuo *TranscriptUpdateOne) ClearLocus() *TranscriptUpdateOne {
 	tuo.mutation.ClearLocus()
 	return tuo
+}
+
+// ClearGoterms clears all "goterms" edges to the GoTerm entity.
+func (tuo *TranscriptUpdateOne) ClearGoterms() *TranscriptUpdateOne {
+	tuo.mutation.ClearGoterms()
+	return tuo
+}
+
+// RemoveGotermIDs removes the "goterms" edge to GoTerm entities by IDs.
+func (tuo *TranscriptUpdateOne) RemoveGotermIDs(ids ...string) *TranscriptUpdateOne {
+	tuo.mutation.RemoveGotermIDs(ids...)
+	return tuo
+}
+
+// RemoveGoterms removes "goterms" edges to GoTerm entities.
+func (tuo *TranscriptUpdateOne) RemoveGoterms(g ...*GoTerm) *TranscriptUpdateOne {
+	ids := make([]string, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return tuo.RemoveGotermIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -767,6 +894,60 @@ func (tuo *TranscriptUpdateOne) sqlSave(ctx context.Context) (_node *Transcript,
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
 					Column: locus.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tuo.mutation.GotermsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   transcript.GotermsTable,
+			Columns: transcript.GotermsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: goterm.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.RemovedGotermsIDs(); len(nodes) > 0 && !tuo.mutation.GotermsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   transcript.GotermsTable,
+			Columns: transcript.GotermsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: goterm.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.GotermsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   transcript.GotermsTable,
+			Columns: transcript.GotermsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: goterm.FieldID,
 				},
 			},
 		}

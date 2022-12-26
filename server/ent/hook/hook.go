@@ -21,6 +21,97 @@ func (f GenomeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return f(ctx, mv)
 }
 
+// The GoTermFunc type is an adapter to allow the use of ordinary
+// function as GoTerm mutator.
+type GoTermFunc func(context.Context, *ent.GoTermMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f GoTermFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.GoTermMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GoTermMutation", m)
+	}
+	return f(ctx, mv)
+}
+
+// The GoTermOnTranscriptsFunc type is an adapter to allow the use of ordinary
+// function as GoTermOnTranscripts mutator.
+type GoTermOnTranscriptsFunc func(context.Context, *ent.GoTermOnTranscriptsMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f GoTermOnTranscriptsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.GoTermOnTranscriptsMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GoTermOnTranscriptsMutation", m)
+	}
+	return f(ctx, mv)
+}
+
+// The KeggCompoundFunc type is an adapter to allow the use of ordinary
+// function as KeggCompound mutator.
+type KeggCompoundFunc func(context.Context, *ent.KeggCompoundMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KeggCompoundFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.KeggCompoundMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KeggCompoundMutation", m)
+	}
+	return f(ctx, mv)
+}
+
+// The KeggModuleFunc type is an adapter to allow the use of ordinary
+// function as KeggModule mutator.
+type KeggModuleFunc func(context.Context, *ent.KeggModuleMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KeggModuleFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.KeggModuleMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KeggModuleMutation", m)
+	}
+	return f(ctx, mv)
+}
+
+// The KeggOntologyFunc type is an adapter to allow the use of ordinary
+// function as KeggOntology mutator.
+type KeggOntologyFunc func(context.Context, *ent.KeggOntologyMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KeggOntologyFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.KeggOntologyMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KeggOntologyMutation", m)
+	}
+	return f(ctx, mv)
+}
+
+// The KeggPathwayFunc type is an adapter to allow the use of ordinary
+// function as KeggPathway mutator.
+type KeggPathwayFunc func(context.Context, *ent.KeggPathwayMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KeggPathwayFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.KeggPathwayMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KeggPathwayMutation", m)
+	}
+	return f(ctx, mv)
+}
+
+// The KeggReactionFunc type is an adapter to allow the use of ordinary
+// function as KeggReaction mutator.
+type KeggReactionFunc func(context.Context, *ent.KeggReactionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KeggReactionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.KeggReactionMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KeggReactionMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The LocusFunc type is an adapter to allow the use of ordinary
 // function as Locus mutator.
 type LocusFunc func(context.Context, *ent.LocusMutation) (ent.Value, error)

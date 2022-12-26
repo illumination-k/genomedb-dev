@@ -37,6 +37,10 @@ const (
 	FieldProteinSequence = "protein_sequence"
 	// EdgeLocus holds the string denoting the locus edge name in mutations.
 	EdgeLocus = "locus"
+	// EdgeGoterms holds the string denoting the goterms edge name in mutations.
+	EdgeGoterms = "goterms"
+	// EdgeGotermTranscript holds the string denoting the goterm_transcript edge name in mutations.
+	EdgeGotermTranscript = "goterm_transcript"
 	// Table holds the table name of the transcript in the database.
 	Table = "transcripts"
 	// LocusTable is the table that holds the locus relation/edge.
@@ -46,6 +50,18 @@ const (
 	LocusInverseTable = "locus"
 	// LocusColumn is the table column denoting the locus relation/edge.
 	LocusColumn = "locus_transcripts"
+	// GotermsTable is the table that holds the goterms relation/edge. The primary key declared below.
+	GotermsTable = "go_term_on_transcripts"
+	// GotermsInverseTable is the table name for the GoTerm entity.
+	// It exists in this package in order to avoid circular dependency with the "goterm" package.
+	GotermsInverseTable = "go_terms"
+	// GotermTranscriptTable is the table that holds the goterm_transcript relation/edge.
+	GotermTranscriptTable = "go_term_on_transcripts"
+	// GotermTranscriptInverseTable is the table name for the GoTermOnTranscripts entity.
+	// It exists in this package in order to avoid circular dependency with the "gotermontranscripts" package.
+	GotermTranscriptInverseTable = "go_term_on_transcripts"
+	// GotermTranscriptColumn is the table column denoting the goterm_transcript relation/edge.
+	GotermTranscriptColumn = "transcript_id"
 )
 
 // Columns holds all SQL columns for transcript fields.
@@ -72,6 +88,12 @@ var Columns = []string{
 var ForeignKeys = []string{
 	"locus_transcripts",
 }
+
+var (
+	// GotermsPrimaryKey and GotermsColumn2 are the table columns denoting the
+	// primary key for the goterms relation (M2M).
+	GotermsPrimaryKey = []string{"go_term_id", "transcript_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {

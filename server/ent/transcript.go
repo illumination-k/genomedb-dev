@@ -5,9 +5,9 @@ package ent
 import (
 	"encoding/json"
 	"fmt"
+	"genomedb/bio/gffio"
 	"genomedb/ent/locus"
 	"genomedb/ent/transcript"
-	"genomedb/gffio"
 	"strings"
 
 	"entgo.io/ent/dialect/sql"
@@ -56,9 +56,13 @@ type Transcript struct {
 type TranscriptEdges struct {
 	// Locus holds the value of the locus edge.
 	Locus *Locus `json:"locus,omitempty"`
+	// Goterms holds the value of the goterms edge.
+	Goterms []*GoTerm `json:"goterms,omitempty"`
+	// GotermTranscript holds the value of the goterm_transcript edge.
+	GotermTranscript []*GoTermOnTranscripts `json:"goterm_transcript,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [3]bool
 }
 
 // LocusOrErr returns the Locus value or an error if the edge
@@ -72,6 +76,24 @@ func (e TranscriptEdges) LocusOrErr() (*Locus, error) {
 		return e.Locus, nil
 	}
 	return nil, &NotLoadedError{edge: "locus"}
+}
+
+// GotermsOrErr returns the Goterms value or an error if the edge
+// was not loaded in eager-loading.
+func (e TranscriptEdges) GotermsOrErr() ([]*GoTerm, error) {
+	if e.loadedTypes[1] {
+		return e.Goterms, nil
+	}
+	return nil, &NotLoadedError{edge: "goterms"}
+}
+
+// GotermTranscriptOrErr returns the GotermTranscript value or an error if the edge
+// was not loaded in eager-loading.
+func (e TranscriptEdges) GotermTranscriptOrErr() ([]*GoTermOnTranscripts, error) {
+	if e.loadedTypes[2] {
+		return e.GotermTranscript, nil
+	}
+	return nil, &NotLoadedError{edge: "goterm_transcript"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -215,6 +237,16 @@ func (t *Transcript) assignValues(columns []string, values []any) error {
 // QueryLocus queries the "locus" edge of the Transcript entity.
 func (t *Transcript) QueryLocus() *LocusQuery {
 	return (&TranscriptClient{config: t.config}).QueryLocus(t)
+}
+
+// QueryGoterms queries the "goterms" edge of the Transcript entity.
+func (t *Transcript) QueryGoterms() *GoTermQuery {
+	return (&TranscriptClient{config: t.config}).QueryGoterms(t)
+}
+
+// QueryGotermTranscript queries the "goterm_transcript" edge of the Transcript entity.
+func (t *Transcript) QueryGotermTranscript() *GoTermOnTranscriptsQuery {
+	return (&TranscriptClient{config: t.config}).QueryGotermTranscript(t)
 }
 
 // Update returns a builder for updating this Transcript.

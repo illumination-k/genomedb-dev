@@ -1,7 +1,7 @@
 package gffio_test
 
 import (
-	"genomedb/gffio"
+	"genomedb/bio/gffio"
 	"reflect"
 	"testing"
 )

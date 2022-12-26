@@ -1,7 +1,7 @@
 package schema
 
 import (
-	"genomedb/gffio"
+	"genomedb/bio/gffio"
 
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
@@ -39,5 +39,6 @@ func (Transcript) Fields() []ent.Field {
 func (Transcript) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("locus", Locus.Type).Ref("transcripts").Unique(),
+		edge.From("goterms", GoTerm.Type).Ref("transcripts").Through("goterm_transcript", GoTermOnTranscripts.Type),
 	}
 }

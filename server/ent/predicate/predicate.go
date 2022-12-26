@@ -9,6 +9,27 @@ import (
 // Genome is the predicate function for genome builders.
 type Genome func(*sql.Selector)
 
+// GoTerm is the predicate function for goterm builders.
+type GoTerm func(*sql.Selector)
+
+// GoTermOnTranscripts is the predicate function for gotermontranscripts builders.
+type GoTermOnTranscripts func(*sql.Selector)
+
+// KeggCompound is the predicate function for keggcompound builders.
+type KeggCompound func(*sql.Selector)
+
+// KeggModule is the predicate function for keggmodule builders.
+type KeggModule func(*sql.Selector)
+
+// KeggOntology is the predicate function for keggontology builders.
+type KeggOntology func(*sql.Selector)
+
+// KeggPathway is the predicate function for keggpathway builders.
+type KeggPathway func(*sql.Selector)
+
+// KeggReaction is the predicate function for keggreaction builders.
+type KeggReaction func(*sql.Selector)
+
 // Locus is the predicate function for locus builders.
 type Locus func(*sql.Selector)
 

@@ -1,13 +1,13 @@
-package importgenome
+package genome
 
 import (
 	"bufio"
 	"context"
 	"fmt"
+	"genomedb/bio/gffio"
+	"genomedb/bio/seq"
+	"genomedb/bio/seqio"
 	"genomedb/ent"
-	"genomedb/gffio"
-	"genomedb/seq"
-	"genomedb/seqio"
 	"os"
 	"strings"
 )

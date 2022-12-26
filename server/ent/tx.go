@@ -14,6 +14,20 @@ type Tx struct {
 	config
 	// Genome is the client for interacting with the Genome builders.
 	Genome *GenomeClient
+	// GoTerm is the client for interacting with the GoTerm builders.
+	GoTerm *GoTermClient
+	// GoTermOnTranscripts is the client for interacting with the GoTermOnTranscripts builders.
+	GoTermOnTranscripts *GoTermOnTranscriptsClient
+	// KeggCompound is the client for interacting with the KeggCompound builders.
+	KeggCompound *KeggCompoundClient
+	// KeggModule is the client for interacting with the KeggModule builders.
+	KeggModule *KeggModuleClient
+	// KeggOntology is the client for interacting with the KeggOntology builders.
+	KeggOntology *KeggOntologyClient
+	// KeggPathway is the client for interacting with the KeggPathway builders.
+	KeggPathway *KeggPathwayClient
+	// KeggReaction is the client for interacting with the KeggReaction builders.
+	KeggReaction *KeggReactionClient
 	// Locus is the client for interacting with the Locus builders.
 	Locus *LocusClient
 	// Scaffold is the client for interacting with the Scaffold builders.
@@ -152,6 +166,13 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Genome = NewGenomeClient(tx.config)
+	tx.GoTerm = NewGoTermClient(tx.config)
+	tx.GoTermOnTranscripts = NewGoTermOnTranscriptsClient(tx.config)
+	tx.KeggCompound = NewKeggCompoundClient(tx.config)
+	tx.KeggModule = NewKeggModuleClient(tx.config)
+	tx.KeggOntology = NewKeggOntologyClient(tx.config)
+	tx.KeggPathway = NewKeggPathwayClient(tx.config)
+	tx.KeggReaction = NewKeggReactionClient(tx.config)
 	tx.Locus = NewLocusClient(tx.config)
 	tx.Scaffold = NewScaffoldClient(tx.config)
 	tx.Transcript = NewTranscriptClient(tx.config)

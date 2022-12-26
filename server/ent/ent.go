@@ -7,6 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"genomedb/ent/genome"
+	"genomedb/ent/goterm"
+	"genomedb/ent/gotermontranscripts"
+	"genomedb/ent/keggcompound"
+	"genomedb/ent/keggmodule"
+	"genomedb/ent/keggontology"
+	"genomedb/ent/keggpathway"
+	"genomedb/ent/keggreaction"
 	"genomedb/ent/locus"
 	"genomedb/ent/scaffold"
 	"genomedb/ent/transcript"
@@ -34,10 +41,17 @@ type OrderFunc func(*sql.Selector)
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
-		genome.Table:     genome.ValidColumn,
-		locus.Table:      locus.ValidColumn,
-		scaffold.Table:   scaffold.ValidColumn,
-		transcript.Table: transcript.ValidColumn,
+		genome.Table:              genome.ValidColumn,
+		goterm.Table:              goterm.ValidColumn,
+		gotermontranscripts.Table: gotermontranscripts.ValidColumn,
+		keggcompound.Table:        keggcompound.ValidColumn,
+		keggmodule.Table:          keggmodule.ValidColumn,
+		keggontology.Table:        keggontology.ValidColumn,
+		keggpathway.Table:         keggpathway.ValidColumn,
+		keggreaction.Table:        keggreaction.ValidColumn,
+		locus.Table:               locus.ValidColumn,
+		scaffold.Table:            scaffold.ValidColumn,
+		transcript.Table:          transcript.ValidColumn,
 	}
 	check, ok := checks[table]
 	if !ok {

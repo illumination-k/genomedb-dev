@@ -19,6 +19,107 @@ var (
 		Columns:    GenomesColumns,
 		PrimaryKey: []*schema.Column{GenomesColumns[0]},
 	}
+	// GoTermsColumns holds the columns for the "go_terms" table.
+	GoTermsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString},
+		{Name: "namespace", Type: field.TypeEnum, Enums: []string{"BP", "MF", "CC"}},
+		{Name: "name", Type: field.TypeString},
+		{Name: "level", Type: field.TypeInt32},
+		{Name: "depth", Type: field.TypeInt32},
+		{Name: "go_term_children", Type: field.TypeString, Nullable: true},
+	}
+	// GoTermsTable holds the schema information for the "go_terms" table.
+	GoTermsTable = &schema.Table{
+		Name:       "go_terms",
+		Columns:    GoTermsColumns,
+		PrimaryKey: []*schema.Column{GoTermsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "go_terms_go_terms_children",
+				Columns:    []*schema.Column{GoTermsColumns[5]},
+				RefColumns: []*schema.Column{GoTermsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// GoTermOnTranscriptsColumns holds the columns for the "go_term_on_transcripts" table.
+	GoTermOnTranscriptsColumns = []*schema.Column{
+		{Name: "evidence_code", Type: field.TypeString},
+		{Name: "go_term_id", Type: field.TypeString},
+		{Name: "transcript_id", Type: field.TypeString},
+	}
+	// GoTermOnTranscriptsTable holds the schema information for the "go_term_on_transcripts" table.
+	GoTermOnTranscriptsTable = &schema.Table{
+		Name:       "go_term_on_transcripts",
+		Columns:    GoTermOnTranscriptsColumns,
+		PrimaryKey: []*schema.Column{GoTermOnTranscriptsColumns[1], GoTermOnTranscriptsColumns[2]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "go_term_on_transcripts_go_terms_go_term",
+				Columns:    []*schema.Column{GoTermOnTranscriptsColumns[1]},
+				RefColumns: []*schema.Column{GoTermsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "go_term_on_transcripts_transcripts_transcript",
+				Columns:    []*schema.Column{GoTermOnTranscriptsColumns[2]},
+				RefColumns: []*schema.Column{TranscriptsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// KeggCompoundsColumns holds the columns for the "kegg_compounds" table.
+	KeggCompoundsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString},
+	}
+	// KeggCompoundsTable holds the schema information for the "kegg_compounds" table.
+	KeggCompoundsTable = &schema.Table{
+		Name:       "kegg_compounds",
+		Columns:    KeggCompoundsColumns,
+		PrimaryKey: []*schema.Column{KeggCompoundsColumns[0]},
+	}
+	// KeggModulesColumns holds the columns for the "kegg_modules" table.
+	KeggModulesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString},
+	}
+	// KeggModulesTable holds the schema information for the "kegg_modules" table.
+	KeggModulesTable = &schema.Table{
+		Name:       "kegg_modules",
+		Columns:    KeggModulesColumns,
+		PrimaryKey: []*schema.Column{KeggModulesColumns[0]},
+	}
+	// KeggOntologiesColumns holds the columns for the "kegg_ontologies" table.
+	KeggOntologiesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString},
+		{Name: "symbol", Type: field.TypeString},
+	}
+	// KeggOntologiesTable holds the schema information for the "kegg_ontologies" table.
+	KeggOntologiesTable = &schema.Table{
+		Name:       "kegg_ontologies",
+		Columns:    KeggOntologiesColumns,
+		PrimaryKey: []*schema.Column{KeggOntologiesColumns[0]},
+	}
+	// KeggPathwaysColumns holds the columns for the "kegg_pathways" table.
+	KeggPathwaysColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString},
+	}
+	// KeggPathwaysTable holds the schema information for the "kegg_pathways" table.
+	KeggPathwaysTable = &schema.Table{
+		Name:       "kegg_pathways",
+		Columns:    KeggPathwaysColumns,
+		PrimaryKey: []*schema.Column{KeggPathwaysColumns[0]},
+	}
+	// KeggReactionsColumns holds the columns for the "kegg_reactions" table.
+	KeggReactionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+	}
+	// KeggReactionsTable holds the schema information for the "kegg_reactions" table.
+	KeggReactionsTable = &schema.Table{
+		Name:       "kegg_reactions",
+		Columns:    KeggReactionsColumns,
+		PrimaryKey: []*schema.Column{KeggReactionsColumns[0]},
+	}
 	// LocusColumns holds the columns for the "locus" table.
 	LocusColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString},
@@ -95,6 +196,13 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		GenomesTable,
+		GoTermsTable,
+		GoTermOnTranscriptsTable,
+		KeggCompoundsTable,
+		KeggModulesTable,
+		KeggOntologiesTable,
+		KeggPathwaysTable,
+		KeggReactionsTable,
 		LocusTable,
 		ScaffoldsTable,
 		TranscriptsTable,
@@ -102,6 +210,9 @@ var (
 )
 
 func init() {
+	GoTermsTable.ForeignKeys[0].RefTable = GoTermsTable
+	GoTermOnTranscriptsTable.ForeignKeys[0].RefTable = GoTermsTable
+	GoTermOnTranscriptsTable.ForeignKeys[1].RefTable = TranscriptsTable
 	LocusTable.ForeignKeys[0].RefTable = GenomesTable
 	ScaffoldsTable.ForeignKeys[0].RefTable = GenomesTable
 	TranscriptsTable.ForeignKeys[0].RefTable = LocusTable

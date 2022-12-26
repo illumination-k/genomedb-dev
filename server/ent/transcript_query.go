@@ -4,7 +4,10 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
+	"genomedb/ent/goterm"
+	"genomedb/ent/gotermontranscripts"
 	"genomedb/ent/locus"
 	"genomedb/ent/predicate"
 	"genomedb/ent/transcript"
@@ -18,14 +21,16 @@ import (
 // TranscriptQuery is the builder for querying Transcript entities.
 type TranscriptQuery struct {
 	config
-	limit      *int
-	offset     *int
-	unique     *bool
-	order      []OrderFunc
-	fields     []string
-	predicates []predicate.Transcript
-	withLocus  *LocusQuery
-	withFKs    bool
+	limit                *int
+	offset               *int
+	unique               *bool
+	order                []OrderFunc
+	fields               []string
+	predicates           []predicate.Transcript
+	withLocus            *LocusQuery
+	withGoterms          *GoTermQuery
+	withGotermTranscript *GoTermOnTranscriptsQuery
+	withFKs              bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -77,6 +82,50 @@ func (tq *TranscriptQuery) QueryLocus() *LocusQuery {
 			sqlgraph.From(transcript.Table, transcript.FieldID, selector),
 			sqlgraph.To(locus.Table, locus.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, transcript.LocusTable, transcript.LocusColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryGoterms chains the current query on the "goterms" edge.
+func (tq *TranscriptQuery) QueryGoterms() *GoTermQuery {
+	query := &GoTermQuery{config: tq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(transcript.Table, transcript.FieldID, selector),
+			sqlgraph.To(goterm.Table, goterm.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, transcript.GotermsTable, transcript.GotermsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryGotermTranscript chains the current query on the "goterm_transcript" edge.
+func (tq *TranscriptQuery) QueryGotermTranscript() *GoTermOnTranscriptsQuery {
+	query := &GoTermOnTranscriptsQuery{config: tq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(transcript.Table, transcript.FieldID, selector),
+			sqlgraph.To(gotermontranscripts.Table, gotermontranscripts.TranscriptColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, transcript.GotermTranscriptTable, transcript.GotermTranscriptColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -260,12 +309,14 @@ func (tq *TranscriptQuery) Clone() *TranscriptQuery {
 		return nil
 	}
 	return &TranscriptQuery{
-		config:     tq.config,
-		limit:      tq.limit,
-		offset:     tq.offset,
-		order:      append([]OrderFunc{}, tq.order...),
-		predicates: append([]predicate.Transcript{}, tq.predicates...),
-		withLocus:  tq.withLocus.Clone(),
+		config:               tq.config,
+		limit:                tq.limit,
+		offset:               tq.offset,
+		order:                append([]OrderFunc{}, tq.order...),
+		predicates:           append([]predicate.Transcript{}, tq.predicates...),
+		withLocus:            tq.withLocus.Clone(),
+		withGoterms:          tq.withGoterms.Clone(),
+		withGotermTranscript: tq.withGotermTranscript.Clone(),
 		// clone intermediate query.
 		sql:    tq.sql.Clone(),
 		path:   tq.path,
@@ -281,6 +332,28 @@ func (tq *TranscriptQuery) WithLocus(opts ...func(*LocusQuery)) *TranscriptQuery
 		opt(query)
 	}
 	tq.withLocus = query
+	return tq
+}
+
+// WithGoterms tells the query-builder to eager-load the nodes that are connected to
+// the "goterms" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TranscriptQuery) WithGoterms(opts ...func(*GoTermQuery)) *TranscriptQuery {
+	query := &GoTermQuery{config: tq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withGoterms = query
+	return tq
+}
+
+// WithGotermTranscript tells the query-builder to eager-load the nodes that are connected to
+// the "goterm_transcript" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TranscriptQuery) WithGotermTranscript(opts ...func(*GoTermOnTranscriptsQuery)) *TranscriptQuery {
+	query := &GoTermOnTranscriptsQuery{config: tq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withGotermTranscript = query
 	return tq
 }
 
@@ -358,8 +431,10 @@ func (tq *TranscriptQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*T
 		nodes       = []*Transcript{}
 		withFKs     = tq.withFKs
 		_spec       = tq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [3]bool{
 			tq.withLocus != nil,
+			tq.withGoterms != nil,
+			tq.withGotermTranscript != nil,
 		}
 	)
 	if tq.withLocus != nil {
@@ -392,6 +467,22 @@ func (tq *TranscriptQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*T
 			return nil, err
 		}
 	}
+	if query := tq.withGoterms; query != nil {
+		if err := tq.loadGoterms(ctx, query, nodes,
+			func(n *Transcript) { n.Edges.Goterms = []*GoTerm{} },
+			func(n *Transcript, e *GoTerm) { n.Edges.Goterms = append(n.Edges.Goterms, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := tq.withGotermTranscript; query != nil {
+		if err := tq.loadGotermTranscript(ctx, query, nodes,
+			func(n *Transcript) { n.Edges.GotermTranscript = []*GoTermOnTranscripts{} },
+			func(n *Transcript, e *GoTermOnTranscripts) {
+				n.Edges.GotermTranscript = append(n.Edges.GotermTranscript, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -421,6 +512,91 @@ func (tq *TranscriptQuery) loadLocus(ctx context.Context, query *LocusQuery, nod
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (tq *TranscriptQuery) loadGoterms(ctx context.Context, query *GoTermQuery, nodes []*Transcript, init func(*Transcript), assign func(*Transcript, *GoTerm)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[string]*Transcript)
+	nids := make(map[string]map[*Transcript]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(transcript.GotermsTable)
+		s.Join(joinT).On(s.C(goterm.FieldID), joinT.C(transcript.GotermsPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(transcript.GotermsPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(transcript.GotermsPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	neighbors, err := query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+		assign := spec.Assign
+		values := spec.ScanValues
+		spec.ScanValues = func(columns []string) ([]any, error) {
+			values, err := values(columns[1:])
+			if err != nil {
+				return nil, err
+			}
+			return append([]any{new(sql.NullString)}, values...), nil
+		}
+		spec.Assign = func(columns []string, values []any) error {
+			outValue := values[0].(*sql.NullString).String
+			inValue := values[1].(*sql.NullString).String
+			if nids[inValue] == nil {
+				nids[inValue] = map[*Transcript]struct{}{byID[outValue]: {}}
+				return assign(columns[1:], values[1:])
+			}
+			nids[inValue][byID[outValue]] = struct{}{}
+			return nil
+		}
+	})
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "goterms" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (tq *TranscriptQuery) loadGotermTranscript(ctx context.Context, query *GoTermOnTranscriptsQuery, nodes []*Transcript, init func(*Transcript), assign func(*Transcript, *GoTermOnTranscripts)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[string]*Transcript)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.Where(predicate.GoTermOnTranscripts(func(s *sql.Selector) {
+		s.Where(sql.InValues(transcript.GotermTranscriptColumn, fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.TranscriptID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "transcript_id" returned %v for node %v`, fk, n)
+		}
+		assign(node, n)
 	}
 	return nil
 }

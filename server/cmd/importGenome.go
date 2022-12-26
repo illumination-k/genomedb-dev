@@ -4,7 +4,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"genomedb/cmd/importgenome"
+	im "genomedb/cmd/import/genome"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/spf13/cobra"
@@ -21,7 +21,7 @@ var importGenomeCmd = &cobra.Command{
 	Short: "Import genome information",
 	Long:  `Import genomic features from a genomic fasta file and a genomic gff3 file into the database.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return importgenome.Run(genomeName, genomeFasta, genomeGff, databaseUri, codonCode)
+		return im.Run(genomeName, genomeFasta, genomeGff, databaseUri, codonCode)
 	},
 }
 

@@ -2,7 +2,7 @@ package seq_test
 
 import (
 	"fmt"
-	"genomedb/seq"
+	"genomedb/bio/seq"
 	"testing"
 )
 
