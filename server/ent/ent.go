@@ -6,6 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"genomedb/ent/domainannotation"
+	"genomedb/ent/domainannotationtotranscript"
 	"genomedb/ent/genome"
 	"genomedb/ent/goterm"
 	"genomedb/ent/gotermontranscripts"
@@ -41,17 +43,19 @@ type OrderFunc func(*sql.Selector)
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
-		genome.Table:              genome.ValidColumn,
-		goterm.Table:              goterm.ValidColumn,
-		gotermontranscripts.Table: gotermontranscripts.ValidColumn,
-		keggcompound.Table:        keggcompound.ValidColumn,
-		keggmodule.Table:          keggmodule.ValidColumn,
-		keggontology.Table:        keggontology.ValidColumn,
-		keggpathway.Table:         keggpathway.ValidColumn,
-		keggreaction.Table:        keggreaction.ValidColumn,
-		locus.Table:               locus.ValidColumn,
-		scaffold.Table:            scaffold.ValidColumn,
-		transcript.Table:          transcript.ValidColumn,
+		domainannotation.Table:             domainannotation.ValidColumn,
+		domainannotationtotranscript.Table: domainannotationtotranscript.ValidColumn,
+		genome.Table:                       genome.ValidColumn,
+		goterm.Table:                       goterm.ValidColumn,
+		gotermontranscripts.Table:          gotermontranscripts.ValidColumn,
+		keggcompound.Table:                 keggcompound.ValidColumn,
+		keggmodule.Table:                   keggmodule.ValidColumn,
+		keggontology.Table:                 keggontology.ValidColumn,
+		keggpathway.Table:                  keggpathway.ValidColumn,
+		keggreaction.Table:                 keggreaction.ValidColumn,
+		locus.Table:                        locus.ValidColumn,
+		scaffold.Table:                     scaffold.ValidColumn,
+		transcript.Table:                   transcript.ValidColumn,
 	}
 	check, ok := checks[table]
 	if !ok {

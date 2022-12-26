@@ -19,11 +19,6 @@ InterPro annotations - description (e.g. BRCA2 repeat)
 (Pathways annotations (e.g. REACT_71) - optional column; only displayed if –pathways option is switched on)
 */
 
-type InterproscanAnnotation struct {
-	Accession   string
-	Description string
-}
-
 type InterproscanRecord struct {
 	Accession               string
 	Length                  int

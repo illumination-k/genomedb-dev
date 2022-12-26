@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"genomedb/bio/gffio"
+	"genomedb/ent/domainannotation"
 	"genomedb/ent/goterm"
 	"genomedb/ent/locus"
 	"genomedb/ent/transcript"
@@ -147,6 +148,21 @@ func (tc *TranscriptCreate) AddGoterms(g ...*GoTerm) *TranscriptCreate {
 		ids[i] = g[i].ID
 	}
 	return tc.AddGotermIDs(ids...)
+}
+
+// AddDomainIDs adds the "domains" edge to the DomainAnnotation entity by IDs.
+func (tc *TranscriptCreate) AddDomainIDs(ids ...string) *TranscriptCreate {
+	tc.mutation.AddDomainIDs(ids...)
+	return tc
+}
+
+// AddDomains adds the "domains" edges to the DomainAnnotation entity.
+func (tc *TranscriptCreate) AddDomains(d ...*DomainAnnotation) *TranscriptCreate {
+	ids := make([]string, len(d))
+	for i := range d {
+		ids[i] = d[i].ID
+	}
+	return tc.AddDomainIDs(ids...)
 }
 
 // Mutation returns the TranscriptMutation object of the builder.
@@ -401,6 +417,25 @@ func (tc *TranscriptCreate) createSpec() (*Transcript, *sqlgraph.CreateSpec) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
 					Column: goterm.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := tc.mutation.DomainsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   transcript.DomainsTable,
+			Columns: transcript.DomainsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: domainannotation.FieldID,
 				},
 			},
 		}

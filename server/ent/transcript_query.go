@@ -6,6 +6,8 @@ import (
 	"context"
 	"database/sql/driver"
 	"fmt"
+	"genomedb/ent/domainannotation"
+	"genomedb/ent/domainannotationtotranscript"
 	"genomedb/ent/goterm"
 	"genomedb/ent/gotermontranscripts"
 	"genomedb/ent/locus"
@@ -29,7 +31,9 @@ type TranscriptQuery struct {
 	predicates           []predicate.Transcript
 	withLocus            *LocusQuery
 	withGoterms          *GoTermQuery
+	withDomains          *DomainAnnotationQuery
 	withGotermTranscript *GoTermOnTranscriptsQuery
+	withDomainTranscript *DomainAnnotationToTranscriptQuery
 	withFKs              bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -111,6 +115,28 @@ func (tq *TranscriptQuery) QueryGoterms() *GoTermQuery {
 	return query
 }
 
+// QueryDomains chains the current query on the "domains" edge.
+func (tq *TranscriptQuery) QueryDomains() *DomainAnnotationQuery {
+	query := &DomainAnnotationQuery{config: tq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(transcript.Table, transcript.FieldID, selector),
+			sqlgraph.To(domainannotation.Table, domainannotation.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, transcript.DomainsTable, transcript.DomainsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // QueryGotermTranscript chains the current query on the "goterm_transcript" edge.
 func (tq *TranscriptQuery) QueryGotermTranscript() *GoTermOnTranscriptsQuery {
 	query := &GoTermOnTranscriptsQuery{config: tq.config}
@@ -126,6 +152,28 @@ func (tq *TranscriptQuery) QueryGotermTranscript() *GoTermOnTranscriptsQuery {
 			sqlgraph.From(transcript.Table, transcript.FieldID, selector),
 			sqlgraph.To(gotermontranscripts.Table, gotermontranscripts.TranscriptColumn),
 			sqlgraph.Edge(sqlgraph.O2M, true, transcript.GotermTranscriptTable, transcript.GotermTranscriptColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryDomainTranscript chains the current query on the "domain_transcript" edge.
+func (tq *TranscriptQuery) QueryDomainTranscript() *DomainAnnotationToTranscriptQuery {
+	query := &DomainAnnotationToTranscriptQuery{config: tq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(transcript.Table, transcript.FieldID, selector),
+			sqlgraph.To(domainannotationtotranscript.Table, domainannotationtotranscript.TranscriptColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, transcript.DomainTranscriptTable, transcript.DomainTranscriptColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -316,7 +364,9 @@ func (tq *TranscriptQuery) Clone() *TranscriptQuery {
 		predicates:           append([]predicate.Transcript{}, tq.predicates...),
 		withLocus:            tq.withLocus.Clone(),
 		withGoterms:          tq.withGoterms.Clone(),
+		withDomains:          tq.withDomains.Clone(),
 		withGotermTranscript: tq.withGotermTranscript.Clone(),
+		withDomainTranscript: tq.withDomainTranscript.Clone(),
 		// clone intermediate query.
 		sql:    tq.sql.Clone(),
 		path:   tq.path,
@@ -346,6 +396,17 @@ func (tq *TranscriptQuery) WithGoterms(opts ...func(*GoTermQuery)) *TranscriptQu
 	return tq
 }
 
+// WithDomains tells the query-builder to eager-load the nodes that are connected to
+// the "domains" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TranscriptQuery) WithDomains(opts ...func(*DomainAnnotationQuery)) *TranscriptQuery {
+	query := &DomainAnnotationQuery{config: tq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withDomains = query
+	return tq
+}
+
 // WithGotermTranscript tells the query-builder to eager-load the nodes that are connected to
 // the "goterm_transcript" edge. The optional arguments are used to configure the query builder of the edge.
 func (tq *TranscriptQuery) WithGotermTranscript(opts ...func(*GoTermOnTranscriptsQuery)) *TranscriptQuery {
@@ -354,6 +415,17 @@ func (tq *TranscriptQuery) WithGotermTranscript(opts ...func(*GoTermOnTranscript
 		opt(query)
 	}
 	tq.withGotermTranscript = query
+	return tq
+}
+
+// WithDomainTranscript tells the query-builder to eager-load the nodes that are connected to
+// the "domain_transcript" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TranscriptQuery) WithDomainTranscript(opts ...func(*DomainAnnotationToTranscriptQuery)) *TranscriptQuery {
+	query := &DomainAnnotationToTranscriptQuery{config: tq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withDomainTranscript = query
 	return tq
 }
 
@@ -431,10 +503,12 @@ func (tq *TranscriptQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*T
 		nodes       = []*Transcript{}
 		withFKs     = tq.withFKs
 		_spec       = tq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [5]bool{
 			tq.withLocus != nil,
 			tq.withGoterms != nil,
+			tq.withDomains != nil,
 			tq.withGotermTranscript != nil,
+			tq.withDomainTranscript != nil,
 		}
 	)
 	if tq.withLocus != nil {
@@ -474,11 +548,27 @@ func (tq *TranscriptQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*T
 			return nil, err
 		}
 	}
+	if query := tq.withDomains; query != nil {
+		if err := tq.loadDomains(ctx, query, nodes,
+			func(n *Transcript) { n.Edges.Domains = []*DomainAnnotation{} },
+			func(n *Transcript, e *DomainAnnotation) { n.Edges.Domains = append(n.Edges.Domains, e) }); err != nil {
+			return nil, err
+		}
+	}
 	if query := tq.withGotermTranscript; query != nil {
 		if err := tq.loadGotermTranscript(ctx, query, nodes,
 			func(n *Transcript) { n.Edges.GotermTranscript = []*GoTermOnTranscripts{} },
 			func(n *Transcript, e *GoTermOnTranscripts) {
 				n.Edges.GotermTranscript = append(n.Edges.GotermTranscript, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := tq.withDomainTranscript; query != nil {
+		if err := tq.loadDomainTranscript(ctx, query, nodes,
+			func(n *Transcript) { n.Edges.DomainTranscript = []*DomainAnnotationToTranscript{} },
+			func(n *Transcript, e *DomainAnnotationToTranscript) {
+				n.Edges.DomainTranscript = append(n.Edges.DomainTranscript, e)
 			}); err != nil {
 			return nil, err
 		}
@@ -573,6 +663,64 @@ func (tq *TranscriptQuery) loadGoterms(ctx context.Context, query *GoTermQuery, 
 	}
 	return nil
 }
+func (tq *TranscriptQuery) loadDomains(ctx context.Context, query *DomainAnnotationQuery, nodes []*Transcript, init func(*Transcript), assign func(*Transcript, *DomainAnnotation)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[string]*Transcript)
+	nids := make(map[string]map[*Transcript]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(transcript.DomainsTable)
+		s.Join(joinT).On(s.C(domainannotation.FieldID), joinT.C(transcript.DomainsPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(transcript.DomainsPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(transcript.DomainsPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	neighbors, err := query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+		assign := spec.Assign
+		values := spec.ScanValues
+		spec.ScanValues = func(columns []string) ([]any, error) {
+			values, err := values(columns[1:])
+			if err != nil {
+				return nil, err
+			}
+			return append([]any{new(sql.NullString)}, values...), nil
+		}
+		spec.Assign = func(columns []string, values []any) error {
+			outValue := values[0].(*sql.NullString).String
+			inValue := values[1].(*sql.NullString).String
+			if nids[inValue] == nil {
+				nids[inValue] = map[*Transcript]struct{}{byID[outValue]: {}}
+				return assign(columns[1:], values[1:])
+			}
+			nids[inValue][byID[outValue]] = struct{}{}
+			return nil
+		}
+	})
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "domains" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
 func (tq *TranscriptQuery) loadGotermTranscript(ctx context.Context, query *GoTermOnTranscriptsQuery, nodes []*Transcript, init func(*Transcript), assign func(*Transcript, *GoTermOnTranscripts)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[string]*Transcript)
@@ -585,6 +733,33 @@ func (tq *TranscriptQuery) loadGotermTranscript(ctx context.Context, query *GoTe
 	}
 	query.Where(predicate.GoTermOnTranscripts(func(s *sql.Selector) {
 		s.Where(sql.InValues(transcript.GotermTranscriptColumn, fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.TranscriptID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "transcript_id" returned %v for node %v`, fk, n)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (tq *TranscriptQuery) loadDomainTranscript(ctx context.Context, query *DomainAnnotationToTranscriptQuery, nodes []*Transcript, init func(*Transcript), assign func(*Transcript, *DomainAnnotationToTranscript)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[string]*Transcript)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.Where(predicate.DomainAnnotationToTranscript(func(s *sql.Selector) {
+		s.Where(sql.InValues(transcript.DomainTranscriptColumn, fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

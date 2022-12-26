@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"genomedb/bio/gffio"
+	"genomedb/ent/domainannotation"
+	"genomedb/ent/domainannotationtotranscript"
 	"genomedb/ent/genome"
 	"genomedb/ent/goterm"
 	"genomedb/ent/gotermontranscripts"
@@ -29,18 +31,1066 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeGenome              = "Genome"
-	TypeGoTerm              = "GoTerm"
-	TypeGoTermOnTranscripts = "GoTermOnTranscripts"
-	TypeKeggCompound        = "KeggCompound"
-	TypeKeggModule          = "KeggModule"
-	TypeKeggOntology        = "KeggOntology"
-	TypeKeggPathway         = "KeggPathway"
-	TypeKeggReaction        = "KeggReaction"
-	TypeLocus               = "Locus"
-	TypeScaffold            = "Scaffold"
-	TypeTranscript          = "Transcript"
+	TypeDomainAnnotation             = "DomainAnnotation"
+	TypeDomainAnnotationToTranscript = "DomainAnnotationToTranscript"
+	TypeGenome                       = "Genome"
+	TypeGoTerm                       = "GoTerm"
+	TypeGoTermOnTranscripts          = "GoTermOnTranscripts"
+	TypeKeggCompound                 = "KeggCompound"
+	TypeKeggModule                   = "KeggModule"
+	TypeKeggOntology                 = "KeggOntology"
+	TypeKeggPathway                  = "KeggPathway"
+	TypeKeggReaction                 = "KeggReaction"
+	TypeLocus                        = "Locus"
+	TypeScaffold                     = "Scaffold"
+	TypeTranscript                   = "Transcript"
 )
+
+// DomainAnnotationMutation represents an operation that mutates the DomainAnnotation nodes in the graph.
+type DomainAnnotationMutation struct {
+	config
+	op                 Op
+	typ                string
+	id                 *string
+	description        *string
+	_Analysis          *domainannotation.Analysis
+	clearedFields      map[string]struct{}
+	transcripts        map[string]struct{}
+	removedtranscripts map[string]struct{}
+	clearedtranscripts bool
+	done               bool
+	oldValue           func(context.Context) (*DomainAnnotation, error)
+	predicates         []predicate.DomainAnnotation
+}
+
+var _ ent.Mutation = (*DomainAnnotationMutation)(nil)
+
+// domainannotationOption allows management of the mutation configuration using functional options.
+type domainannotationOption func(*DomainAnnotationMutation)
+
+// newDomainAnnotationMutation creates new mutation for the DomainAnnotation entity.
+func newDomainAnnotationMutation(c config, op Op, opts ...domainannotationOption) *DomainAnnotationMutation {
+	m := &DomainAnnotationMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeDomainAnnotation,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withDomainAnnotationID sets the ID field of the mutation.
+func withDomainAnnotationID(id string) domainannotationOption {
+	return func(m *DomainAnnotationMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *DomainAnnotation
+		)
+		m.oldValue = func(ctx context.Context) (*DomainAnnotation, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().DomainAnnotation.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withDomainAnnotation sets the old DomainAnnotation of the mutation.
+func withDomainAnnotation(node *DomainAnnotation) domainannotationOption {
+	return func(m *DomainAnnotationMutation) {
+		m.oldValue = func(context.Context) (*DomainAnnotation, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m DomainAnnotationMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m DomainAnnotationMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of DomainAnnotation entities.
+func (m *DomainAnnotationMutation) SetID(id string) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *DomainAnnotationMutation) ID() (id string, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *DomainAnnotationMutation) IDs(ctx context.Context) ([]string, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []string{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().DomainAnnotation.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetDescription sets the "description" field.
+func (m *DomainAnnotationMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *DomainAnnotationMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the DomainAnnotation entity.
+// If the DomainAnnotation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DomainAnnotationMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *DomainAnnotationMutation) ResetDescription() {
+	m.description = nil
+}
+
+// SetAnalysis sets the "Analysis" field.
+func (m *DomainAnnotationMutation) SetAnalysis(d domainannotation.Analysis) {
+	m._Analysis = &d
+}
+
+// Analysis returns the value of the "Analysis" field in the mutation.
+func (m *DomainAnnotationMutation) Analysis() (r domainannotation.Analysis, exists bool) {
+	v := m._Analysis
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAnalysis returns the old "Analysis" field's value of the DomainAnnotation entity.
+// If the DomainAnnotation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DomainAnnotationMutation) OldAnalysis(ctx context.Context) (v domainannotation.Analysis, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAnalysis is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAnalysis requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAnalysis: %w", err)
+	}
+	return oldValue.Analysis, nil
+}
+
+// ResetAnalysis resets all changes to the "Analysis" field.
+func (m *DomainAnnotationMutation) ResetAnalysis() {
+	m._Analysis = nil
+}
+
+// AddTranscriptIDs adds the "transcripts" edge to the Transcript entity by ids.
+func (m *DomainAnnotationMutation) AddTranscriptIDs(ids ...string) {
+	if m.transcripts == nil {
+		m.transcripts = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.transcripts[ids[i]] = struct{}{}
+	}
+}
+
+// ClearTranscripts clears the "transcripts" edge to the Transcript entity.
+func (m *DomainAnnotationMutation) ClearTranscripts() {
+	m.clearedtranscripts = true
+}
+
+// TranscriptsCleared reports if the "transcripts" edge to the Transcript entity was cleared.
+func (m *DomainAnnotationMutation) TranscriptsCleared() bool {
+	return m.clearedtranscripts
+}
+
+// RemoveTranscriptIDs removes the "transcripts" edge to the Transcript entity by IDs.
+func (m *DomainAnnotationMutation) RemoveTranscriptIDs(ids ...string) {
+	if m.removedtranscripts == nil {
+		m.removedtranscripts = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.transcripts, ids[i])
+		m.removedtranscripts[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedTranscripts returns the removed IDs of the "transcripts" edge to the Transcript entity.
+func (m *DomainAnnotationMutation) RemovedTranscriptsIDs() (ids []string) {
+	for id := range m.removedtranscripts {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// TranscriptsIDs returns the "transcripts" edge IDs in the mutation.
+func (m *DomainAnnotationMutation) TranscriptsIDs() (ids []string) {
+	for id := range m.transcripts {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetTranscripts resets all changes to the "transcripts" edge.
+func (m *DomainAnnotationMutation) ResetTranscripts() {
+	m.transcripts = nil
+	m.clearedtranscripts = false
+	m.removedtranscripts = nil
+}
+
+// Where appends a list predicates to the DomainAnnotationMutation builder.
+func (m *DomainAnnotationMutation) Where(ps ...predicate.DomainAnnotation) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *DomainAnnotationMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (DomainAnnotation).
+func (m *DomainAnnotationMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *DomainAnnotationMutation) Fields() []string {
+	fields := make([]string, 0, 2)
+	if m.description != nil {
+		fields = append(fields, domainannotation.FieldDescription)
+	}
+	if m._Analysis != nil {
+		fields = append(fields, domainannotation.FieldAnalysis)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *DomainAnnotationMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case domainannotation.FieldDescription:
+		return m.Description()
+	case domainannotation.FieldAnalysis:
+		return m.Analysis()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *DomainAnnotationMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case domainannotation.FieldDescription:
+		return m.OldDescription(ctx)
+	case domainannotation.FieldAnalysis:
+		return m.OldAnalysis(ctx)
+	}
+	return nil, fmt.Errorf("unknown DomainAnnotation field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *DomainAnnotationMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case domainannotation.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case domainannotation.FieldAnalysis:
+		v, ok := value.(domainannotation.Analysis)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAnalysis(v)
+		return nil
+	}
+	return fmt.Errorf("unknown DomainAnnotation field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *DomainAnnotationMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *DomainAnnotationMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *DomainAnnotationMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown DomainAnnotation numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *DomainAnnotationMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *DomainAnnotationMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *DomainAnnotationMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown DomainAnnotation nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *DomainAnnotationMutation) ResetField(name string) error {
+	switch name {
+	case domainannotation.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case domainannotation.FieldAnalysis:
+		m.ResetAnalysis()
+		return nil
+	}
+	return fmt.Errorf("unknown DomainAnnotation field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *DomainAnnotationMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.transcripts != nil {
+		edges = append(edges, domainannotation.EdgeTranscripts)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *DomainAnnotationMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case domainannotation.EdgeTranscripts:
+		ids := make([]ent.Value, 0, len(m.transcripts))
+		for id := range m.transcripts {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *DomainAnnotationMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removedtranscripts != nil {
+		edges = append(edges, domainannotation.EdgeTranscripts)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *DomainAnnotationMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case domainannotation.EdgeTranscripts:
+		ids := make([]ent.Value, 0, len(m.removedtranscripts))
+		for id := range m.removedtranscripts {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *DomainAnnotationMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedtranscripts {
+		edges = append(edges, domainannotation.EdgeTranscripts)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *DomainAnnotationMutation) EdgeCleared(name string) bool {
+	switch name {
+	case domainannotation.EdgeTranscripts:
+		return m.clearedtranscripts
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *DomainAnnotationMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown DomainAnnotation unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *DomainAnnotationMutation) ResetEdge(name string) error {
+	switch name {
+	case domainannotation.EdgeTranscripts:
+		m.ResetTranscripts()
+		return nil
+	}
+	return fmt.Errorf("unknown DomainAnnotation edge %s", name)
+}
+
+// DomainAnnotationToTranscriptMutation represents an operation that mutates the DomainAnnotationToTranscript nodes in the graph.
+type DomainAnnotationToTranscriptMutation struct {
+	config
+	op                Op
+	typ               string
+	start             *int32
+	addstart          *int32
+	stop              *int32
+	addstop           *int32
+	score             *float64
+	addscore          *float64
+	clearedFields     map[string]struct{}
+	domain            *string
+	cleareddomain     bool
+	transcript        *string
+	clearedtranscript bool
+	done              bool
+	oldValue          func(context.Context) (*DomainAnnotationToTranscript, error)
+	predicates        []predicate.DomainAnnotationToTranscript
+}
+
+var _ ent.Mutation = (*DomainAnnotationToTranscriptMutation)(nil)
+
+// domainannotationtotranscriptOption allows management of the mutation configuration using functional options.
+type domainannotationtotranscriptOption func(*DomainAnnotationToTranscriptMutation)
+
+// newDomainAnnotationToTranscriptMutation creates new mutation for the DomainAnnotationToTranscript entity.
+func newDomainAnnotationToTranscriptMutation(c config, op Op, opts ...domainannotationtotranscriptOption) *DomainAnnotationToTranscriptMutation {
+	m := &DomainAnnotationToTranscriptMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeDomainAnnotationToTranscript,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m DomainAnnotationToTranscriptMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m DomainAnnotationToTranscriptMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetDomainAnnotationID sets the "domain_annotation_id" field.
+func (m *DomainAnnotationToTranscriptMutation) SetDomainAnnotationID(s string) {
+	m.domain = &s
+}
+
+// DomainAnnotationID returns the value of the "domain_annotation_id" field in the mutation.
+func (m *DomainAnnotationToTranscriptMutation) DomainAnnotationID() (r string, exists bool) {
+	v := m.domain
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetDomainAnnotationID resets all changes to the "domain_annotation_id" field.
+func (m *DomainAnnotationToTranscriptMutation) ResetDomainAnnotationID() {
+	m.domain = nil
+}
+
+// SetTranscriptID sets the "transcript_id" field.
+func (m *DomainAnnotationToTranscriptMutation) SetTranscriptID(s string) {
+	m.transcript = &s
+}
+
+// TranscriptID returns the value of the "transcript_id" field in the mutation.
+func (m *DomainAnnotationToTranscriptMutation) TranscriptID() (r string, exists bool) {
+	v := m.transcript
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetTranscriptID resets all changes to the "transcript_id" field.
+func (m *DomainAnnotationToTranscriptMutation) ResetTranscriptID() {
+	m.transcript = nil
+}
+
+// SetStart sets the "start" field.
+func (m *DomainAnnotationToTranscriptMutation) SetStart(i int32) {
+	m.start = &i
+	m.addstart = nil
+}
+
+// Start returns the value of the "start" field in the mutation.
+func (m *DomainAnnotationToTranscriptMutation) Start() (r int32, exists bool) {
+	v := m.start
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// AddStart adds i to the "start" field.
+func (m *DomainAnnotationToTranscriptMutation) AddStart(i int32) {
+	if m.addstart != nil {
+		*m.addstart += i
+	} else {
+		m.addstart = &i
+	}
+}
+
+// AddedStart returns the value that was added to the "start" field in this mutation.
+func (m *DomainAnnotationToTranscriptMutation) AddedStart() (r int32, exists bool) {
+	v := m.addstart
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetStart resets all changes to the "start" field.
+func (m *DomainAnnotationToTranscriptMutation) ResetStart() {
+	m.start = nil
+	m.addstart = nil
+}
+
+// SetStop sets the "stop" field.
+func (m *DomainAnnotationToTranscriptMutation) SetStop(i int32) {
+	m.stop = &i
+	m.addstop = nil
+}
+
+// Stop returns the value of the "stop" field in the mutation.
+func (m *DomainAnnotationToTranscriptMutation) Stop() (r int32, exists bool) {
+	v := m.stop
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// AddStop adds i to the "stop" field.
+func (m *DomainAnnotationToTranscriptMutation) AddStop(i int32) {
+	if m.addstop != nil {
+		*m.addstop += i
+	} else {
+		m.addstop = &i
+	}
+}
+
+// AddedStop returns the value that was added to the "stop" field in this mutation.
+func (m *DomainAnnotationToTranscriptMutation) AddedStop() (r int32, exists bool) {
+	v := m.addstop
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetStop resets all changes to the "stop" field.
+func (m *DomainAnnotationToTranscriptMutation) ResetStop() {
+	m.stop = nil
+	m.addstop = nil
+}
+
+// SetScore sets the "score" field.
+func (m *DomainAnnotationToTranscriptMutation) SetScore(f float64) {
+	m.score = &f
+	m.addscore = nil
+}
+
+// Score returns the value of the "score" field in the mutation.
+func (m *DomainAnnotationToTranscriptMutation) Score() (r float64, exists bool) {
+	v := m.score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// AddScore adds f to the "score" field.
+func (m *DomainAnnotationToTranscriptMutation) AddScore(f float64) {
+	if m.addscore != nil {
+		*m.addscore += f
+	} else {
+		m.addscore = &f
+	}
+}
+
+// AddedScore returns the value that was added to the "score" field in this mutation.
+func (m *DomainAnnotationToTranscriptMutation) AddedScore() (r float64, exists bool) {
+	v := m.addscore
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetScore resets all changes to the "score" field.
+func (m *DomainAnnotationToTranscriptMutation) ResetScore() {
+	m.score = nil
+	m.addscore = nil
+}
+
+// SetDomainID sets the "domain" edge to the DomainAnnotation entity by id.
+func (m *DomainAnnotationToTranscriptMutation) SetDomainID(id string) {
+	m.domain = &id
+}
+
+// ClearDomain clears the "domain" edge to the DomainAnnotation entity.
+func (m *DomainAnnotationToTranscriptMutation) ClearDomain() {
+	m.cleareddomain = true
+}
+
+// DomainCleared reports if the "domain" edge to the DomainAnnotation entity was cleared.
+func (m *DomainAnnotationToTranscriptMutation) DomainCleared() bool {
+	return m.cleareddomain
+}
+
+// DomainID returns the "domain" edge ID in the mutation.
+func (m *DomainAnnotationToTranscriptMutation) DomainID() (id string, exists bool) {
+	if m.domain != nil {
+		return *m.domain, true
+	}
+	return
+}
+
+// DomainIDs returns the "domain" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// DomainID instead. It exists only for internal usage by the builders.
+func (m *DomainAnnotationToTranscriptMutation) DomainIDs() (ids []string) {
+	if id := m.domain; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetDomain resets all changes to the "domain" edge.
+func (m *DomainAnnotationToTranscriptMutation) ResetDomain() {
+	m.domain = nil
+	m.cleareddomain = false
+}
+
+// ClearTranscript clears the "transcript" edge to the Transcript entity.
+func (m *DomainAnnotationToTranscriptMutation) ClearTranscript() {
+	m.clearedtranscript = true
+}
+
+// TranscriptCleared reports if the "transcript" edge to the Transcript entity was cleared.
+func (m *DomainAnnotationToTranscriptMutation) TranscriptCleared() bool {
+	return m.clearedtranscript
+}
+
+// TranscriptIDs returns the "transcript" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TranscriptID instead. It exists only for internal usage by the builders.
+func (m *DomainAnnotationToTranscriptMutation) TranscriptIDs() (ids []string) {
+	if id := m.transcript; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTranscript resets all changes to the "transcript" edge.
+func (m *DomainAnnotationToTranscriptMutation) ResetTranscript() {
+	m.transcript = nil
+	m.clearedtranscript = false
+}
+
+// Where appends a list predicates to the DomainAnnotationToTranscriptMutation builder.
+func (m *DomainAnnotationToTranscriptMutation) Where(ps ...predicate.DomainAnnotationToTranscript) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *DomainAnnotationToTranscriptMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (DomainAnnotationToTranscript).
+func (m *DomainAnnotationToTranscriptMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *DomainAnnotationToTranscriptMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.domain != nil {
+		fields = append(fields, domainannotationtotranscript.FieldDomainAnnotationID)
+	}
+	if m.transcript != nil {
+		fields = append(fields, domainannotationtotranscript.FieldTranscriptID)
+	}
+	if m.start != nil {
+		fields = append(fields, domainannotationtotranscript.FieldStart)
+	}
+	if m.stop != nil {
+		fields = append(fields, domainannotationtotranscript.FieldStop)
+	}
+	if m.score != nil {
+		fields = append(fields, domainannotationtotranscript.FieldScore)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *DomainAnnotationToTranscriptMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case domainannotationtotranscript.FieldDomainAnnotationID:
+		return m.DomainAnnotationID()
+	case domainannotationtotranscript.FieldTranscriptID:
+		return m.TranscriptID()
+	case domainannotationtotranscript.FieldStart:
+		return m.Start()
+	case domainannotationtotranscript.FieldStop:
+		return m.Stop()
+	case domainannotationtotranscript.FieldScore:
+		return m.Score()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *DomainAnnotationToTranscriptMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	return nil, errors.New("edge schema DomainAnnotationToTranscript does not support getting old values")
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *DomainAnnotationToTranscriptMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case domainannotationtotranscript.FieldDomainAnnotationID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDomainAnnotationID(v)
+		return nil
+	case domainannotationtotranscript.FieldTranscriptID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTranscriptID(v)
+		return nil
+	case domainannotationtotranscript.FieldStart:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStart(v)
+		return nil
+	case domainannotationtotranscript.FieldStop:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStop(v)
+		return nil
+	case domainannotationtotranscript.FieldScore:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetScore(v)
+		return nil
+	}
+	return fmt.Errorf("unknown DomainAnnotationToTranscript field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *DomainAnnotationToTranscriptMutation) AddedFields() []string {
+	var fields []string
+	if m.addstart != nil {
+		fields = append(fields, domainannotationtotranscript.FieldStart)
+	}
+	if m.addstop != nil {
+		fields = append(fields, domainannotationtotranscript.FieldStop)
+	}
+	if m.addscore != nil {
+		fields = append(fields, domainannotationtotranscript.FieldScore)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *DomainAnnotationToTranscriptMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case domainannotationtotranscript.FieldStart:
+		return m.AddedStart()
+	case domainannotationtotranscript.FieldStop:
+		return m.AddedStop()
+	case domainannotationtotranscript.FieldScore:
+		return m.AddedScore()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *DomainAnnotationToTranscriptMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case domainannotationtotranscript.FieldStart:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddStart(v)
+		return nil
+	case domainannotationtotranscript.FieldStop:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddStop(v)
+		return nil
+	case domainannotationtotranscript.FieldScore:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddScore(v)
+		return nil
+	}
+	return fmt.Errorf("unknown DomainAnnotationToTranscript numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *DomainAnnotationToTranscriptMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *DomainAnnotationToTranscriptMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *DomainAnnotationToTranscriptMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown DomainAnnotationToTranscript nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *DomainAnnotationToTranscriptMutation) ResetField(name string) error {
+	switch name {
+	case domainannotationtotranscript.FieldDomainAnnotationID:
+		m.ResetDomainAnnotationID()
+		return nil
+	case domainannotationtotranscript.FieldTranscriptID:
+		m.ResetTranscriptID()
+		return nil
+	case domainannotationtotranscript.FieldStart:
+		m.ResetStart()
+		return nil
+	case domainannotationtotranscript.FieldStop:
+		m.ResetStop()
+		return nil
+	case domainannotationtotranscript.FieldScore:
+		m.ResetScore()
+		return nil
+	}
+	return fmt.Errorf("unknown DomainAnnotationToTranscript field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *DomainAnnotationToTranscriptMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.domain != nil {
+		edges = append(edges, domainannotationtotranscript.EdgeDomain)
+	}
+	if m.transcript != nil {
+		edges = append(edges, domainannotationtotranscript.EdgeTranscript)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *DomainAnnotationToTranscriptMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case domainannotationtotranscript.EdgeDomain:
+		if id := m.domain; id != nil {
+			return []ent.Value{*id}
+		}
+	case domainannotationtotranscript.EdgeTranscript:
+		if id := m.transcript; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *DomainAnnotationToTranscriptMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *DomainAnnotationToTranscriptMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *DomainAnnotationToTranscriptMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.cleareddomain {
+		edges = append(edges, domainannotationtotranscript.EdgeDomain)
+	}
+	if m.clearedtranscript {
+		edges = append(edges, domainannotationtotranscript.EdgeTranscript)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *DomainAnnotationToTranscriptMutation) EdgeCleared(name string) bool {
+	switch name {
+	case domainannotationtotranscript.EdgeDomain:
+		return m.cleareddomain
+	case domainannotationtotranscript.EdgeTranscript:
+		return m.clearedtranscript
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *DomainAnnotationToTranscriptMutation) ClearEdge(name string) error {
+	switch name {
+	case domainannotationtotranscript.EdgeDomain:
+		m.ClearDomain()
+		return nil
+	case domainannotationtotranscript.EdgeTranscript:
+		m.ClearTranscript()
+		return nil
+	}
+	return fmt.Errorf("unknown DomainAnnotationToTranscript unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *DomainAnnotationToTranscriptMutation) ResetEdge(name string) error {
+	switch name {
+	case domainannotationtotranscript.EdgeDomain:
+		m.ResetDomain()
+		return nil
+	case domainannotationtotranscript.EdgeTranscript:
+		m.ResetTranscript()
+		return nil
+	}
+	return fmt.Errorf("unknown DomainAnnotationToTranscript edge %s", name)
+}
 
 // GenomeMutation represents an operation that mutates the Genome nodes in the graph.
 type GenomeMutation struct {
@@ -4007,6 +5057,9 @@ type TranscriptMutation struct {
 	goterms               map[string]struct{}
 	removedgoterms        map[string]struct{}
 	clearedgoterms        bool
+	domains               map[string]struct{}
+	removeddomains        map[string]struct{}
+	cleareddomains        bool
 	done                  bool
 	oldValue              func(context.Context) (*Transcript, error)
 	predicates            []predicate.Transcript
@@ -4813,6 +5866,60 @@ func (m *TranscriptMutation) ResetGoterms() {
 	m.removedgoterms = nil
 }
 
+// AddDomainIDs adds the "domains" edge to the DomainAnnotation entity by ids.
+func (m *TranscriptMutation) AddDomainIDs(ids ...string) {
+	if m.domains == nil {
+		m.domains = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.domains[ids[i]] = struct{}{}
+	}
+}
+
+// ClearDomains clears the "domains" edge to the DomainAnnotation entity.
+func (m *TranscriptMutation) ClearDomains() {
+	m.cleareddomains = true
+}
+
+// DomainsCleared reports if the "domains" edge to the DomainAnnotation entity was cleared.
+func (m *TranscriptMutation) DomainsCleared() bool {
+	return m.cleareddomains
+}
+
+// RemoveDomainIDs removes the "domains" edge to the DomainAnnotation entity by IDs.
+func (m *TranscriptMutation) RemoveDomainIDs(ids ...string) {
+	if m.removeddomains == nil {
+		m.removeddomains = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.domains, ids[i])
+		m.removeddomains[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedDomains returns the removed IDs of the "domains" edge to the DomainAnnotation entity.
+func (m *TranscriptMutation) RemovedDomainsIDs() (ids []string) {
+	for id := range m.removeddomains {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// DomainsIDs returns the "domains" edge IDs in the mutation.
+func (m *TranscriptMutation) DomainsIDs() (ids []string) {
+	for id := range m.domains {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetDomains resets all changes to the "domains" edge.
+func (m *TranscriptMutation) ResetDomains() {
+	m.domains = nil
+	m.cleareddomains = false
+	m.removeddomains = nil
+}
+
 // Where appends a list predicates to the TranscriptMutation builder.
 func (m *TranscriptMutation) Where(ps ...predicate.Transcript) {
 	m.predicates = append(m.predicates, ps...)
@@ -5179,12 +6286,15 @@ func (m *TranscriptMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TranscriptMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.locus != nil {
 		edges = append(edges, transcript.EdgeLocus)
 	}
 	if m.goterms != nil {
 		edges = append(edges, transcript.EdgeGoterms)
+	}
+	if m.domains != nil {
+		edges = append(edges, transcript.EdgeDomains)
 	}
 	return edges
 }
@@ -5203,15 +6313,24 @@ func (m *TranscriptMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case transcript.EdgeDomains:
+		ids := make([]ent.Value, 0, len(m.domains))
+		for id := range m.domains {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *TranscriptMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.removedgoterms != nil {
 		edges = append(edges, transcript.EdgeGoterms)
+	}
+	if m.removeddomains != nil {
+		edges = append(edges, transcript.EdgeDomains)
 	}
 	return edges
 }
@@ -5226,18 +6345,27 @@ func (m *TranscriptMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case transcript.EdgeDomains:
+		ids := make([]ent.Value, 0, len(m.removeddomains))
+		for id := range m.removeddomains {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TranscriptMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedlocus {
 		edges = append(edges, transcript.EdgeLocus)
 	}
 	if m.clearedgoterms {
 		edges = append(edges, transcript.EdgeGoterms)
+	}
+	if m.cleareddomains {
+		edges = append(edges, transcript.EdgeDomains)
 	}
 	return edges
 }
@@ -5250,6 +6378,8 @@ func (m *TranscriptMutation) EdgeCleared(name string) bool {
 		return m.clearedlocus
 	case transcript.EdgeGoterms:
 		return m.clearedgoterms
+	case transcript.EdgeDomains:
+		return m.cleareddomains
 	}
 	return false
 }
@@ -5274,6 +6404,9 @@ func (m *TranscriptMutation) ResetEdge(name string) error {
 		return nil
 	case transcript.EdgeGoterms:
 		m.ResetGoterms()
+		return nil
+	case transcript.EdgeDomains:
+		m.ResetDomains()
 		return nil
 	}
 	return fmt.Errorf("unknown Transcript edge %s", name)

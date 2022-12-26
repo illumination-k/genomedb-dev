@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"genomedb/ent/domainannotationtotranscript"
 	"genomedb/ent/genome"
 	"genomedb/ent/schema"
 	"genomedb/ent/transcript"
@@ -12,6 +13,16 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	domainannotationtotranscriptFields := schema.DomainAnnotationToTranscript{}.Fields()
+	_ = domainannotationtotranscriptFields
+	// domainannotationtotranscriptDescStart is the schema descriptor for start field.
+	domainannotationtotranscriptDescStart := domainannotationtotranscriptFields[2].Descriptor()
+	// domainannotationtotranscript.StartValidator is a validator for the "start" field. It is called by the builders before save.
+	domainannotationtotranscript.StartValidator = domainannotationtotranscriptDescStart.Validators[0].(func(int32) error)
+	// domainannotationtotranscriptDescStop is the schema descriptor for stop field.
+	domainannotationtotranscriptDescStop := domainannotationtotranscriptFields[3].Descriptor()
+	// domainannotationtotranscript.StopValidator is a validator for the "stop" field. It is called by the builders before save.
+	domainannotationtotranscript.StopValidator = domainannotationtotranscriptDescStop.Validators[0].(func(int32) error)
 	genomeFields := schema.Genome{}.Fields()
 	_ = genomeFields
 	// genomeDescCodonTable is the schema descriptor for codon_table field.

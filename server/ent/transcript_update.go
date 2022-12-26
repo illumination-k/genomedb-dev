@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"genomedb/bio/gffio"
+	"genomedb/ent/domainannotation"
 	"genomedb/ent/goterm"
 	"genomedb/ent/locus"
 	"genomedb/ent/predicate"
@@ -187,6 +188,21 @@ func (tu *TranscriptUpdate) AddGoterms(g ...*GoTerm) *TranscriptUpdate {
 	return tu.AddGotermIDs(ids...)
 }
 
+// AddDomainIDs adds the "domains" edge to the DomainAnnotation entity by IDs.
+func (tu *TranscriptUpdate) AddDomainIDs(ids ...string) *TranscriptUpdate {
+	tu.mutation.AddDomainIDs(ids...)
+	return tu
+}
+
+// AddDomains adds the "domains" edges to the DomainAnnotation entity.
+func (tu *TranscriptUpdate) AddDomains(d ...*DomainAnnotation) *TranscriptUpdate {
+	ids := make([]string, len(d))
+	for i := range d {
+		ids[i] = d[i].ID
+	}
+	return tu.AddDomainIDs(ids...)
+}
+
 // Mutation returns the TranscriptMutation object of the builder.
 func (tu *TranscriptUpdate) Mutation() *TranscriptMutation {
 	return tu.mutation
@@ -217,6 +233,27 @@ func (tu *TranscriptUpdate) RemoveGoterms(g ...*GoTerm) *TranscriptUpdate {
 		ids[i] = g[i].ID
 	}
 	return tu.RemoveGotermIDs(ids...)
+}
+
+// ClearDomains clears all "domains" edges to the DomainAnnotation entity.
+func (tu *TranscriptUpdate) ClearDomains() *TranscriptUpdate {
+	tu.mutation.ClearDomains()
+	return tu
+}
+
+// RemoveDomainIDs removes the "domains" edge to DomainAnnotation entities by IDs.
+func (tu *TranscriptUpdate) RemoveDomainIDs(ids ...string) *TranscriptUpdate {
+	tu.mutation.RemoveDomainIDs(ids...)
+	return tu
+}
+
+// RemoveDomains removes "domains" edges to DomainAnnotation entities.
+func (tu *TranscriptUpdate) RemoveDomains(d ...*DomainAnnotation) *TranscriptUpdate {
+	ids := make([]string, len(d))
+	for i := range d {
+		ids[i] = d[i].ID
+	}
+	return tu.RemoveDomainIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -469,6 +506,60 @@ func (tu *TranscriptUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if tu.mutation.DomainsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   transcript.DomainsTable,
+			Columns: transcript.DomainsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: domainannotation.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.RemovedDomainsIDs(); len(nodes) > 0 && !tu.mutation.DomainsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   transcript.DomainsTable,
+			Columns: transcript.DomainsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: domainannotation.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.DomainsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   transcript.DomainsTable,
+			Columns: transcript.DomainsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: domainannotation.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{transcript.Label}
@@ -644,6 +735,21 @@ func (tuo *TranscriptUpdateOne) AddGoterms(g ...*GoTerm) *TranscriptUpdateOne {
 	return tuo.AddGotermIDs(ids...)
 }
 
+// AddDomainIDs adds the "domains" edge to the DomainAnnotation entity by IDs.
+func (tuo *TranscriptUpdateOne) AddDomainIDs(ids ...string) *TranscriptUpdateOne {
+	tuo.mutation.AddDomainIDs(ids...)
+	return tuo
+}
+
+// AddDomains adds the "domains" edges to the DomainAnnotation entity.
+func (tuo *TranscriptUpdateOne) AddDomains(d ...*DomainAnnotation) *TranscriptUpdateOne {
+	ids := make([]string, len(d))
+	for i := range d {
+		ids[i] = d[i].ID
+	}
+	return tuo.AddDomainIDs(ids...)
+}
+
 // Mutation returns the TranscriptMutation object of the builder.
 func (tuo *TranscriptUpdateOne) Mutation() *TranscriptMutation {
 	return tuo.mutation
@@ -674,6 +780,27 @@ func (tuo *TranscriptUpdateOne) RemoveGoterms(g ...*GoTerm) *TranscriptUpdateOne
 		ids[i] = g[i].ID
 	}
 	return tuo.RemoveGotermIDs(ids...)
+}
+
+// ClearDomains clears all "domains" edges to the DomainAnnotation entity.
+func (tuo *TranscriptUpdateOne) ClearDomains() *TranscriptUpdateOne {
+	tuo.mutation.ClearDomains()
+	return tuo
+}
+
+// RemoveDomainIDs removes the "domains" edge to DomainAnnotation entities by IDs.
+func (tuo *TranscriptUpdateOne) RemoveDomainIDs(ids ...string) *TranscriptUpdateOne {
+	tuo.mutation.RemoveDomainIDs(ids...)
+	return tuo
+}
+
+// RemoveDomains removes "domains" edges to DomainAnnotation entities.
+func (tuo *TranscriptUpdateOne) RemoveDomains(d ...*DomainAnnotation) *TranscriptUpdateOne {
+	ids := make([]string, len(d))
+	for i := range d {
+		ids[i] = d[i].ID
+	}
+	return tuo.RemoveDomainIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -948,6 +1075,60 @@ func (tuo *TranscriptUpdateOne) sqlSave(ctx context.Context) (_node *Transcript,
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
 					Column: goterm.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tuo.mutation.DomainsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   transcript.DomainsTable,
+			Columns: transcript.DomainsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: domainannotation.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.RemovedDomainsIDs(); len(nodes) > 0 && !tuo.mutation.DomainsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   transcript.DomainsTable,
+			Columns: transcript.DomainsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: domainannotation.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.DomainsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   transcript.DomainsTable,
+			Columns: transcript.DomainsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: domainannotation.FieldID,
 				},
 			},
 		}

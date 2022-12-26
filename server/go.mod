@@ -9,7 +9,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.0
-	golang.org/x/net v0.3.0
+	golang.org/x/net v0.4.0
 	google.golang.org/protobuf v1.28.1
 )
 
@@ -29,6 +29,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/xuri/xgen v0.0.0-20221130013449-4b677f0df988 // indirect
 	github.com/zclconf/go-cty v1.12.1 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect

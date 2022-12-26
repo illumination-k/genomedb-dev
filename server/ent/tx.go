@@ -12,6 +12,10 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// DomainAnnotation is the client for interacting with the DomainAnnotation builders.
+	DomainAnnotation *DomainAnnotationClient
+	// DomainAnnotationToTranscript is the client for interacting with the DomainAnnotationToTranscript builders.
+	DomainAnnotationToTranscript *DomainAnnotationToTranscriptClient
 	// Genome is the client for interacting with the Genome builders.
 	Genome *GenomeClient
 	// GoTerm is the client for interacting with the GoTerm builders.
@@ -165,6 +169,8 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.DomainAnnotation = NewDomainAnnotationClient(tx.config)
+	tx.DomainAnnotationToTranscript = NewDomainAnnotationToTranscriptClient(tx.config)
 	tx.Genome = NewGenomeClient(tx.config)
 	tx.GoTerm = NewGoTermClient(tx.config)
 	tx.GoTermOnTranscripts = NewGoTermOnTranscriptsClient(tx.config)
@@ -185,7 +191,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: Genome.QueryXXX(), the query will be executed
+// applies a query, for example: DomainAnnotation.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

@@ -8,6 +8,32 @@ import (
 	"genomedb/ent"
 )
 
+// The DomainAnnotationFunc type is an adapter to allow the use of ordinary
+// function as DomainAnnotation mutator.
+type DomainAnnotationFunc func(context.Context, *ent.DomainAnnotationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f DomainAnnotationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.DomainAnnotationMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DomainAnnotationMutation", m)
+	}
+	return f(ctx, mv)
+}
+
+// The DomainAnnotationToTranscriptFunc type is an adapter to allow the use of ordinary
+// function as DomainAnnotationToTranscript mutator.
+type DomainAnnotationToTranscriptFunc func(context.Context, *ent.DomainAnnotationToTranscriptMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f DomainAnnotationToTranscriptFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.DomainAnnotationToTranscriptMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DomainAnnotationToTranscriptMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The GenomeFunc type is an adapter to allow the use of ordinary
 // function as Genome mutator.
 type GenomeFunc func(context.Context, *ent.GenomeMutation) (ent.Value, error)

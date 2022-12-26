@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type InterproscanParser struct{}
+type InterproscanTsvParser struct{}
 
 func splitTerms(attr string) []string {
 	var arr []string
@@ -17,7 +17,7 @@ func splitTerms(attr string) []string {
 	return strings.Split("|", attr)
 }
 
-func (p InterproscanParser) ConsumeLine(line string) (record InterproscanRecord, err error) {
+func (p InterproscanTsvParser) ConsumeLine(line string) (record InterproscanRecord, err error) {
 	line = strings.TrimSpace(line)
 
 	attrs := strings.Split(line, "\t")

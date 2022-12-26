@@ -1126,6 +1126,34 @@ func HasGotermsWith(preds ...predicate.GoTerm) predicate.Transcript {
 	})
 }
 
+// HasDomains applies the HasEdge predicate on the "domains" edge.
+func HasDomains() predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(DomainsTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, DomainsTable, DomainsPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasDomainsWith applies the HasEdge predicate on the "domains" edge with a given conditions (other predicates).
+func HasDomainsWith(preds ...predicate.DomainAnnotation) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(DomainsInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, DomainsTable, DomainsPrimaryKey...),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasGotermTranscript applies the HasEdge predicate on the "goterm_transcript" edge.
 func HasGotermTranscript() predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
@@ -1145,6 +1173,34 @@ func HasGotermTranscriptWith(preds ...predicate.GoTermOnTranscripts) predicate.T
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(GotermTranscriptInverseTable, GotermTranscriptColumn),
 			sqlgraph.Edge(sqlgraph.O2M, true, GotermTranscriptTable, GotermTranscriptColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasDomainTranscript applies the HasEdge predicate on the "domain_transcript" edge.
+func HasDomainTranscript() predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(DomainTranscriptTable, DomainTranscriptColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, DomainTranscriptTable, DomainTranscriptColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasDomainTranscriptWith applies the HasEdge predicate on the "domain_transcript" edge with a given conditions (other predicates).
+func HasDomainTranscriptWith(preds ...predicate.DomainAnnotationToTranscript) predicate.Transcript {
+	return predicate.Transcript(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(DomainTranscriptInverseTable, DomainTranscriptColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, DomainTranscriptTable, DomainTranscriptColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

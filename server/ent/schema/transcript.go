@@ -40,5 +40,6 @@ func (Transcript) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("locus", Locus.Type).Ref("transcripts").Unique(),
 		edge.From("goterms", GoTerm.Type).Ref("transcripts").Through("goterm_transcript", GoTermOnTranscripts.Type),
+		edge.From("domains", DomainAnnotation.Type).Ref("transcripts").Through("domain_transcript", DomainAnnotationToTranscript.Type),
 	}
 }

@@ -6,6 +6,12 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// DomainAnnotation is the predicate function for domainannotation builders.
+type DomainAnnotation func(*sql.Selector)
+
+// DomainAnnotationToTranscript is the predicate function for domainannotationtotranscript builders.
+type DomainAnnotationToTranscript func(*sql.Selector)
+
 // Genome is the predicate function for genome builders.
 type Genome func(*sql.Selector)
 

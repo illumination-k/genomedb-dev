@@ -8,6 +8,46 @@ import (
 )
 
 var (
+	// DomainAnnotationsColumns holds the columns for the "domain_annotations" table.
+	DomainAnnotationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString},
+		{Name: "analysis", Type: field.TypeEnum, Enums: []string{"CDD", "COILS", "Gene3D", "HAMAP", "MOBIDB", "PANTHER", "Pfam", "PIRSF", "PRINTS", "PROSITE", "SFLD", "SMART", "SUPERFAMILY", "TIGRFAMs"}},
+	}
+	// DomainAnnotationsTable holds the schema information for the "domain_annotations" table.
+	DomainAnnotationsTable = &schema.Table{
+		Name:       "domain_annotations",
+		Columns:    DomainAnnotationsColumns,
+		PrimaryKey: []*schema.Column{DomainAnnotationsColumns[0]},
+	}
+	// DomainAnnotationToTranscriptsColumns holds the columns for the "domain_annotation_to_transcripts" table.
+	DomainAnnotationToTranscriptsColumns = []*schema.Column{
+		{Name: "start", Type: field.TypeInt32},
+		{Name: "stop", Type: field.TypeInt32},
+		{Name: "score", Type: field.TypeFloat64},
+		{Name: "domain_annotation_id", Type: field.TypeString},
+		{Name: "transcript_id", Type: field.TypeString},
+	}
+	// DomainAnnotationToTranscriptsTable holds the schema information for the "domain_annotation_to_transcripts" table.
+	DomainAnnotationToTranscriptsTable = &schema.Table{
+		Name:       "domain_annotation_to_transcripts",
+		Columns:    DomainAnnotationToTranscriptsColumns,
+		PrimaryKey: []*schema.Column{DomainAnnotationToTranscriptsColumns[3], DomainAnnotationToTranscriptsColumns[4]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "domain_annotation_to_transcripts_domain_annotations_domain",
+				Columns:    []*schema.Column{DomainAnnotationToTranscriptsColumns[3]},
+				RefColumns: []*schema.Column{DomainAnnotationsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "domain_annotation_to_transcripts_transcripts_transcript",
+				Columns:    []*schema.Column{DomainAnnotationToTranscriptsColumns[4]},
+				RefColumns: []*schema.Column{TranscriptsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// GenomesColumns holds the columns for the "genomes" table.
 	GenomesColumns = []*schema.Column{
 		{Name: "name", Type: field.TypeString},
@@ -195,6 +235,8 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		DomainAnnotationsTable,
+		DomainAnnotationToTranscriptsTable,
 		GenomesTable,
 		GoTermsTable,
 		GoTermOnTranscriptsTable,
@@ -210,6 +252,8 @@ var (
 )
 
 func init() {
+	DomainAnnotationToTranscriptsTable.ForeignKeys[0].RefTable = DomainAnnotationsTable
+	DomainAnnotationToTranscriptsTable.ForeignKeys[1].RefTable = TranscriptsTable
 	GoTermsTable.ForeignKeys[0].RefTable = GoTermsTable
 	GoTermOnTranscriptsTable.ForeignKeys[0].RefTable = GoTermsTable
 	GoTermOnTranscriptsTable.ForeignKeys[1].RefTable = TranscriptsTable

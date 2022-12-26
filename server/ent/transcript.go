@@ -58,11 +58,15 @@ type TranscriptEdges struct {
 	Locus *Locus `json:"locus,omitempty"`
 	// Goterms holds the value of the goterms edge.
 	Goterms []*GoTerm `json:"goterms,omitempty"`
+	// Domains holds the value of the domains edge.
+	Domains []*DomainAnnotation `json:"domains,omitempty"`
 	// GotermTranscript holds the value of the goterm_transcript edge.
 	GotermTranscript []*GoTermOnTranscripts `json:"goterm_transcript,omitempty"`
+	// DomainTranscript holds the value of the domain_transcript edge.
+	DomainTranscript []*DomainAnnotationToTranscript `json:"domain_transcript,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [5]bool
 }
 
 // LocusOrErr returns the Locus value or an error if the edge
@@ -87,13 +91,31 @@ func (e TranscriptEdges) GotermsOrErr() ([]*GoTerm, error) {
 	return nil, &NotLoadedError{edge: "goterms"}
 }
 
+// DomainsOrErr returns the Domains value or an error if the edge
+// was not loaded in eager-loading.
+func (e TranscriptEdges) DomainsOrErr() ([]*DomainAnnotation, error) {
+	if e.loadedTypes[2] {
+		return e.Domains, nil
+	}
+	return nil, &NotLoadedError{edge: "domains"}
+}
+
 // GotermTranscriptOrErr returns the GotermTranscript value or an error if the edge
 // was not loaded in eager-loading.
 func (e TranscriptEdges) GotermTranscriptOrErr() ([]*GoTermOnTranscripts, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[3] {
 		return e.GotermTranscript, nil
 	}
 	return nil, &NotLoadedError{edge: "goterm_transcript"}
+}
+
+// DomainTranscriptOrErr returns the DomainTranscript value or an error if the edge
+// was not loaded in eager-loading.
+func (e TranscriptEdges) DomainTranscriptOrErr() ([]*DomainAnnotationToTranscript, error) {
+	if e.loadedTypes[4] {
+		return e.DomainTranscript, nil
+	}
+	return nil, &NotLoadedError{edge: "domain_transcript"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -244,9 +266,19 @@ func (t *Transcript) QueryGoterms() *GoTermQuery {
 	return (&TranscriptClient{config: t.config}).QueryGoterms(t)
 }
 
+// QueryDomains queries the "domains" edge of the Transcript entity.
+func (t *Transcript) QueryDomains() *DomainAnnotationQuery {
+	return (&TranscriptClient{config: t.config}).QueryDomains(t)
+}
+
 // QueryGotermTranscript queries the "goterm_transcript" edge of the Transcript entity.
 func (t *Transcript) QueryGotermTranscript() *GoTermOnTranscriptsQuery {
 	return (&TranscriptClient{config: t.config}).QueryGotermTranscript(t)
+}
+
+// QueryDomainTranscript queries the "domain_transcript" edge of the Transcript entity.
+func (t *Transcript) QueryDomainTranscript() *DomainAnnotationToTranscriptQuery {
+	return (&TranscriptClient{config: t.config}).QueryDomainTranscript(t)
 }
 
 // Update returns a builder for updating this Transcript.

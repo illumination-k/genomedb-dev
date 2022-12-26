@@ -39,8 +39,12 @@ const (
 	EdgeLocus = "locus"
 	// EdgeGoterms holds the string denoting the goterms edge name in mutations.
 	EdgeGoterms = "goterms"
+	// EdgeDomains holds the string denoting the domains edge name in mutations.
+	EdgeDomains = "domains"
 	// EdgeGotermTranscript holds the string denoting the goterm_transcript edge name in mutations.
 	EdgeGotermTranscript = "goterm_transcript"
+	// EdgeDomainTranscript holds the string denoting the domain_transcript edge name in mutations.
+	EdgeDomainTranscript = "domain_transcript"
 	// Table holds the table name of the transcript in the database.
 	Table = "transcripts"
 	// LocusTable is the table that holds the locus relation/edge.
@@ -55,6 +59,11 @@ const (
 	// GotermsInverseTable is the table name for the GoTerm entity.
 	// It exists in this package in order to avoid circular dependency with the "goterm" package.
 	GotermsInverseTable = "go_terms"
+	// DomainsTable is the table that holds the domains relation/edge. The primary key declared below.
+	DomainsTable = "domain_annotation_to_transcripts"
+	// DomainsInverseTable is the table name for the DomainAnnotation entity.
+	// It exists in this package in order to avoid circular dependency with the "domainannotation" package.
+	DomainsInverseTable = "domain_annotations"
 	// GotermTranscriptTable is the table that holds the goterm_transcript relation/edge.
 	GotermTranscriptTable = "go_term_on_transcripts"
 	// GotermTranscriptInverseTable is the table name for the GoTermOnTranscripts entity.
@@ -62,6 +71,13 @@ const (
 	GotermTranscriptInverseTable = "go_term_on_transcripts"
 	// GotermTranscriptColumn is the table column denoting the goterm_transcript relation/edge.
 	GotermTranscriptColumn = "transcript_id"
+	// DomainTranscriptTable is the table that holds the domain_transcript relation/edge.
+	DomainTranscriptTable = "domain_annotation_to_transcripts"
+	// DomainTranscriptInverseTable is the table name for the DomainAnnotationToTranscript entity.
+	// It exists in this package in order to avoid circular dependency with the "domainannotationtotranscript" package.
+	DomainTranscriptInverseTable = "domain_annotation_to_transcripts"
+	// DomainTranscriptColumn is the table column denoting the domain_transcript relation/edge.
+	DomainTranscriptColumn = "transcript_id"
 )
 
 // Columns holds all SQL columns for transcript fields.
@@ -93,6 +109,9 @@ var (
 	// GotermsPrimaryKey and GotermsColumn2 are the table columns denoting the
 	// primary key for the goterms relation (M2M).
 	GotermsPrimaryKey = []string{"go_term_id", "transcript_id"}
+	// DomainsPrimaryKey and DomainsColumn2 are the table columns denoting the
+	// primary key for the domains relation (M2M).
+	DomainsPrimaryKey = []string{"domain_annotation_id", "transcript_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).

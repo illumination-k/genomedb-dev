@@ -10,6 +10,8 @@ import (
 
 	"genomedb/ent/migrate"
 
+	"genomedb/ent/domainannotation"
+	"genomedb/ent/domainannotationtotranscript"
 	"genomedb/ent/genome"
 	"genomedb/ent/goterm"
 	"genomedb/ent/gotermontranscripts"
@@ -32,6 +34,10 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// DomainAnnotation is the client for interacting with the DomainAnnotation builders.
+	DomainAnnotation *DomainAnnotationClient
+	// DomainAnnotationToTranscript is the client for interacting with the DomainAnnotationToTranscript builders.
+	DomainAnnotationToTranscript *DomainAnnotationToTranscriptClient
 	// Genome is the client for interacting with the Genome builders.
 	Genome *GenomeClient
 	// GoTerm is the client for interacting with the GoTerm builders.
@@ -67,6 +73,8 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.DomainAnnotation = NewDomainAnnotationClient(c.config)
+	c.DomainAnnotationToTranscript = NewDomainAnnotationToTranscriptClient(c.config)
 	c.Genome = NewGenomeClient(c.config)
 	c.GoTerm = NewGoTermClient(c.config)
 	c.GoTermOnTranscripts = NewGoTermOnTranscriptsClient(c.config)
@@ -109,19 +117,21 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:                 ctx,
-		config:              cfg,
-		Genome:              NewGenomeClient(cfg),
-		GoTerm:              NewGoTermClient(cfg),
-		GoTermOnTranscripts: NewGoTermOnTranscriptsClient(cfg),
-		KeggCompound:        NewKeggCompoundClient(cfg),
-		KeggModule:          NewKeggModuleClient(cfg),
-		KeggOntology:        NewKeggOntologyClient(cfg),
-		KeggPathway:         NewKeggPathwayClient(cfg),
-		KeggReaction:        NewKeggReactionClient(cfg),
-		Locus:               NewLocusClient(cfg),
-		Scaffold:            NewScaffoldClient(cfg),
-		Transcript:          NewTranscriptClient(cfg),
+		ctx:                          ctx,
+		config:                       cfg,
+		DomainAnnotation:             NewDomainAnnotationClient(cfg),
+		DomainAnnotationToTranscript: NewDomainAnnotationToTranscriptClient(cfg),
+		Genome:                       NewGenomeClient(cfg),
+		GoTerm:                       NewGoTermClient(cfg),
+		GoTermOnTranscripts:          NewGoTermOnTranscriptsClient(cfg),
+		KeggCompound:                 NewKeggCompoundClient(cfg),
+		KeggModule:                   NewKeggModuleClient(cfg),
+		KeggOntology:                 NewKeggOntologyClient(cfg),
+		KeggPathway:                  NewKeggPathwayClient(cfg),
+		KeggReaction:                 NewKeggReactionClient(cfg),
+		Locus:                        NewLocusClient(cfg),
+		Scaffold:                     NewScaffoldClient(cfg),
+		Transcript:                   NewTranscriptClient(cfg),
 	}, nil
 }
 
@@ -139,26 +149,28 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:                 ctx,
-		config:              cfg,
-		Genome:              NewGenomeClient(cfg),
-		GoTerm:              NewGoTermClient(cfg),
-		GoTermOnTranscripts: NewGoTermOnTranscriptsClient(cfg),
-		KeggCompound:        NewKeggCompoundClient(cfg),
-		KeggModule:          NewKeggModuleClient(cfg),
-		KeggOntology:        NewKeggOntologyClient(cfg),
-		KeggPathway:         NewKeggPathwayClient(cfg),
-		KeggReaction:        NewKeggReactionClient(cfg),
-		Locus:               NewLocusClient(cfg),
-		Scaffold:            NewScaffoldClient(cfg),
-		Transcript:          NewTranscriptClient(cfg),
+		ctx:                          ctx,
+		config:                       cfg,
+		DomainAnnotation:             NewDomainAnnotationClient(cfg),
+		DomainAnnotationToTranscript: NewDomainAnnotationToTranscriptClient(cfg),
+		Genome:                       NewGenomeClient(cfg),
+		GoTerm:                       NewGoTermClient(cfg),
+		GoTermOnTranscripts:          NewGoTermOnTranscriptsClient(cfg),
+		KeggCompound:                 NewKeggCompoundClient(cfg),
+		KeggModule:                   NewKeggModuleClient(cfg),
+		KeggOntology:                 NewKeggOntologyClient(cfg),
+		KeggPathway:                  NewKeggPathwayClient(cfg),
+		KeggReaction:                 NewKeggReactionClient(cfg),
+		Locus:                        NewLocusClient(cfg),
+		Scaffold:                     NewScaffoldClient(cfg),
+		Transcript:                   NewTranscriptClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Genome.
+//		DomainAnnotation.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -180,6 +192,8 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.DomainAnnotation.Use(hooks...)
+	c.DomainAnnotationToTranscript.Use(hooks...)
 	c.Genome.Use(hooks...)
 	c.GoTerm.Use(hooks...)
 	c.GoTermOnTranscripts.Use(hooks...)
@@ -191,6 +205,201 @@ func (c *Client) Use(hooks ...Hook) {
 	c.Locus.Use(hooks...)
 	c.Scaffold.Use(hooks...)
 	c.Transcript.Use(hooks...)
+}
+
+// DomainAnnotationClient is a client for the DomainAnnotation schema.
+type DomainAnnotationClient struct {
+	config
+}
+
+// NewDomainAnnotationClient returns a client for the DomainAnnotation from the given config.
+func NewDomainAnnotationClient(c config) *DomainAnnotationClient {
+	return &DomainAnnotationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `domainannotation.Hooks(f(g(h())))`.
+func (c *DomainAnnotationClient) Use(hooks ...Hook) {
+	c.hooks.DomainAnnotation = append(c.hooks.DomainAnnotation, hooks...)
+}
+
+// Create returns a builder for creating a DomainAnnotation entity.
+func (c *DomainAnnotationClient) Create() *DomainAnnotationCreate {
+	mutation := newDomainAnnotationMutation(c.config, OpCreate)
+	return &DomainAnnotationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of DomainAnnotation entities.
+func (c *DomainAnnotationClient) CreateBulk(builders ...*DomainAnnotationCreate) *DomainAnnotationCreateBulk {
+	return &DomainAnnotationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for DomainAnnotation.
+func (c *DomainAnnotationClient) Update() *DomainAnnotationUpdate {
+	mutation := newDomainAnnotationMutation(c.config, OpUpdate)
+	return &DomainAnnotationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *DomainAnnotationClient) UpdateOne(da *DomainAnnotation) *DomainAnnotationUpdateOne {
+	mutation := newDomainAnnotationMutation(c.config, OpUpdateOne, withDomainAnnotation(da))
+	return &DomainAnnotationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *DomainAnnotationClient) UpdateOneID(id string) *DomainAnnotationUpdateOne {
+	mutation := newDomainAnnotationMutation(c.config, OpUpdateOne, withDomainAnnotationID(id))
+	return &DomainAnnotationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for DomainAnnotation.
+func (c *DomainAnnotationClient) Delete() *DomainAnnotationDelete {
+	mutation := newDomainAnnotationMutation(c.config, OpDelete)
+	return &DomainAnnotationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *DomainAnnotationClient) DeleteOne(da *DomainAnnotation) *DomainAnnotationDeleteOne {
+	return c.DeleteOneID(da.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *DomainAnnotationClient) DeleteOneID(id string) *DomainAnnotationDeleteOne {
+	builder := c.Delete().Where(domainannotation.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &DomainAnnotationDeleteOne{builder}
+}
+
+// Query returns a query builder for DomainAnnotation.
+func (c *DomainAnnotationClient) Query() *DomainAnnotationQuery {
+	return &DomainAnnotationQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a DomainAnnotation entity by its id.
+func (c *DomainAnnotationClient) Get(ctx context.Context, id string) (*DomainAnnotation, error) {
+	return c.Query().Where(domainannotation.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *DomainAnnotationClient) GetX(ctx context.Context, id string) *DomainAnnotation {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryTranscripts queries the transcripts edge of a DomainAnnotation.
+func (c *DomainAnnotationClient) QueryTranscripts(da *DomainAnnotation) *TranscriptQuery {
+	query := &TranscriptQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := da.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(domainannotation.Table, domainannotation.FieldID, id),
+			sqlgraph.To(transcript.Table, transcript.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, domainannotation.TranscriptsTable, domainannotation.TranscriptsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(da.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryDomainTranscript queries the domain_transcript edge of a DomainAnnotation.
+func (c *DomainAnnotationClient) QueryDomainTranscript(da *DomainAnnotation) *DomainAnnotationToTranscriptQuery {
+	query := &DomainAnnotationToTranscriptQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := da.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(domainannotation.Table, domainannotation.FieldID, id),
+			sqlgraph.To(domainannotationtotranscript.Table, domainannotationtotranscript.DomainColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, domainannotation.DomainTranscriptTable, domainannotation.DomainTranscriptColumn),
+		)
+		fromV = sqlgraph.Neighbors(da.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *DomainAnnotationClient) Hooks() []Hook {
+	return c.hooks.DomainAnnotation
+}
+
+// DomainAnnotationToTranscriptClient is a client for the DomainAnnotationToTranscript schema.
+type DomainAnnotationToTranscriptClient struct {
+	config
+}
+
+// NewDomainAnnotationToTranscriptClient returns a client for the DomainAnnotationToTranscript from the given config.
+func NewDomainAnnotationToTranscriptClient(c config) *DomainAnnotationToTranscriptClient {
+	return &DomainAnnotationToTranscriptClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `domainannotationtotranscript.Hooks(f(g(h())))`.
+func (c *DomainAnnotationToTranscriptClient) Use(hooks ...Hook) {
+	c.hooks.DomainAnnotationToTranscript = append(c.hooks.DomainAnnotationToTranscript, hooks...)
+}
+
+// Create returns a builder for creating a DomainAnnotationToTranscript entity.
+func (c *DomainAnnotationToTranscriptClient) Create() *DomainAnnotationToTranscriptCreate {
+	mutation := newDomainAnnotationToTranscriptMutation(c.config, OpCreate)
+	return &DomainAnnotationToTranscriptCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of DomainAnnotationToTranscript entities.
+func (c *DomainAnnotationToTranscriptClient) CreateBulk(builders ...*DomainAnnotationToTranscriptCreate) *DomainAnnotationToTranscriptCreateBulk {
+	return &DomainAnnotationToTranscriptCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for DomainAnnotationToTranscript.
+func (c *DomainAnnotationToTranscriptClient) Update() *DomainAnnotationToTranscriptUpdate {
+	mutation := newDomainAnnotationToTranscriptMutation(c.config, OpUpdate)
+	return &DomainAnnotationToTranscriptUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *DomainAnnotationToTranscriptClient) UpdateOne(datt *DomainAnnotationToTranscript) *DomainAnnotationToTranscriptUpdateOne {
+	mutation := newDomainAnnotationToTranscriptMutation(c.config, OpUpdateOne)
+	mutation.domain = &datt.DomainAnnotationID
+	mutation.transcript = &datt.TranscriptID
+	return &DomainAnnotationToTranscriptUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for DomainAnnotationToTranscript.
+func (c *DomainAnnotationToTranscriptClient) Delete() *DomainAnnotationToTranscriptDelete {
+	mutation := newDomainAnnotationToTranscriptMutation(c.config, OpDelete)
+	return &DomainAnnotationToTranscriptDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Query returns a query builder for DomainAnnotationToTranscript.
+func (c *DomainAnnotationToTranscriptClient) Query() *DomainAnnotationToTranscriptQuery {
+	return &DomainAnnotationToTranscriptQuery{
+		config: c.config,
+	}
+}
+
+// QueryDomain queries the domain edge of a DomainAnnotationToTranscript.
+func (c *DomainAnnotationToTranscriptClient) QueryDomain(datt *DomainAnnotationToTranscript) *DomainAnnotationQuery {
+	return c.Query().
+		Where(domainannotationtotranscript.DomainAnnotationID(datt.DomainAnnotationID), domainannotationtotranscript.TranscriptID(datt.TranscriptID)).
+		QueryDomain()
+}
+
+// QueryTranscript queries the transcript edge of a DomainAnnotationToTranscript.
+func (c *DomainAnnotationToTranscriptClient) QueryTranscript(datt *DomainAnnotationToTranscript) *TranscriptQuery {
+	return c.Query().
+		Where(domainannotationtotranscript.DomainAnnotationID(datt.DomainAnnotationID), domainannotationtotranscript.TranscriptID(datt.TranscriptID)).
+		QueryTranscript()
+}
+
+// Hooks returns the client hooks.
+func (c *DomainAnnotationToTranscriptClient) Hooks() []Hook {
+	return c.hooks.DomainAnnotationToTranscript
 }
 
 // GenomeClient is a client for the Genome schema.
@@ -1337,6 +1546,22 @@ func (c *TranscriptClient) QueryGoterms(t *Transcript) *GoTermQuery {
 	return query
 }
 
+// QueryDomains queries the domains edge of a Transcript.
+func (c *TranscriptClient) QueryDomains(t *Transcript) *DomainAnnotationQuery {
+	query := &DomainAnnotationQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(transcript.Table, transcript.FieldID, id),
+			sqlgraph.To(domainannotation.Table, domainannotation.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, transcript.DomainsTable, transcript.DomainsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryGotermTranscript queries the goterm_transcript edge of a Transcript.
 func (c *TranscriptClient) QueryGotermTranscript(t *Transcript) *GoTermOnTranscriptsQuery {
 	query := &GoTermOnTranscriptsQuery{config: c.config}
@@ -1346,6 +1571,22 @@ func (c *TranscriptClient) QueryGotermTranscript(t *Transcript) *GoTermOnTranscr
 			sqlgraph.From(transcript.Table, transcript.FieldID, id),
 			sqlgraph.To(gotermontranscripts.Table, gotermontranscripts.TranscriptColumn),
 			sqlgraph.Edge(sqlgraph.O2M, true, transcript.GotermTranscriptTable, transcript.GotermTranscriptColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryDomainTranscript queries the domain_transcript edge of a Transcript.
+func (c *TranscriptClient) QueryDomainTranscript(t *Transcript) *DomainAnnotationToTranscriptQuery {
+	query := &DomainAnnotationToTranscriptQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(transcript.Table, transcript.FieldID, id),
+			sqlgraph.To(domainannotationtotranscript.Table, domainannotationtotranscript.TranscriptColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, transcript.DomainTranscriptTable, transcript.DomainTranscriptColumn),
 		)
 		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
 		return fromV, nil
