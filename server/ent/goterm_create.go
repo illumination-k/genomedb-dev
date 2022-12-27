@@ -35,6 +35,12 @@ func (gtc *GoTermCreate) SetName(s string) *GoTermCreate {
 	return gtc
 }
 
+// SetDef sets the "def" field.
+func (gtc *GoTermCreate) SetDef(s string) *GoTermCreate {
+	gtc.mutation.SetDef(s)
+	return gtc
+}
+
 // SetLevel sets the "level" field.
 func (gtc *GoTermCreate) SetLevel(i int32) *GoTermCreate {
 	gtc.mutation.SetLevel(i)
@@ -189,6 +195,9 @@ func (gtc *GoTermCreate) check() error {
 	if _, ok := gtc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "GoTerm.name"`)}
 	}
+	if _, ok := gtc.mutation.Def(); !ok {
+		return &ValidationError{Name: "def", err: errors.New(`ent: missing required field "GoTerm.def"`)}
+	}
 	if _, ok := gtc.mutation.Level(); !ok {
 		return &ValidationError{Name: "level", err: errors.New(`ent: missing required field "GoTerm.level"`)}
 	}
@@ -239,6 +248,10 @@ func (gtc *GoTermCreate) createSpec() (*GoTerm, *sqlgraph.CreateSpec) {
 	if value, ok := gtc.mutation.Name(); ok {
 		_spec.SetField(goterm.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if value, ok := gtc.mutation.Def(); ok {
+		_spec.SetField(goterm.FieldDef, field.TypeString, value)
+		_node.Def = value
 	}
 	if value, ok := gtc.mutation.Level(); ok {
 		_spec.SetField(goterm.FieldLevel, field.TypeInt32, value)
@@ -382,6 +395,18 @@ func (u *GoTermUpsert) UpdateName() *GoTermUpsert {
 	return u
 }
 
+// SetDef sets the "def" field.
+func (u *GoTermUpsert) SetDef(v string) *GoTermUpsert {
+	u.Set(goterm.FieldDef, v)
+	return u
+}
+
+// UpdateDef sets the "def" field to the value that was provided on create.
+func (u *GoTermUpsert) UpdateDef() *GoTermUpsert {
+	u.SetExcluded(goterm.FieldDef)
+	return u
+}
+
 // SetLevel sets the "level" field.
 func (u *GoTermUpsert) SetLevel(v int32) *GoTermUpsert {
 	u.Set(goterm.FieldLevel, v)
@@ -491,6 +516,20 @@ func (u *GoTermUpsertOne) SetName(v string) *GoTermUpsertOne {
 func (u *GoTermUpsertOne) UpdateName() *GoTermUpsertOne {
 	return u.Update(func(s *GoTermUpsert) {
 		s.UpdateName()
+	})
+}
+
+// SetDef sets the "def" field.
+func (u *GoTermUpsertOne) SetDef(v string) *GoTermUpsertOne {
+	return u.Update(func(s *GoTermUpsert) {
+		s.SetDef(v)
+	})
+}
+
+// UpdateDef sets the "def" field to the value that was provided on create.
+func (u *GoTermUpsertOne) UpdateDef() *GoTermUpsertOne {
+	return u.Update(func(s *GoTermUpsert) {
+		s.UpdateDef()
 	})
 }
 
@@ -771,6 +810,20 @@ func (u *GoTermUpsertBulk) SetName(v string) *GoTermUpsertBulk {
 func (u *GoTermUpsertBulk) UpdateName() *GoTermUpsertBulk {
 	return u.Update(func(s *GoTermUpsert) {
 		s.UpdateName()
+	})
+}
+
+// SetDef sets the "def" field.
+func (u *GoTermUpsertBulk) SetDef(v string) *GoTermUpsertBulk {
+	return u.Update(func(s *GoTermUpsert) {
+		s.SetDef(v)
+	})
+}
+
+// UpdateDef sets the "def" field to the value that was provided on create.
+func (u *GoTermUpsertBulk) UpdateDef() *GoTermUpsertBulk {
+	return u.Update(func(s *GoTermUpsert) {
+		s.UpdateDef()
 	})
 }
 

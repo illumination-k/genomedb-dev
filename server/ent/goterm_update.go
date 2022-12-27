@@ -40,6 +40,12 @@ func (gtu *GoTermUpdate) SetName(s string) *GoTermUpdate {
 	return gtu
 }
 
+// SetDef sets the "def" field.
+func (gtu *GoTermUpdate) SetDef(s string) *GoTermUpdate {
+	gtu.mutation.SetDef(s)
+	return gtu
+}
+
 // SetLevel sets the "level" field.
 func (gtu *GoTermUpdate) SetLevel(i int32) *GoTermUpdate {
 	gtu.mutation.ResetLevel()
@@ -262,6 +268,9 @@ func (gtu *GoTermUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := gtu.mutation.Name(); ok {
 		_spec.SetField(goterm.FieldName, field.TypeString, value)
 	}
+	if value, ok := gtu.mutation.Def(); ok {
+		_spec.SetField(goterm.FieldDef, field.TypeString, value)
+	}
 	if value, ok := gtu.mutation.Level(); ok {
 		_spec.SetField(goterm.FieldLevel, field.TypeInt32, value)
 	}
@@ -445,6 +454,12 @@ func (gtuo *GoTermUpdateOne) SetNamespace(_go goterm.Namespace) *GoTermUpdateOne
 // SetName sets the "name" field.
 func (gtuo *GoTermUpdateOne) SetName(s string) *GoTermUpdateOne {
 	gtuo.mutation.SetName(s)
+	return gtuo
+}
+
+// SetDef sets the "def" field.
+func (gtuo *GoTermUpdateOne) SetDef(s string) *GoTermUpdateOne {
+	gtuo.mutation.SetDef(s)
 	return gtuo
 }
 
@@ -699,6 +714,9 @@ func (gtuo *GoTermUpdateOne) sqlSave(ctx context.Context) (_node *GoTerm, err er
 	}
 	if value, ok := gtuo.mutation.Name(); ok {
 		_spec.SetField(goterm.FieldName, field.TypeString, value)
+	}
+	if value, ok := gtuo.mutation.Def(); ok {
+		_spec.SetField(goterm.FieldDef, field.TypeString, value)
 	}
 	if value, ok := gtuo.mutation.Level(); ok {
 		_spec.SetField(goterm.FieldLevel, field.TypeInt32, value)

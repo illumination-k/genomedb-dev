@@ -53,7 +53,7 @@ type DomainAnnotationMutation struct {
 	typ                string
 	id                 *string
 	description        *string
-	_Analysis          *domainannotation.Analysis
+	_Analysis          *string
 	clearedFields      map[string]struct{}
 	transcripts        map[string]struct{}
 	removedtranscripts map[string]struct{}
@@ -204,12 +204,12 @@ func (m *DomainAnnotationMutation) ResetDescription() {
 }
 
 // SetAnalysis sets the "Analysis" field.
-func (m *DomainAnnotationMutation) SetAnalysis(d domainannotation.Analysis) {
-	m._Analysis = &d
+func (m *DomainAnnotationMutation) SetAnalysis(s string) {
+	m._Analysis = &s
 }
 
 // Analysis returns the value of the "Analysis" field in the mutation.
-func (m *DomainAnnotationMutation) Analysis() (r domainannotation.Analysis, exists bool) {
+func (m *DomainAnnotationMutation) Analysis() (r string, exists bool) {
 	v := m._Analysis
 	if v == nil {
 		return
@@ -220,7 +220,7 @@ func (m *DomainAnnotationMutation) Analysis() (r domainannotation.Analysis, exis
 // OldAnalysis returns the old "Analysis" field's value of the DomainAnnotation entity.
 // If the DomainAnnotation object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *DomainAnnotationMutation) OldAnalysis(ctx context.Context) (v domainannotation.Analysis, err error) {
+func (m *DomainAnnotationMutation) OldAnalysis(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAnalysis is only allowed on UpdateOne operations")
 	}
@@ -361,7 +361,7 @@ func (m *DomainAnnotationMutation) SetField(name string, value ent.Value) error 
 		m.SetDescription(v)
 		return nil
 	case domainannotation.FieldAnalysis:
-		v, ok := value.(domainannotation.Analysis)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1629,6 +1629,7 @@ type GoTermMutation struct {
 	id                 *string
 	namespace          *goterm.Namespace
 	name               *string
+	def                *string
 	level              *int32
 	addlevel           *int32
 	depth              *int32
@@ -1821,6 +1822,42 @@ func (m *GoTermMutation) OldName(ctx context.Context) (v string, err error) {
 // ResetName resets all changes to the "name" field.
 func (m *GoTermMutation) ResetName() {
 	m.name = nil
+}
+
+// SetDef sets the "def" field.
+func (m *GoTermMutation) SetDef(s string) {
+	m.def = &s
+}
+
+// Def returns the value of the "def" field in the mutation.
+func (m *GoTermMutation) Def() (r string, exists bool) {
+	v := m.def
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDef returns the old "def" field's value of the GoTerm entity.
+// If the GoTerm object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GoTermMutation) OldDef(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDef is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDef requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDef: %w", err)
+	}
+	return oldValue.Def, nil
+}
+
+// ResetDef resets all changes to the "def" field.
+func (m *GoTermMutation) ResetDef() {
+	m.def = nil
 }
 
 // SetLevel sets the "level" field.
@@ -2101,12 +2138,15 @@ func (m *GoTermMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GoTermMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 5)
 	if m.namespace != nil {
 		fields = append(fields, goterm.FieldNamespace)
 	}
 	if m.name != nil {
 		fields = append(fields, goterm.FieldName)
+	}
+	if m.def != nil {
+		fields = append(fields, goterm.FieldDef)
 	}
 	if m.level != nil {
 		fields = append(fields, goterm.FieldLevel)
@@ -2126,6 +2166,8 @@ func (m *GoTermMutation) Field(name string) (ent.Value, bool) {
 		return m.Namespace()
 	case goterm.FieldName:
 		return m.Name()
+	case goterm.FieldDef:
+		return m.Def()
 	case goterm.FieldLevel:
 		return m.Level()
 	case goterm.FieldDepth:
@@ -2143,6 +2185,8 @@ func (m *GoTermMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldNamespace(ctx)
 	case goterm.FieldName:
 		return m.OldName(ctx)
+	case goterm.FieldDef:
+		return m.OldDef(ctx)
 	case goterm.FieldLevel:
 		return m.OldLevel(ctx)
 	case goterm.FieldDepth:
@@ -2169,6 +2213,13 @@ func (m *GoTermMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
+		return nil
+	case goterm.FieldDef:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDef(v)
 		return nil
 	case goterm.FieldLevel:
 		v, ok := value.(int32)
@@ -2265,6 +2316,9 @@ func (m *GoTermMutation) ResetField(name string) error {
 		return nil
 	case goterm.FieldName:
 		m.ResetName()
+		return nil
+	case goterm.FieldDef:
+		m.ResetDef()
 		return nil
 	case goterm.FieldLevel:
 		m.ResetLevel()

@@ -87,6 +87,13 @@ func Name(v string) predicate.GoTerm {
 	})
 }
 
+// Def applies equality check predicate on the "def" field. It's identical to DefEQ.
+func Def(v string) predicate.GoTerm {
+	return predicate.GoTerm(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldDef), v))
+	})
+}
+
 // Level applies equality check predicate on the "level" field. It's identical to LevelEQ.
 func Level(v int32) predicate.GoTerm {
 	return predicate.GoTerm(func(s *sql.Selector) {
@@ -233,6 +240,105 @@ func NameEqualFold(v string) predicate.GoTerm {
 func NameContainsFold(v string) predicate.GoTerm {
 	return predicate.GoTerm(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldName), v))
+	})
+}
+
+// DefEQ applies the EQ predicate on the "def" field.
+func DefEQ(v string) predicate.GoTerm {
+	return predicate.GoTerm(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldDef), v))
+	})
+}
+
+// DefNEQ applies the NEQ predicate on the "def" field.
+func DefNEQ(v string) predicate.GoTerm {
+	return predicate.GoTerm(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldDef), v))
+	})
+}
+
+// DefIn applies the In predicate on the "def" field.
+func DefIn(vs ...string) predicate.GoTerm {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.GoTerm(func(s *sql.Selector) {
+		s.Where(sql.In(s.C(FieldDef), v...))
+	})
+}
+
+// DefNotIn applies the NotIn predicate on the "def" field.
+func DefNotIn(vs ...string) predicate.GoTerm {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.GoTerm(func(s *sql.Selector) {
+		s.Where(sql.NotIn(s.C(FieldDef), v...))
+	})
+}
+
+// DefGT applies the GT predicate on the "def" field.
+func DefGT(v string) predicate.GoTerm {
+	return predicate.GoTerm(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldDef), v))
+	})
+}
+
+// DefGTE applies the GTE predicate on the "def" field.
+func DefGTE(v string) predicate.GoTerm {
+	return predicate.GoTerm(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldDef), v))
+	})
+}
+
+// DefLT applies the LT predicate on the "def" field.
+func DefLT(v string) predicate.GoTerm {
+	return predicate.GoTerm(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldDef), v))
+	})
+}
+
+// DefLTE applies the LTE predicate on the "def" field.
+func DefLTE(v string) predicate.GoTerm {
+	return predicate.GoTerm(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldDef), v))
+	})
+}
+
+// DefContains applies the Contains predicate on the "def" field.
+func DefContains(v string) predicate.GoTerm {
+	return predicate.GoTerm(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldDef), v))
+	})
+}
+
+// DefHasPrefix applies the HasPrefix predicate on the "def" field.
+func DefHasPrefix(v string) predicate.GoTerm {
+	return predicate.GoTerm(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldDef), v))
+	})
+}
+
+// DefHasSuffix applies the HasSuffix predicate on the "def" field.
+func DefHasSuffix(v string) predicate.GoTerm {
+	return predicate.GoTerm(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldDef), v))
+	})
+}
+
+// DefEqualFold applies the EqualFold predicate on the "def" field.
+func DefEqualFold(v string) predicate.GoTerm {
+	return predicate.GoTerm(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldDef), v))
+	})
+}
+
+// DefContainsFold applies the ContainsFold predicate on the "def" field.
+func DefContainsFold(v string) predicate.GoTerm {
+	return predicate.GoTerm(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldDef), v))
 	})
 }
 

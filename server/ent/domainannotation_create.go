@@ -30,8 +30,8 @@ func (dac *DomainAnnotationCreate) SetDescription(s string) *DomainAnnotationCre
 }
 
 // SetAnalysis sets the "Analysis" field.
-func (dac *DomainAnnotationCreate) SetAnalysis(d domainannotation.Analysis) *DomainAnnotationCreate {
-	dac.mutation.SetAnalysis(d)
+func (dac *DomainAnnotationCreate) SetAnalysis(s string) *DomainAnnotationCreate {
+	dac.mutation.SetAnalysis(s)
 	return dac
 }
 
@@ -138,11 +138,6 @@ func (dac *DomainAnnotationCreate) check() error {
 	if _, ok := dac.mutation.Analysis(); !ok {
 		return &ValidationError{Name: "Analysis", err: errors.New(`ent: missing required field "DomainAnnotation.Analysis"`)}
 	}
-	if v, ok := dac.mutation.Analysis(); ok {
-		if err := domainannotation.AnalysisValidator(v); err != nil {
-			return &ValidationError{Name: "Analysis", err: fmt.Errorf(`ent: validator failed for field "DomainAnnotation.Analysis": %w`, err)}
-		}
-	}
 	return nil
 }
 
@@ -185,7 +180,7 @@ func (dac *DomainAnnotationCreate) createSpec() (*DomainAnnotation, *sqlgraph.Cr
 		_node.Description = value
 	}
 	if value, ok := dac.mutation.Analysis(); ok {
-		_spec.SetField(domainannotation.FieldAnalysis, field.TypeEnum, value)
+		_spec.SetField(domainannotation.FieldAnalysis, field.TypeString, value)
 		_node.Analysis = value
 	}
 	if nodes := dac.mutation.TranscriptsIDs(); len(nodes) > 0 {
@@ -272,7 +267,7 @@ func (u *DomainAnnotationUpsert) UpdateDescription() *DomainAnnotationUpsert {
 }
 
 // SetAnalysis sets the "Analysis" field.
-func (u *DomainAnnotationUpsert) SetAnalysis(v domainannotation.Analysis) *DomainAnnotationUpsert {
+func (u *DomainAnnotationUpsert) SetAnalysis(v string) *DomainAnnotationUpsert {
 	u.Set(domainannotation.FieldAnalysis, v)
 	return u
 }
@@ -346,7 +341,7 @@ func (u *DomainAnnotationUpsertOne) UpdateDescription() *DomainAnnotationUpsertO
 }
 
 // SetAnalysis sets the "Analysis" field.
-func (u *DomainAnnotationUpsertOne) SetAnalysis(v domainannotation.Analysis) *DomainAnnotationUpsertOne {
+func (u *DomainAnnotationUpsertOne) SetAnalysis(v string) *DomainAnnotationUpsertOne {
 	return u.Update(func(s *DomainAnnotationUpsert) {
 		s.SetAnalysis(v)
 	})
@@ -584,7 +579,7 @@ func (u *DomainAnnotationUpsertBulk) UpdateDescription() *DomainAnnotationUpsert
 }
 
 // SetAnalysis sets the "Analysis" field.
-func (u *DomainAnnotationUpsertBulk) SetAnalysis(v domainannotation.Analysis) *DomainAnnotationUpsertBulk {
+func (u *DomainAnnotationUpsertBulk) SetAnalysis(v string) *DomainAnnotationUpsertBulk {
 	return u.Update(func(s *DomainAnnotationUpsert) {
 		s.SetAnalysis(v)
 	})

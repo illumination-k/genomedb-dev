@@ -18,8 +18,10 @@ type GoTerm struct {
 	ID string `json:"id,omitempty"`
 	// Namespace holds the value of the "namespace" field.
 	Namespace goterm.Namespace `json:"namespace,omitempty"`
-	// Go term description
+	// short name of GO term
 	Name string `json:"name,omitempty"`
+	// Go term description
+	Def string `json:"def,omitempty"`
 	// shortest distance from root node
 	Level int32 `json:"level,omitempty"`
 	// longest distance from root node
@@ -92,7 +94,7 @@ func (*GoTerm) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case goterm.FieldLevel, goterm.FieldDepth:
 			values[i] = new(sql.NullInt64)
-		case goterm.FieldID, goterm.FieldNamespace, goterm.FieldName:
+		case goterm.FieldID, goterm.FieldNamespace, goterm.FieldName, goterm.FieldDef:
 			values[i] = new(sql.NullString)
 		case goterm.ForeignKeys[0]: // go_term_children
 			values[i] = new(sql.NullString)
@@ -128,6 +130,12 @@ func (gt *GoTerm) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				gt.Name = value.String
+			}
+		case goterm.FieldDef:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field def", values[i])
+			} else if value.Valid {
+				gt.Def = value.String
 			}
 		case goterm.FieldLevel:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -201,6 +209,9 @@ func (gt *GoTerm) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(gt.Name)
+	builder.WriteString(", ")
+	builder.WriteString("def=")
+	builder.WriteString(gt.Def)
 	builder.WriteString(", ")
 	builder.WriteString("level=")
 	builder.WriteString(fmt.Sprintf("%v", gt.Level))

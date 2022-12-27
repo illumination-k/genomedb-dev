@@ -15,6 +15,8 @@ const (
 	FieldNamespace = "namespace"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldDef holds the string denoting the def field in the database.
+	FieldDef = "def"
 	// FieldLevel holds the string denoting the level field in the database.
 	FieldLevel = "level"
 	// FieldDepth holds the string denoting the depth field in the database.
@@ -56,6 +58,7 @@ var Columns = []string{
 	FieldID,
 	FieldNamespace,
 	FieldName,
+	FieldDef,
 	FieldLevel,
 	FieldDepth,
 }

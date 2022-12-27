@@ -17,21 +17,21 @@ func (DomainAnnotation) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("id"),
 		field.String("description"),
-		field.Enum("Analysis").Values(
-			"CDD",
-			"COILS",
-			"Gene3D",
-			"HAMAP",
-			"MOBIDB",
-			"PANTHER",
-			"Pfam",
-			"PIRSF",
-			"PRINTS",
-			"PROSITE",
-			"SFLD",
-			"SMART",
-			"SUPERFAMILY",
-			"TIGRFAMs",
+		field.String("Analysis").Comment(
+			"CDD" +
+				"COILS" +
+				"Gene3D" +
+				"HAMAP" +
+				"MOBIDB" +
+				"PANTHER" +
+				"Pfam" +
+				"PIRSF" +
+				"PRINTS" +
+				"PROSITE" +
+				"SFLD" +
+				"SMART" +
+				"SUPERFAMILY" +
+				"TIGRFAMs",
 		),
 	}
 }

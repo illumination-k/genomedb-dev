@@ -12,7 +12,7 @@ var (
 	DomainAnnotationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString},
-		{Name: "analysis", Type: field.TypeEnum, Enums: []string{"CDD", "COILS", "Gene3D", "HAMAP", "MOBIDB", "PANTHER", "Pfam", "PIRSF", "PRINTS", "PROSITE", "SFLD", "SMART", "SUPERFAMILY", "TIGRFAMs"}},
+		{Name: "analysis", Type: field.TypeString},
 	}
 	// DomainAnnotationsTable holds the schema information for the "domain_annotations" table.
 	DomainAnnotationsTable = &schema.Table{
@@ -64,6 +64,7 @@ var (
 		{Name: "id", Type: field.TypeString},
 		{Name: "namespace", Type: field.TypeEnum, Enums: []string{"BP", "MF", "CC"}},
 		{Name: "name", Type: field.TypeString},
+		{Name: "def", Type: field.TypeString},
 		{Name: "level", Type: field.TypeInt32},
 		{Name: "depth", Type: field.TypeInt32},
 		{Name: "go_term_children", Type: field.TypeString, Nullable: true},
@@ -76,7 +77,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "go_terms_go_terms_children",
-				Columns:    []*schema.Column{GoTermsColumns[5]},
+				Columns:    []*schema.Column{GoTermsColumns[6]},
 				RefColumns: []*schema.Column{GoTermsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

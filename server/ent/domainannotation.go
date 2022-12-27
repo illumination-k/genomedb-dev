@@ -17,8 +17,8 @@ type DomainAnnotation struct {
 	ID string `json:"id,omitempty"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
-	// Analysis holds the value of the "Analysis" field.
-	Analysis domainannotation.Analysis `json:"Analysis,omitempty"`
+	// CDDCOILSGene3DHAMAPMOBIDBPANTHERPfamPIRSFPRINTSPROSITESFLDSMARTSUPERFAMILYTIGRFAMs
+	Analysis string `json:"Analysis,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the DomainAnnotationQuery when eager-loading is set.
 	Edges DomainAnnotationEdges `json:"edges"`
@@ -91,7 +91,7 @@ func (da *DomainAnnotation) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field Analysis", values[i])
 			} else if value.Valid {
-				da.Analysis = domainannotation.Analysis(value.String)
+				da.Analysis = value.String
 			}
 		}
 	}
@@ -135,7 +135,7 @@ func (da *DomainAnnotation) String() string {
 	builder.WriteString(da.Description)
 	builder.WriteString(", ")
 	builder.WriteString("Analysis=")
-	builder.WriteString(fmt.Sprintf("%v", da.Analysis))
+	builder.WriteString(da.Analysis)
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -35,8 +35,8 @@ func (dau *DomainAnnotationUpdate) SetDescription(s string) *DomainAnnotationUpd
 }
 
 // SetAnalysis sets the "Analysis" field.
-func (dau *DomainAnnotationUpdate) SetAnalysis(d domainannotation.Analysis) *DomainAnnotationUpdate {
-	dau.mutation.SetAnalysis(d)
+func (dau *DomainAnnotationUpdate) SetAnalysis(s string) *DomainAnnotationUpdate {
+	dau.mutation.SetAnalysis(s)
 	return dau
 }
 
@@ -88,18 +88,12 @@ func (dau *DomainAnnotationUpdate) Save(ctx context.Context) (int, error) {
 		affected int
 	)
 	if len(dau.hooks) == 0 {
-		if err = dau.check(); err != nil {
-			return 0, err
-		}
 		affected, err = dau.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*DomainAnnotationMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = dau.check(); err != nil {
-				return 0, err
 			}
 			dau.mutation = mutation
 			affected, err = dau.sqlSave(ctx)
@@ -141,16 +135,6 @@ func (dau *DomainAnnotationUpdate) ExecX(ctx context.Context) {
 	}
 }
 
-// check runs all checks and user-defined validators on the builder.
-func (dau *DomainAnnotationUpdate) check() error {
-	if v, ok := dau.mutation.Analysis(); ok {
-		if err := domainannotation.AnalysisValidator(v); err != nil {
-			return &ValidationError{Name: "Analysis", err: fmt.Errorf(`ent: validator failed for field "DomainAnnotation.Analysis": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (dau *DomainAnnotationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
@@ -173,7 +157,7 @@ func (dau *DomainAnnotationUpdate) sqlSave(ctx context.Context) (n int, err erro
 		_spec.SetField(domainannotation.FieldDescription, field.TypeString, value)
 	}
 	if value, ok := dau.mutation.Analysis(); ok {
-		_spec.SetField(domainannotation.FieldAnalysis, field.TypeEnum, value)
+		_spec.SetField(domainannotation.FieldAnalysis, field.TypeString, value)
 	}
 	if dau.mutation.TranscriptsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -255,8 +239,8 @@ func (dauo *DomainAnnotationUpdateOne) SetDescription(s string) *DomainAnnotatio
 }
 
 // SetAnalysis sets the "Analysis" field.
-func (dauo *DomainAnnotationUpdateOne) SetAnalysis(d domainannotation.Analysis) *DomainAnnotationUpdateOne {
-	dauo.mutation.SetAnalysis(d)
+func (dauo *DomainAnnotationUpdateOne) SetAnalysis(s string) *DomainAnnotationUpdateOne {
+	dauo.mutation.SetAnalysis(s)
 	return dauo
 }
 
@@ -315,18 +299,12 @@ func (dauo *DomainAnnotationUpdateOne) Save(ctx context.Context) (*DomainAnnotat
 		node *DomainAnnotation
 	)
 	if len(dauo.hooks) == 0 {
-		if err = dauo.check(); err != nil {
-			return nil, err
-		}
 		node, err = dauo.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*DomainAnnotationMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = dauo.check(); err != nil {
-				return nil, err
 			}
 			dauo.mutation = mutation
 			node, err = dauo.sqlSave(ctx)
@@ -374,16 +352,6 @@ func (dauo *DomainAnnotationUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
-// check runs all checks and user-defined validators on the builder.
-func (dauo *DomainAnnotationUpdateOne) check() error {
-	if v, ok := dauo.mutation.Analysis(); ok {
-		if err := domainannotation.AnalysisValidator(v); err != nil {
-			return &ValidationError{Name: "Analysis", err: fmt.Errorf(`ent: validator failed for field "DomainAnnotation.Analysis": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (dauo *DomainAnnotationUpdateOne) sqlSave(ctx context.Context) (_node *DomainAnnotation, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
@@ -423,7 +391,7 @@ func (dauo *DomainAnnotationUpdateOne) sqlSave(ctx context.Context) (_node *Doma
 		_spec.SetField(domainannotation.FieldDescription, field.TypeString, value)
 	}
 	if value, ok := dauo.mutation.Analysis(); ok {
-		_spec.SetField(domainannotation.FieldAnalysis, field.TypeEnum, value)
+		_spec.SetField(domainannotation.FieldAnalysis, field.TypeString, value)
 	}
 	if dauo.mutation.TranscriptsCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -87,6 +87,13 @@ func Description(v string) predicate.DomainAnnotation {
 	})
 }
 
+// Analysis applies equality check predicate on the "Analysis" field. It's identical to AnalysisEQ.
+func Analysis(v string) predicate.DomainAnnotation {
+	return predicate.DomainAnnotation(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldAnalysis), v))
+	})
+}
+
 // DescriptionEQ applies the EQ predicate on the "description" field.
 func DescriptionEQ(v string) predicate.DomainAnnotation {
 	return predicate.DomainAnnotation(func(s *sql.Selector) {
@@ -187,21 +194,21 @@ func DescriptionContainsFold(v string) predicate.DomainAnnotation {
 }
 
 // AnalysisEQ applies the EQ predicate on the "Analysis" field.
-func AnalysisEQ(v Analysis) predicate.DomainAnnotation {
+func AnalysisEQ(v string) predicate.DomainAnnotation {
 	return predicate.DomainAnnotation(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldAnalysis), v))
 	})
 }
 
 // AnalysisNEQ applies the NEQ predicate on the "Analysis" field.
-func AnalysisNEQ(v Analysis) predicate.DomainAnnotation {
+func AnalysisNEQ(v string) predicate.DomainAnnotation {
 	return predicate.DomainAnnotation(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldAnalysis), v))
 	})
 }
 
 // AnalysisIn applies the In predicate on the "Analysis" field.
-func AnalysisIn(vs ...Analysis) predicate.DomainAnnotation {
+func AnalysisIn(vs ...string) predicate.DomainAnnotation {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -212,13 +219,76 @@ func AnalysisIn(vs ...Analysis) predicate.DomainAnnotation {
 }
 
 // AnalysisNotIn applies the NotIn predicate on the "Analysis" field.
-func AnalysisNotIn(vs ...Analysis) predicate.DomainAnnotation {
+func AnalysisNotIn(vs ...string) predicate.DomainAnnotation {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
 	}
 	return predicate.DomainAnnotation(func(s *sql.Selector) {
 		s.Where(sql.NotIn(s.C(FieldAnalysis), v...))
+	})
+}
+
+// AnalysisGT applies the GT predicate on the "Analysis" field.
+func AnalysisGT(v string) predicate.DomainAnnotation {
+	return predicate.DomainAnnotation(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldAnalysis), v))
+	})
+}
+
+// AnalysisGTE applies the GTE predicate on the "Analysis" field.
+func AnalysisGTE(v string) predicate.DomainAnnotation {
+	return predicate.DomainAnnotation(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldAnalysis), v))
+	})
+}
+
+// AnalysisLT applies the LT predicate on the "Analysis" field.
+func AnalysisLT(v string) predicate.DomainAnnotation {
+	return predicate.DomainAnnotation(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldAnalysis), v))
+	})
+}
+
+// AnalysisLTE applies the LTE predicate on the "Analysis" field.
+func AnalysisLTE(v string) predicate.DomainAnnotation {
+	return predicate.DomainAnnotation(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldAnalysis), v))
+	})
+}
+
+// AnalysisContains applies the Contains predicate on the "Analysis" field.
+func AnalysisContains(v string) predicate.DomainAnnotation {
+	return predicate.DomainAnnotation(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldAnalysis), v))
+	})
+}
+
+// AnalysisHasPrefix applies the HasPrefix predicate on the "Analysis" field.
+func AnalysisHasPrefix(v string) predicate.DomainAnnotation {
+	return predicate.DomainAnnotation(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldAnalysis), v))
+	})
+}
+
+// AnalysisHasSuffix applies the HasSuffix predicate on the "Analysis" field.
+func AnalysisHasSuffix(v string) predicate.DomainAnnotation {
+	return predicate.DomainAnnotation(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldAnalysis), v))
+	})
+}
+
+// AnalysisEqualFold applies the EqualFold predicate on the "Analysis" field.
+func AnalysisEqualFold(v string) predicate.DomainAnnotation {
+	return predicate.DomainAnnotation(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldAnalysis), v))
+	})
+}
+
+// AnalysisContainsFold applies the ContainsFold predicate on the "Analysis" field.
+func AnalysisContainsFold(v string) predicate.DomainAnnotation {
+	return predicate.DomainAnnotation(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldAnalysis), v))
 	})
 }
 

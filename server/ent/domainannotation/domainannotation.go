@@ -2,10 +2,6 @@
 
 package domainannotation
 
-import (
-	"fmt"
-)
-
 const (
 	// Label holds the string label denoting the domainannotation type in the database.
 	Label = "domain_annotation"
@@ -56,39 +52,4 @@ func ValidColumn(column string) bool {
 		}
 	}
 	return false
-}
-
-// Analysis defines the type for the "Analysis" enum field.
-type Analysis string
-
-// Analysis values.
-const (
-	AnalysisCDD         Analysis = "CDD"
-	AnalysisCOILS       Analysis = "COILS"
-	AnalysisGene3D      Analysis = "Gene3D"
-	AnalysisHAMAP       Analysis = "HAMAP"
-	AnalysisMOBIDB      Analysis = "MOBIDB"
-	AnalysisPANTHER     Analysis = "PANTHER"
-	AnalysisPfam        Analysis = "Pfam"
-	AnalysisPIRSF       Analysis = "PIRSF"
-	AnalysisPRINTS      Analysis = "PRINTS"
-	AnalysisPROSITE     Analysis = "PROSITE"
-	AnalysisSFLD        Analysis = "SFLD"
-	AnalysisSMART       Analysis = "SMART"
-	AnalysisSUPERFAMILY Analysis = "SUPERFAMILY"
-	AnalysisTIGRFAMs    Analysis = "TIGRFAMs"
-)
-
-func (_analysis Analysis) String() string {
-	return string(_analysis)
-}
-
-// AnalysisValidator is a validator for the "Analysis" field enum values. It is called by the builders before save.
-func AnalysisValidator(_analysis Analysis) error {
-	switch _analysis {
-	case AnalysisCDD, AnalysisCOILS, AnalysisGene3D, AnalysisHAMAP, AnalysisMOBIDB, AnalysisPANTHER, AnalysisPfam, AnalysisPIRSF, AnalysisPRINTS, AnalysisPROSITE, AnalysisSFLD, AnalysisSMART, AnalysisSUPERFAMILY, AnalysisTIGRFAMs:
-		return nil
-	default:
-		return fmt.Errorf("domainannotation: invalid enum value for Analysis field: %q", _analysis)
-	}
 }

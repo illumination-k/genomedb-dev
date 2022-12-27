@@ -17,7 +17,8 @@ func (GoTerm) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("id").Comment("Go term id: GO:NNNNNN"),
 		field.Enum("namespace").Values("BP", "MF", "CC"),
-		field.String("name").Comment("Go term description"),
+		field.String("name").Comment("short name of GO term"),
+		field.String("def").Comment("Go term description"),
 		field.Int32("level").Comment("shortest distance from root node"),
 		field.Int32("depth").Comment("longest distance from root node"),
 	}
