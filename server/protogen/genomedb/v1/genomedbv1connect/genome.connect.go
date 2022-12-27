@@ -28,8 +28,8 @@ const (
 
 // GenomeServiceClient is a client for the genomedb.v1.GenomeService service.
 type GenomeServiceClient interface {
-	Get(context.Context, *connect_go.Request[v1.GenomeGetRequest]) (*connect_go.Response[v1.GenomeGetResponse], error)
-	ListGenomeNames(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[v1.ListGenomeNamesResponse], error)
+	Get(context.Context, *connect_go.Request[v1.GenomeServiceGetRequest]) (*connect_go.Response[v1.GenomeServiceGetResponse], error)
+	ListGenomeNames(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[v1.GenomeServiceListGenomeNamesResponse], error)
 }
 
 // NewGenomeServiceClient constructs a client for the genomedb.v1.GenomeService service. By default,
@@ -42,12 +42,12 @@ type GenomeServiceClient interface {
 func NewGenomeServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) GenomeServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &genomeServiceClient{
-		get: connect_go.NewClient[v1.GenomeGetRequest, v1.GenomeGetResponse](
+		get: connect_go.NewClient[v1.GenomeServiceGetRequest, v1.GenomeServiceGetResponse](
 			httpClient,
 			baseURL+"/genomedb.v1.GenomeService/Get",
 			opts...,
 		),
-		listGenomeNames: connect_go.NewClient[emptypb.Empty, v1.ListGenomeNamesResponse](
+		listGenomeNames: connect_go.NewClient[emptypb.Empty, v1.GenomeServiceListGenomeNamesResponse](
 			httpClient,
 			baseURL+"/genomedb.v1.GenomeService/ListGenomeNames",
 			opts...,
@@ -57,24 +57,24 @@ func NewGenomeServiceClient(httpClient connect_go.HTTPClient, baseURL string, op
 
 // genomeServiceClient implements GenomeServiceClient.
 type genomeServiceClient struct {
-	get             *connect_go.Client[v1.GenomeGetRequest, v1.GenomeGetResponse]
-	listGenomeNames *connect_go.Client[emptypb.Empty, v1.ListGenomeNamesResponse]
+	get             *connect_go.Client[v1.GenomeServiceGetRequest, v1.GenomeServiceGetResponse]
+	listGenomeNames *connect_go.Client[emptypb.Empty, v1.GenomeServiceListGenomeNamesResponse]
 }
 
 // Get calls genomedb.v1.GenomeService.Get.
-func (c *genomeServiceClient) Get(ctx context.Context, req *connect_go.Request[v1.GenomeGetRequest]) (*connect_go.Response[v1.GenomeGetResponse], error) {
+func (c *genomeServiceClient) Get(ctx context.Context, req *connect_go.Request[v1.GenomeServiceGetRequest]) (*connect_go.Response[v1.GenomeServiceGetResponse], error) {
 	return c.get.CallUnary(ctx, req)
 }
 
 // ListGenomeNames calls genomedb.v1.GenomeService.ListGenomeNames.
-func (c *genomeServiceClient) ListGenomeNames(ctx context.Context, req *connect_go.Request[emptypb.Empty]) (*connect_go.Response[v1.ListGenomeNamesResponse], error) {
+func (c *genomeServiceClient) ListGenomeNames(ctx context.Context, req *connect_go.Request[emptypb.Empty]) (*connect_go.Response[v1.GenomeServiceListGenomeNamesResponse], error) {
 	return c.listGenomeNames.CallUnary(ctx, req)
 }
 
 // GenomeServiceHandler is an implementation of the genomedb.v1.GenomeService service.
 type GenomeServiceHandler interface {
-	Get(context.Context, *connect_go.Request[v1.GenomeGetRequest]) (*connect_go.Response[v1.GenomeGetResponse], error)
-	ListGenomeNames(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[v1.ListGenomeNamesResponse], error)
+	Get(context.Context, *connect_go.Request[v1.GenomeServiceGetRequest]) (*connect_go.Response[v1.GenomeServiceGetResponse], error)
+	ListGenomeNames(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[v1.GenomeServiceListGenomeNamesResponse], error)
 }
 
 // NewGenomeServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -100,10 +100,10 @@ func NewGenomeServiceHandler(svc GenomeServiceHandler, opts ...connect_go.Handle
 // UnimplementedGenomeServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedGenomeServiceHandler struct{}
 
-func (UnimplementedGenomeServiceHandler) Get(context.Context, *connect_go.Request[v1.GenomeGetRequest]) (*connect_go.Response[v1.GenomeGetResponse], error) {
+func (UnimplementedGenomeServiceHandler) Get(context.Context, *connect_go.Request[v1.GenomeServiceGetRequest]) (*connect_go.Response[v1.GenomeServiceGetResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("genomedb.v1.GenomeService.Get is not implemented"))
 }
 
-func (UnimplementedGenomeServiceHandler) ListGenomeNames(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[v1.ListGenomeNamesResponse], error) {
+func (UnimplementedGenomeServiceHandler) ListGenomeNames(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[v1.GenomeServiceListGenomeNamesResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("genomedb.v1.GenomeService.ListGenomeNames is not implemented"))
 }
