@@ -44,8 +44,15 @@ to quickly create a Cobra application.`,
 			return fmt.Errorf("failed creating schema resources: %v", err)
 		}
 
+		dbStatus, err = CheckDBStatus(ctx, client)
+
+		if err != nil {
+			return err
+		}
+
 		domainAnnotationCreate := []*ent.DomainAnnotationCreate{}
 		domainToTranscriptCreate := []*ent.DomainAnnotationToTranscriptCreate{}
+		goTermToTranscriptCreat := []*ent.GoTermOnTranscriptsCreate{}
 		for _, record := range interproscanRecords {
 			domainAnnotationCreate = append(
 				domainAnnotationCreate,
@@ -65,6 +72,41 @@ to quickly create a Cobra application.`,
 					SetStop(int32(record.Stop)).
 					SetScore(record.Score),
 			)
+
+			if dbStatus.IsGoTermImported {
+				for _, go_term_id := range record.GoTermIDs {
+					goTermToTranscriptCreat = append(goTermToTranscriptCreat,
+						client.GoTermOnTranscripts.Create().
+							SetEvidenceCode("ISO").
+							SetGoTermID(go_term_id).
+							SetTranscriptID(record.Accession),
+					)
+				}
+			}
+		}
+
+		if err := client.DomainAnnotation.
+			CreateBulk(domainAnnotationCreate...).
+			OnConflict().
+			UpdateNewValues().
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		if err := client.DomainAnnotationToTranscript.
+			CreateBulk(domainToTranscriptCreate...).
+			OnConflict().
+			UpdateNewValues().
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		if err := client.GoTermOnTranscripts.
+			CreateBulk(goTermToTranscriptCreat...).
+			OnConflict().
+			UpdateNewValues().
+			Exec(ctx); err != nil {
+			return err
 		}
 
 		return nil

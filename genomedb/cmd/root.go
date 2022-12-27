@@ -4,8 +4,11 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"genomedb/ds/hashset"
 	"genomedb/ent"
+	"genomedb/ent/genome"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -13,6 +16,7 @@ import (
 
 var databaseUri string
 var client ent.Client
+var dbStatus DBStatus
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -73,4 +77,32 @@ func GetDatabaseUri(databaseUri string) (string, error) {
 	}
 
 	return databaseUri, nil
+}
+
+type DBStatus struct {
+	IsGoTermImported bool
+	IsKeggImported   bool
+	ImportedGenomes  hashset.HashSet[string]
+}
+
+func CheckDBStatus(ctx context.Context, client *ent.Client) (DBStatus, error) {
+	status := DBStatus{}
+
+	goTermCount, err := client.GoTerm.Query().Count(ctx)
+	if err != nil {
+		return status, err
+	}
+
+	status.IsGoTermImported = goTermCount != 0
+
+	genome_dtos, err := client.Genome.Query().Select(genome.FieldID).All(ctx)
+	if err != nil {
+		return status, err
+	}
+
+	for _, genome_dto := range genome_dtos {
+		status.ImportedGenomes.Add(genome_dto.ID)
+	}
+
+	return status, nil
 }

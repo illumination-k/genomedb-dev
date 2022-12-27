@@ -212,6 +212,7 @@ func (r *TranscriptRecords) PushGffRecord(record gffio.GffRecord) error {
 	} else if record.IsThreePrimeUtr() {
 		r.ThreePrimeUtrRecords = append(r.ThreePrimeUtrRecords, record)
 	} else {
+		// unreachable
 	}
 
 	return nil
