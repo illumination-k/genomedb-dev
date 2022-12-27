@@ -7,6 +7,7 @@ import (
 	"genomedb/bio/gffio"
 	"genomedb/bio/seq"
 	"genomedb/bio/seqio"
+	"genomedb/ds/hashset"
 	"genomedb/ent"
 	"os"
 	"strings"
@@ -51,13 +52,13 @@ func Run(genomeName string, genomeFasta string, genomeGff string, databaseUri st
 	// ## set codon table for translation
 	codonTable := seq.NewCodonTable(codonCode)
 
-	genes := map[string]struct{}{}
+	genes := hashset.NewHashSet[string]()
 	transcriptDtos := []*ent.TranscriptCreate{}
 
 	for transcriptId, rec := range transcriptId2recs {
 		scaffoldSeq, ok := seqname2seq[rec.SeqName]
 
-		genes[rec.LocusId] = struct{}{}
+		genes.Add(rec.LocusId)
 
 		if !ok {
 			return fmt.Errorf("seqname=%v does not exist in %v\n rec: %v\n", rec.SeqName, genomeFasta, rec)

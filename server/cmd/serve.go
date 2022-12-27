@@ -24,9 +24,9 @@ type GenomeServer struct{}
 
 func (s *GenomeServer) Get(
 	ctx context.Context,
-	req *connect.Request[genomedbv1.GenomeGetRequest],
-) (*connect.Response[genomedbv1.GenomeGetResponse], error) {
-	res := connect.NewResponse(&genomedbv1.GenomeGetResponse{Genome: &genomedbv1.Genome{Name: req.Msg.GenomeName}})
+	req *connect.Request[genomedbv1.GenomeServiceGetRequest],
+) (*connect.Response[genomedbv1.GenomeServiceGetResponse], error) {
+	res := connect.NewResponse(&genomedbv1.GenomeServiceGetResponse{Genome: &genomedbv1.Genome{Name: req.Msg.GenomeName}})
 	res.Header().Set("Genomedb-Version", "v1")
 	return res, nil
 }
@@ -34,8 +34,8 @@ func (s *GenomeServer) Get(
 func (s *GenomeServer) ListGenomeNames(
 	ctx context.Context,
 	req *connect.Request[emptypb.Empty],
-) (*connect.Response[genomedbv1.ListGenomeNamesResponse], error) {
-	res := connect.NewResponse(&genomedbv1.ListGenomeNamesResponse{})
+) (*connect.Response[genomedbv1.GenomeServiceListGenomeNamesResponse], error) {
+	res := connect.NewResponse(&genomedbv1.GenomeServiceListGenomeNamesResponse{})
 	return res, nil
 }
 
