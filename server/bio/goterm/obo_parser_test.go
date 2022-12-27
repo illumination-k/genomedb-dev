@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestIOObo(t *testing.T) {
+func TestOboParserBasic(t *testing.T) {
 	example_go_obo := `
 format-version: 1.2
 data-version: releases/2022-12-04
