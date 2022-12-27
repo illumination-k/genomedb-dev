@@ -6,7 +6,9 @@ import (
 	"strings"
 )
 
-type InterproscanTsvParser struct{}
+type InterproscanTsvParser struct {
+	Records []InterproscanRecord
+}
 
 func splitTerms(attr string) []string {
 	var arr []string
@@ -14,16 +16,21 @@ func splitTerms(attr string) []string {
 		return arr
 	}
 
-	return strings.Split("|", attr)
+	return strings.Split(attr, "|")
 }
 
-func (p InterproscanTsvParser) ConsumeLine(line string) (record InterproscanRecord, err error) {
+func (p *InterproscanTsvParser) ConsumeLine(line string) (err error) {
+	var record InterproscanRecord
 	line = strings.TrimSpace(line)
+
+	if line == "" {
+		return nil
+	}
 
 	attrs := strings.Split(line, "\t")
 
 	if len(attrs) < 11 {
-		return record, fmt.Errorf("Invalid line: %s\n", line)
+		return fmt.Errorf("Expected more than 11 records but only %d record.\nInvalid line: %s\n", len(attrs), line)
 	}
 
 	for {
@@ -37,27 +44,30 @@ func (p InterproscanTsvParser) ConsumeLine(line string) (record InterproscanReco
 	record.Accession = attrs[0]
 
 	if record.Length, err = strconv.Atoi(attrs[2]); err != nil {
-		return record, fmt.Errorf("Invalid line, length field should be integer: %s\n", line)
+		return fmt.Errorf("Invalid line, length field should be integer: %s\n", line)
 	}
 
 	record.Analysis = attrs[3]
 
 	if record.Start, err = strconv.Atoi(attrs[6]); err != nil {
-		return record, fmt.Errorf("Invalid line, start field should be integer: %s\n", line)
+		return fmt.Errorf("Invalid line, start field should be integer: %s\n", line)
 	}
 
 	if record.Stop, err = strconv.Atoi(attrs[7]); err != nil {
-		return record, fmt.Errorf("Invalid line, end field should be integer: %s\n", line)
+		return fmt.Errorf("Invalid line, end field should be integer: %s\n", line)
 	}
 
 	if record.Score, err = strconv.ParseFloat(attrs[8], 64); err != nil {
-		return record, fmt.Errorf("Invalid line, end field should be float: %s\n", line)
+		return fmt.Errorf("Invalid line, score field should be float: %s\n", line)
 	}
 
-	record.SignatureAccession = attrs[11]
-	record.SignatureDescription = attrs[12]
+	record.SignatureAccession = attrs[4]
+	record.SignatureDescription = attrs[5]
+	record.InterproscanAccession = attrs[11]
+	record.InterproscanDescription = attrs[12]
 	record.GoTermIDs = splitTerms(attrs[13])
 	record.PathwayIDs = splitTerms(attrs[14])
 
-	return record, nil
+	p.Records = append(p.Records, record)
+	return nil
 }
