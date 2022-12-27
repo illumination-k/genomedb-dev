@@ -27,7 +27,7 @@ type Genome struct {
 	unknownFields protoimpl.UnknownFields
 
 	Name     string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	LocusIds []string `protobuf:"bytes,2,rep,name=locus_ids,json=locusIds,proto3" json:"locus_ids,omitempty"`
+	GeneIds []string `protobuf:"bytes,2,rep,name=gene_ids,json=geneIds,proto3" json:"gene_ids,omitempty"`
 }
 
 func (x *Genome) Reset() {
@@ -69,9 +69,9 @@ func (x *Genome) GetName() string {
 	return ""
 }
 
-func (x *Genome) GetLocusIds() []string {
+func (x *Genome) GetGeneIds() []string {
 	if x != nil {
-		return x.LocusIds
+		return x.GeneIds
 	}
 	return nil
 }

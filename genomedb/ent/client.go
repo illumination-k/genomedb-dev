@@ -12,6 +12,7 @@ import (
 
 	"genomedb/ent/domainannotation"
 	"genomedb/ent/domainannotationtotranscript"
+	"genomedb/ent/gene"
 	"genomedb/ent/genome"
 	"genomedb/ent/goterm"
 	"genomedb/ent/gotermontranscripts"
@@ -20,7 +21,6 @@ import (
 	"genomedb/ent/keggontology"
 	"genomedb/ent/keggpathway"
 	"genomedb/ent/keggreaction"
-	"genomedb/ent/locus"
 	"genomedb/ent/scaffold"
 	"genomedb/ent/transcript"
 
@@ -38,6 +38,8 @@ type Client struct {
 	DomainAnnotation *DomainAnnotationClient
 	// DomainAnnotationToTranscript is the client for interacting with the DomainAnnotationToTranscript builders.
 	DomainAnnotationToTranscript *DomainAnnotationToTranscriptClient
+	// Gene is the client for interacting with the Gene builders.
+	Gene *GeneClient
 	// Genome is the client for interacting with the Genome builders.
 	Genome *GenomeClient
 	// GoTerm is the client for interacting with the GoTerm builders.
@@ -54,8 +56,6 @@ type Client struct {
 	KeggPathway *KeggPathwayClient
 	// KeggReaction is the client for interacting with the KeggReaction builders.
 	KeggReaction *KeggReactionClient
-	// Locus is the client for interacting with the Locus builders.
-	Locus *LocusClient
 	// Scaffold is the client for interacting with the Scaffold builders.
 	Scaffold *ScaffoldClient
 	// Transcript is the client for interacting with the Transcript builders.
@@ -75,6 +75,7 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.DomainAnnotation = NewDomainAnnotationClient(c.config)
 	c.DomainAnnotationToTranscript = NewDomainAnnotationToTranscriptClient(c.config)
+	c.Gene = NewGeneClient(c.config)
 	c.Genome = NewGenomeClient(c.config)
 	c.GoTerm = NewGoTermClient(c.config)
 	c.GoTermOnTranscripts = NewGoTermOnTranscriptsClient(c.config)
@@ -83,7 +84,6 @@ func (c *Client) init() {
 	c.KeggOntology = NewKeggOntologyClient(c.config)
 	c.KeggPathway = NewKeggPathwayClient(c.config)
 	c.KeggReaction = NewKeggReactionClient(c.config)
-	c.Locus = NewLocusClient(c.config)
 	c.Scaffold = NewScaffoldClient(c.config)
 	c.Transcript = NewTranscriptClient(c.config)
 }
@@ -121,6 +121,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		config:                       cfg,
 		DomainAnnotation:             NewDomainAnnotationClient(cfg),
 		DomainAnnotationToTranscript: NewDomainAnnotationToTranscriptClient(cfg),
+		Gene:                         NewGeneClient(cfg),
 		Genome:                       NewGenomeClient(cfg),
 		GoTerm:                       NewGoTermClient(cfg),
 		GoTermOnTranscripts:          NewGoTermOnTranscriptsClient(cfg),
@@ -129,7 +130,6 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		KeggOntology:                 NewKeggOntologyClient(cfg),
 		KeggPathway:                  NewKeggPathwayClient(cfg),
 		KeggReaction:                 NewKeggReactionClient(cfg),
-		Locus:                        NewLocusClient(cfg),
 		Scaffold:                     NewScaffoldClient(cfg),
 		Transcript:                   NewTranscriptClient(cfg),
 	}, nil
@@ -153,6 +153,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		config:                       cfg,
 		DomainAnnotation:             NewDomainAnnotationClient(cfg),
 		DomainAnnotationToTranscript: NewDomainAnnotationToTranscriptClient(cfg),
+		Gene:                         NewGeneClient(cfg),
 		Genome:                       NewGenomeClient(cfg),
 		GoTerm:                       NewGoTermClient(cfg),
 		GoTermOnTranscripts:          NewGoTermOnTranscriptsClient(cfg),
@@ -161,7 +162,6 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		KeggOntology:                 NewKeggOntologyClient(cfg),
 		KeggPathway:                  NewKeggPathwayClient(cfg),
 		KeggReaction:                 NewKeggReactionClient(cfg),
-		Locus:                        NewLocusClient(cfg),
 		Scaffold:                     NewScaffoldClient(cfg),
 		Transcript:                   NewTranscriptClient(cfg),
 	}, nil
@@ -194,6 +194,7 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	c.DomainAnnotation.Use(hooks...)
 	c.DomainAnnotationToTranscript.Use(hooks...)
+	c.Gene.Use(hooks...)
 	c.Genome.Use(hooks...)
 	c.GoTerm.Use(hooks...)
 	c.GoTermOnTranscripts.Use(hooks...)
@@ -202,7 +203,6 @@ func (c *Client) Use(hooks ...Hook) {
 	c.KeggOntology.Use(hooks...)
 	c.KeggPathway.Use(hooks...)
 	c.KeggReaction.Use(hooks...)
-	c.Locus.Use(hooks...)
 	c.Scaffold.Use(hooks...)
 	c.Transcript.Use(hooks...)
 }
@@ -402,6 +402,128 @@ func (c *DomainAnnotationToTranscriptClient) Hooks() []Hook {
 	return c.hooks.DomainAnnotationToTranscript
 }
 
+// GeneClient is a client for the Gene schema.
+type GeneClient struct {
+	config
+}
+
+// NewGeneClient returns a client for the Gene from the given config.
+func NewGeneClient(c config) *GeneClient {
+	return &GeneClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `gene.Hooks(f(g(h())))`.
+func (c *GeneClient) Use(hooks ...Hook) {
+	c.hooks.Gene = append(c.hooks.Gene, hooks...)
+}
+
+// Create returns a builder for creating a Gene entity.
+func (c *GeneClient) Create() *GeneCreate {
+	mutation := newGeneMutation(c.config, OpCreate)
+	return &GeneCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Gene entities.
+func (c *GeneClient) CreateBulk(builders ...*GeneCreate) *GeneCreateBulk {
+	return &GeneCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Gene.
+func (c *GeneClient) Update() *GeneUpdate {
+	mutation := newGeneMutation(c.config, OpUpdate)
+	return &GeneUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *GeneClient) UpdateOne(ge *Gene) *GeneUpdateOne {
+	mutation := newGeneMutation(c.config, OpUpdateOne, withGene(ge))
+	return &GeneUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *GeneClient) UpdateOneID(id string) *GeneUpdateOne {
+	mutation := newGeneMutation(c.config, OpUpdateOne, withGeneID(id))
+	return &GeneUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Gene.
+func (c *GeneClient) Delete() *GeneDelete {
+	mutation := newGeneMutation(c.config, OpDelete)
+	return &GeneDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *GeneClient) DeleteOne(ge *Gene) *GeneDeleteOne {
+	return c.DeleteOneID(ge.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *GeneClient) DeleteOneID(id string) *GeneDeleteOne {
+	builder := c.Delete().Where(gene.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &GeneDeleteOne{builder}
+}
+
+// Query returns a query builder for Gene.
+func (c *GeneClient) Query() *GeneQuery {
+	return &GeneQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Gene entity by its id.
+func (c *GeneClient) Get(ctx context.Context, id string) (*Gene, error) {
+	return c.Query().Where(gene.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *GeneClient) GetX(ctx context.Context, id string) *Gene {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryTranscripts queries the transcripts edge of a Gene.
+func (c *GeneClient) QueryTranscripts(ge *Gene) *TranscriptQuery {
+	query := &TranscriptQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ge.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(gene.Table, gene.FieldID, id),
+			sqlgraph.To(transcript.Table, transcript.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, gene.TranscriptsTable, gene.TranscriptsColumn),
+		)
+		fromV = sqlgraph.Neighbors(ge.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryGenome queries the genome edge of a Gene.
+func (c *GeneClient) QueryGenome(ge *Gene) *GenomeQuery {
+	query := &GenomeQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ge.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(gene.Table, gene.FieldID, id),
+			sqlgraph.To(genome.Table, genome.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, gene.GenomeTable, gene.GenomeColumn),
+		)
+		fromV = sqlgraph.Neighbors(ge.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *GeneClient) Hooks() []Hook {
+	return c.hooks.Gene
+}
+
 // GenomeClient is a client for the Genome schema.
 type GenomeClient struct {
 	config
@@ -487,15 +609,15 @@ func (c *GenomeClient) GetX(ctx context.Context, id string) *Genome {
 	return obj
 }
 
-// QueryLocuses queries the locuses edge of a Genome.
-func (c *GenomeClient) QueryLocuses(ge *Genome) *LocusQuery {
-	query := &LocusQuery{config: c.config}
+// QueryGenes queries the genes edge of a Genome.
+func (c *GenomeClient) QueryGenes(ge *Genome) *GeneQuery {
+	query := &GeneQuery{config: c.config}
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := ge.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(genome.Table, genome.FieldID, id),
-			sqlgraph.To(locus.Table, locus.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, genome.LocusesTable, genome.LocusesColumn),
+			sqlgraph.To(gene.Table, gene.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, genome.GenesTable, genome.GenesColumn),
 		)
 		fromV = sqlgraph.Neighbors(ge.driver.Dialect(), step)
 		return fromV, nil
@@ -1201,128 +1323,6 @@ func (c *KeggReactionClient) Hooks() []Hook {
 	return c.hooks.KeggReaction
 }
 
-// LocusClient is a client for the Locus schema.
-type LocusClient struct {
-	config
-}
-
-// NewLocusClient returns a client for the Locus from the given config.
-func NewLocusClient(c config) *LocusClient {
-	return &LocusClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `locus.Hooks(f(g(h())))`.
-func (c *LocusClient) Use(hooks ...Hook) {
-	c.hooks.Locus = append(c.hooks.Locus, hooks...)
-}
-
-// Create returns a builder for creating a Locus entity.
-func (c *LocusClient) Create() *LocusCreate {
-	mutation := newLocusMutation(c.config, OpCreate)
-	return &LocusCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of Locus entities.
-func (c *LocusClient) CreateBulk(builders ...*LocusCreate) *LocusCreateBulk {
-	return &LocusCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for Locus.
-func (c *LocusClient) Update() *LocusUpdate {
-	mutation := newLocusMutation(c.config, OpUpdate)
-	return &LocusUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *LocusClient) UpdateOne(l *Locus) *LocusUpdateOne {
-	mutation := newLocusMutation(c.config, OpUpdateOne, withLocus(l))
-	return &LocusUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *LocusClient) UpdateOneID(id string) *LocusUpdateOne {
-	mutation := newLocusMutation(c.config, OpUpdateOne, withLocusID(id))
-	return &LocusUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for Locus.
-func (c *LocusClient) Delete() *LocusDelete {
-	mutation := newLocusMutation(c.config, OpDelete)
-	return &LocusDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *LocusClient) DeleteOne(l *Locus) *LocusDeleteOne {
-	return c.DeleteOneID(l.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *LocusClient) DeleteOneID(id string) *LocusDeleteOne {
-	builder := c.Delete().Where(locus.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &LocusDeleteOne{builder}
-}
-
-// Query returns a query builder for Locus.
-func (c *LocusClient) Query() *LocusQuery {
-	return &LocusQuery{
-		config: c.config,
-	}
-}
-
-// Get returns a Locus entity by its id.
-func (c *LocusClient) Get(ctx context.Context, id string) (*Locus, error) {
-	return c.Query().Where(locus.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *LocusClient) GetX(ctx context.Context, id string) *Locus {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// QueryTranscripts queries the transcripts edge of a Locus.
-func (c *LocusClient) QueryTranscripts(l *Locus) *TranscriptQuery {
-	query := &TranscriptQuery{config: c.config}
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := l.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(locus.Table, locus.FieldID, id),
-			sqlgraph.To(transcript.Table, transcript.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, locus.TranscriptsTable, locus.TranscriptsColumn),
-		)
-		fromV = sqlgraph.Neighbors(l.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryGenome queries the genome edge of a Locus.
-func (c *LocusClient) QueryGenome(l *Locus) *GenomeQuery {
-	query := &GenomeQuery{config: c.config}
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := l.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(locus.Table, locus.FieldID, id),
-			sqlgraph.To(genome.Table, genome.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, locus.GenomeTable, locus.GenomeColumn),
-		)
-		fromV = sqlgraph.Neighbors(l.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// Hooks returns the client hooks.
-func (c *LocusClient) Hooks() []Hook {
-	return c.hooks.Locus
-}
-
 // ScaffoldClient is a client for the Scaffold schema.
 type ScaffoldClient struct {
 	config
@@ -1514,15 +1514,15 @@ func (c *TranscriptClient) GetX(ctx context.Context, id string) *Transcript {
 	return obj
 }
 
-// QueryLocus queries the locus edge of a Transcript.
-func (c *TranscriptClient) QueryLocus(t *Transcript) *LocusQuery {
-	query := &LocusQuery{config: c.config}
+// QueryGene queries the gene edge of a Transcript.
+func (c *TranscriptClient) QueryGene(t *Transcript) *GeneQuery {
+	query := &GeneQuery{config: c.config}
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := t.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(transcript.Table, transcript.FieldID, id),
-			sqlgraph.To(locus.Table, locus.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, transcript.LocusTable, transcript.LocusColumn),
+			sqlgraph.To(gene.Table, gene.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, transcript.GeneTable, transcript.GeneColumn),
 		)
 		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
 		return fromV, nil

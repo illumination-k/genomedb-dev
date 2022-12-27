@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"genomedb/bio/gffio"
 	"genomedb/ent/domainannotation"
+	"genomedb/ent/gene"
 	"genomedb/ent/goterm"
-	"genomedb/ent/locus"
 	"genomedb/ent/predicate"
 	"genomedb/ent/transcript"
 
@@ -154,23 +154,23 @@ func (tu *TranscriptUpdate) SetProteinSequence(s string) *TranscriptUpdate {
 	return tu
 }
 
-// SetLocusID sets the "locus" edge to the Locus entity by ID.
-func (tu *TranscriptUpdate) SetLocusID(id string) *TranscriptUpdate {
-	tu.mutation.SetLocusID(id)
+// SetGeneID sets the "gene" edge to the Gene entity by ID.
+func (tu *TranscriptUpdate) SetGeneID(id string) *TranscriptUpdate {
+	tu.mutation.SetGeneID(id)
 	return tu
 }
 
-// SetNillableLocusID sets the "locus" edge to the Locus entity by ID if the given value is not nil.
-func (tu *TranscriptUpdate) SetNillableLocusID(id *string) *TranscriptUpdate {
+// SetNillableGeneID sets the "gene" edge to the Gene entity by ID if the given value is not nil.
+func (tu *TranscriptUpdate) SetNillableGeneID(id *string) *TranscriptUpdate {
 	if id != nil {
-		tu = tu.SetLocusID(*id)
+		tu = tu.SetGeneID(*id)
 	}
 	return tu
 }
 
-// SetLocus sets the "locus" edge to the Locus entity.
-func (tu *TranscriptUpdate) SetLocus(l *Locus) *TranscriptUpdate {
-	return tu.SetLocusID(l.ID)
+// SetGene sets the "gene" edge to the Gene entity.
+func (tu *TranscriptUpdate) SetGene(g *Gene) *TranscriptUpdate {
+	return tu.SetGeneID(g.ID)
 }
 
 // AddGotermIDs adds the "goterms" edge to the GoTerm entity by IDs.
@@ -208,9 +208,9 @@ func (tu *TranscriptUpdate) Mutation() *TranscriptMutation {
 	return tu.mutation
 }
 
-// ClearLocus clears the "locus" edge to the Locus entity.
-func (tu *TranscriptUpdate) ClearLocus() *TranscriptUpdate {
-	tu.mutation.ClearLocus()
+// ClearGene clears the "gene" edge to the Gene entity.
+func (tu *TranscriptUpdate) ClearGene() *TranscriptUpdate {
+	tu.mutation.ClearGene()
 	return tu
 }
 
@@ -417,33 +417,33 @@ func (tu *TranscriptUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := tu.mutation.ProteinSequence(); ok {
 		_spec.SetField(transcript.FieldProteinSequence, field.TypeString, value)
 	}
-	if tu.mutation.LocusCleared() {
+	if tu.mutation.GeneCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   transcript.LocusTable,
-			Columns: []string{transcript.LocusColumn},
+			Table:   transcript.GeneTable,
+			Columns: []string{transcript.GeneColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
-					Column: locus.FieldID,
+					Column: gene.FieldID,
 				},
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.LocusIDs(); len(nodes) > 0 {
+	if nodes := tu.mutation.GeneIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   transcript.LocusTable,
-			Columns: []string{transcript.LocusColumn},
+			Table:   transcript.GeneTable,
+			Columns: []string{transcript.GeneColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
-					Column: locus.FieldID,
+					Column: gene.FieldID,
 				},
 			},
 		}
@@ -701,23 +701,23 @@ func (tuo *TranscriptUpdateOne) SetProteinSequence(s string) *TranscriptUpdateOn
 	return tuo
 }
 
-// SetLocusID sets the "locus" edge to the Locus entity by ID.
-func (tuo *TranscriptUpdateOne) SetLocusID(id string) *TranscriptUpdateOne {
-	tuo.mutation.SetLocusID(id)
+// SetGeneID sets the "gene" edge to the Gene entity by ID.
+func (tuo *TranscriptUpdateOne) SetGeneID(id string) *TranscriptUpdateOne {
+	tuo.mutation.SetGeneID(id)
 	return tuo
 }
 
-// SetNillableLocusID sets the "locus" edge to the Locus entity by ID if the given value is not nil.
-func (tuo *TranscriptUpdateOne) SetNillableLocusID(id *string) *TranscriptUpdateOne {
+// SetNillableGeneID sets the "gene" edge to the Gene entity by ID if the given value is not nil.
+func (tuo *TranscriptUpdateOne) SetNillableGeneID(id *string) *TranscriptUpdateOne {
 	if id != nil {
-		tuo = tuo.SetLocusID(*id)
+		tuo = tuo.SetGeneID(*id)
 	}
 	return tuo
 }
 
-// SetLocus sets the "locus" edge to the Locus entity.
-func (tuo *TranscriptUpdateOne) SetLocus(l *Locus) *TranscriptUpdateOne {
-	return tuo.SetLocusID(l.ID)
+// SetGene sets the "gene" edge to the Gene entity.
+func (tuo *TranscriptUpdateOne) SetGene(g *Gene) *TranscriptUpdateOne {
+	return tuo.SetGeneID(g.ID)
 }
 
 // AddGotermIDs adds the "goterms" edge to the GoTerm entity by IDs.
@@ -755,9 +755,9 @@ func (tuo *TranscriptUpdateOne) Mutation() *TranscriptMutation {
 	return tuo.mutation
 }
 
-// ClearLocus clears the "locus" edge to the Locus entity.
-func (tuo *TranscriptUpdateOne) ClearLocus() *TranscriptUpdateOne {
-	tuo.mutation.ClearLocus()
+// ClearGene clears the "gene" edge to the Gene entity.
+func (tuo *TranscriptUpdateOne) ClearGene() *TranscriptUpdateOne {
+	tuo.mutation.ClearGene()
 	return tuo
 }
 
@@ -994,33 +994,33 @@ func (tuo *TranscriptUpdateOne) sqlSave(ctx context.Context) (_node *Transcript,
 	if value, ok := tuo.mutation.ProteinSequence(); ok {
 		_spec.SetField(transcript.FieldProteinSequence, field.TypeString, value)
 	}
-	if tuo.mutation.LocusCleared() {
+	if tuo.mutation.GeneCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   transcript.LocusTable,
-			Columns: []string{transcript.LocusColumn},
+			Table:   transcript.GeneTable,
+			Columns: []string{transcript.GeneColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
-					Column: locus.FieldID,
+					Column: gene.FieldID,
 				},
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.LocusIDs(); len(nodes) > 0 {
+	if nodes := tuo.mutation.GeneIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   transcript.LocusTable,
-			Columns: []string{transcript.LocusColumn},
+			Table:   transcript.GeneTable,
+			Columns: []string{transcript.GeneColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
-					Column: locus.FieldID,
+					Column: gene.FieldID,
 				},
 			},
 		}

@@ -17,6 +17,17 @@ type GoTerm struct {
 	Relationships []Relationship
 }
 
+func (term *GoTerm) SetNamespace(namespace string) {
+	switch namespace {
+	case "molecular_function":
+		term.Namespace = "MF"
+	case "biological_process":
+		term.Namespace = "BP"
+	case "cellular_component":
+		term.Namespace = "CC"
+	}
+}
+
 func InitGoterm() *GoTerm {
 	term := new(GoTerm)
 	term.IsObsolete = false

@@ -9,11 +9,11 @@ import (
 	"genomedb/bio/gffio"
 	"genomedb/ent/domainannotation"
 	"genomedb/ent/domainannotationtotranscript"
+	"genomedb/ent/gene"
 	"genomedb/ent/genome"
 	"genomedb/ent/goterm"
 	"genomedb/ent/gotermontranscripts"
 	"genomedb/ent/keggontology"
-	"genomedb/ent/locus"
 	"genomedb/ent/predicate"
 	"genomedb/ent/scaffold"
 	"genomedb/ent/transcript"
@@ -33,6 +33,7 @@ const (
 	// Node types.
 	TypeDomainAnnotation             = "DomainAnnotation"
 	TypeDomainAnnotationToTranscript = "DomainAnnotationToTranscript"
+	TypeGene                         = "Gene"
 	TypeGenome                       = "Genome"
 	TypeGoTerm                       = "GoTerm"
 	TypeGoTermOnTranscripts          = "GoTermOnTranscripts"
@@ -41,7 +42,6 @@ const (
 	TypeKeggOntology                 = "KeggOntology"
 	TypeKeggPathway                  = "KeggPathway"
 	TypeKeggReaction                 = "KeggReaction"
-	TypeLocus                        = "Locus"
 	TypeScaffold                     = "Scaffold"
 	TypeTranscript                   = "Transcript"
 )
@@ -1092,6 +1092,413 @@ func (m *DomainAnnotationToTranscriptMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown DomainAnnotationToTranscript edge %s", name)
 }
 
+// GeneMutation represents an operation that mutates the Gene nodes in the graph.
+type GeneMutation struct {
+	config
+	op                 Op
+	typ                string
+	id                 *string
+	clearedFields      map[string]struct{}
+	transcripts        map[string]struct{}
+	removedtranscripts map[string]struct{}
+	clearedtranscripts bool
+	genome             *string
+	clearedgenome      bool
+	done               bool
+	oldValue           func(context.Context) (*Gene, error)
+	predicates         []predicate.Gene
+}
+
+var _ ent.Mutation = (*GeneMutation)(nil)
+
+// geneOption allows management of the mutation configuration using functional options.
+type geneOption func(*GeneMutation)
+
+// newGeneMutation creates new mutation for the Gene entity.
+func newGeneMutation(c config, op Op, opts ...geneOption) *GeneMutation {
+	m := &GeneMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeGene,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withGeneID sets the ID field of the mutation.
+func withGeneID(id string) geneOption {
+	return func(m *GeneMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Gene
+		)
+		m.oldValue = func(ctx context.Context) (*Gene, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Gene.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withGene sets the old Gene of the mutation.
+func withGene(node *Gene) geneOption {
+	return func(m *GeneMutation) {
+		m.oldValue = func(context.Context) (*Gene, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m GeneMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m GeneMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Gene entities.
+func (m *GeneMutation) SetID(id string) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *GeneMutation) ID() (id string, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *GeneMutation) IDs(ctx context.Context) ([]string, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []string{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Gene.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// AddTranscriptIDs adds the "transcripts" edge to the Transcript entity by ids.
+func (m *GeneMutation) AddTranscriptIDs(ids ...string) {
+	if m.transcripts == nil {
+		m.transcripts = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.transcripts[ids[i]] = struct{}{}
+	}
+}
+
+// ClearTranscripts clears the "transcripts" edge to the Transcript entity.
+func (m *GeneMutation) ClearTranscripts() {
+	m.clearedtranscripts = true
+}
+
+// TranscriptsCleared reports if the "transcripts" edge to the Transcript entity was cleared.
+func (m *GeneMutation) TranscriptsCleared() bool {
+	return m.clearedtranscripts
+}
+
+// RemoveTranscriptIDs removes the "transcripts" edge to the Transcript entity by IDs.
+func (m *GeneMutation) RemoveTranscriptIDs(ids ...string) {
+	if m.removedtranscripts == nil {
+		m.removedtranscripts = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.transcripts, ids[i])
+		m.removedtranscripts[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedTranscripts returns the removed IDs of the "transcripts" edge to the Transcript entity.
+func (m *GeneMutation) RemovedTranscriptsIDs() (ids []string) {
+	for id := range m.removedtranscripts {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// TranscriptsIDs returns the "transcripts" edge IDs in the mutation.
+func (m *GeneMutation) TranscriptsIDs() (ids []string) {
+	for id := range m.transcripts {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetTranscripts resets all changes to the "transcripts" edge.
+func (m *GeneMutation) ResetTranscripts() {
+	m.transcripts = nil
+	m.clearedtranscripts = false
+	m.removedtranscripts = nil
+}
+
+// SetGenomeID sets the "genome" edge to the Genome entity by id.
+func (m *GeneMutation) SetGenomeID(id string) {
+	m.genome = &id
+}
+
+// ClearGenome clears the "genome" edge to the Genome entity.
+func (m *GeneMutation) ClearGenome() {
+	m.clearedgenome = true
+}
+
+// GenomeCleared reports if the "genome" edge to the Genome entity was cleared.
+func (m *GeneMutation) GenomeCleared() bool {
+	return m.clearedgenome
+}
+
+// GenomeID returns the "genome" edge ID in the mutation.
+func (m *GeneMutation) GenomeID() (id string, exists bool) {
+	if m.genome != nil {
+		return *m.genome, true
+	}
+	return
+}
+
+// GenomeIDs returns the "genome" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// GenomeID instead. It exists only for internal usage by the builders.
+func (m *GeneMutation) GenomeIDs() (ids []string) {
+	if id := m.genome; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetGenome resets all changes to the "genome" edge.
+func (m *GeneMutation) ResetGenome() {
+	m.genome = nil
+	m.clearedgenome = false
+}
+
+// Where appends a list predicates to the GeneMutation builder.
+func (m *GeneMutation) Where(ps ...predicate.Gene) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *GeneMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (Gene).
+func (m *GeneMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *GeneMutation) Fields() []string {
+	fields := make([]string, 0, 0)
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *GeneMutation) Field(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *GeneMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	return nil, fmt.Errorf("unknown Gene field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *GeneMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Gene field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *GeneMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *GeneMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *GeneMutation) AddField(name string, value ent.Value) error {
+	return fmt.Errorf("unknown Gene numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *GeneMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *GeneMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *GeneMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Gene nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *GeneMutation) ResetField(name string) error {
+	return fmt.Errorf("unknown Gene field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *GeneMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.transcripts != nil {
+		edges = append(edges, gene.EdgeTranscripts)
+	}
+	if m.genome != nil {
+		edges = append(edges, gene.EdgeGenome)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *GeneMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case gene.EdgeTranscripts:
+		ids := make([]ent.Value, 0, len(m.transcripts))
+		for id := range m.transcripts {
+			ids = append(ids, id)
+		}
+		return ids
+	case gene.EdgeGenome:
+		if id := m.genome; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *GeneMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.removedtranscripts != nil {
+		edges = append(edges, gene.EdgeTranscripts)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *GeneMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case gene.EdgeTranscripts:
+		ids := make([]ent.Value, 0, len(m.removedtranscripts))
+		for id := range m.removedtranscripts {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *GeneMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedtranscripts {
+		edges = append(edges, gene.EdgeTranscripts)
+	}
+	if m.clearedgenome {
+		edges = append(edges, gene.EdgeGenome)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *GeneMutation) EdgeCleared(name string) bool {
+	switch name {
+	case gene.EdgeTranscripts:
+		return m.clearedtranscripts
+	case gene.EdgeGenome:
+		return m.clearedgenome
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *GeneMutation) ClearEdge(name string) error {
+	switch name {
+	case gene.EdgeGenome:
+		m.ClearGenome()
+		return nil
+	}
+	return fmt.Errorf("unknown Gene unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *GeneMutation) ResetEdge(name string) error {
+	switch name {
+	case gene.EdgeTranscripts:
+		m.ResetTranscripts()
+		return nil
+	case gene.EdgeGenome:
+		m.ResetGenome()
+		return nil
+	}
+	return fmt.Errorf("unknown Gene edge %s", name)
+}
+
 // GenomeMutation represents an operation that mutates the Genome nodes in the graph.
 type GenomeMutation struct {
 	config
@@ -1101,9 +1508,9 @@ type GenomeMutation struct {
 	codon_table      *int32
 	addcodon_table   *int32
 	clearedFields    map[string]struct{}
-	locuses          map[string]struct{}
-	removedlocuses   map[string]struct{}
-	clearedlocuses   bool
+	genes            map[string]struct{}
+	removedgenes     map[string]struct{}
+	clearedgenes     bool
 	scaffolds        map[int]struct{}
 	removedscaffolds map[int]struct{}
 	clearedscaffolds bool
@@ -1272,58 +1679,58 @@ func (m *GenomeMutation) ResetCodonTable() {
 	m.addcodon_table = nil
 }
 
-// AddLocuseIDs adds the "locuses" edge to the Locus entity by ids.
-func (m *GenomeMutation) AddLocuseIDs(ids ...string) {
-	if m.locuses == nil {
-		m.locuses = make(map[string]struct{})
+// AddGeneIDs adds the "genes" edge to the Gene entity by ids.
+func (m *GenomeMutation) AddGeneIDs(ids ...string) {
+	if m.genes == nil {
+		m.genes = make(map[string]struct{})
 	}
 	for i := range ids {
-		m.locuses[ids[i]] = struct{}{}
+		m.genes[ids[i]] = struct{}{}
 	}
 }
 
-// ClearLocuses clears the "locuses" edge to the Locus entity.
-func (m *GenomeMutation) ClearLocuses() {
-	m.clearedlocuses = true
+// ClearGenes clears the "genes" edge to the Gene entity.
+func (m *GenomeMutation) ClearGenes() {
+	m.clearedgenes = true
 }
 
-// LocusesCleared reports if the "locuses" edge to the Locus entity was cleared.
-func (m *GenomeMutation) LocusesCleared() bool {
-	return m.clearedlocuses
+// GenesCleared reports if the "genes" edge to the Gene entity was cleared.
+func (m *GenomeMutation) GenesCleared() bool {
+	return m.clearedgenes
 }
 
-// RemoveLocuseIDs removes the "locuses" edge to the Locus entity by IDs.
-func (m *GenomeMutation) RemoveLocuseIDs(ids ...string) {
-	if m.removedlocuses == nil {
-		m.removedlocuses = make(map[string]struct{})
+// RemoveGeneIDs removes the "genes" edge to the Gene entity by IDs.
+func (m *GenomeMutation) RemoveGeneIDs(ids ...string) {
+	if m.removedgenes == nil {
+		m.removedgenes = make(map[string]struct{})
 	}
 	for i := range ids {
-		delete(m.locuses, ids[i])
-		m.removedlocuses[ids[i]] = struct{}{}
+		delete(m.genes, ids[i])
+		m.removedgenes[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedLocuses returns the removed IDs of the "locuses" edge to the Locus entity.
-func (m *GenomeMutation) RemovedLocusesIDs() (ids []string) {
-	for id := range m.removedlocuses {
+// RemovedGenes returns the removed IDs of the "genes" edge to the Gene entity.
+func (m *GenomeMutation) RemovedGenesIDs() (ids []string) {
+	for id := range m.removedgenes {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// LocusesIDs returns the "locuses" edge IDs in the mutation.
-func (m *GenomeMutation) LocusesIDs() (ids []string) {
-	for id := range m.locuses {
+// GenesIDs returns the "genes" edge IDs in the mutation.
+func (m *GenomeMutation) GenesIDs() (ids []string) {
+	for id := range m.genes {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetLocuses resets all changes to the "locuses" edge.
-func (m *GenomeMutation) ResetLocuses() {
-	m.locuses = nil
-	m.clearedlocuses = false
-	m.removedlocuses = nil
+// ResetGenes resets all changes to the "genes" edge.
+func (m *GenomeMutation) ResetGenes() {
+	m.genes = nil
+	m.clearedgenes = false
+	m.removedgenes = nil
 }
 
 // AddScaffoldIDs adds the "scaffolds" edge to the Scaffold entity by ids.
@@ -1514,8 +1921,8 @@ func (m *GenomeMutation) ResetField(name string) error {
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *GenomeMutation) AddedEdges() []string {
 	edges := make([]string, 0, 2)
-	if m.locuses != nil {
-		edges = append(edges, genome.EdgeLocuses)
+	if m.genes != nil {
+		edges = append(edges, genome.EdgeGenes)
 	}
 	if m.scaffolds != nil {
 		edges = append(edges, genome.EdgeScaffolds)
@@ -1527,9 +1934,9 @@ func (m *GenomeMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *GenomeMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case genome.EdgeLocuses:
-		ids := make([]ent.Value, 0, len(m.locuses))
-		for id := range m.locuses {
+	case genome.EdgeGenes:
+		ids := make([]ent.Value, 0, len(m.genes))
+		for id := range m.genes {
 			ids = append(ids, id)
 		}
 		return ids
@@ -1546,8 +1953,8 @@ func (m *GenomeMutation) AddedIDs(name string) []ent.Value {
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *GenomeMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 2)
-	if m.removedlocuses != nil {
-		edges = append(edges, genome.EdgeLocuses)
+	if m.removedgenes != nil {
+		edges = append(edges, genome.EdgeGenes)
 	}
 	if m.removedscaffolds != nil {
 		edges = append(edges, genome.EdgeScaffolds)
@@ -1559,9 +1966,9 @@ func (m *GenomeMutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *GenomeMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
-	case genome.EdgeLocuses:
-		ids := make([]ent.Value, 0, len(m.removedlocuses))
-		for id := range m.removedlocuses {
+	case genome.EdgeGenes:
+		ids := make([]ent.Value, 0, len(m.removedgenes))
+		for id := range m.removedgenes {
 			ids = append(ids, id)
 		}
 		return ids
@@ -1578,8 +1985,8 @@ func (m *GenomeMutation) RemovedIDs(name string) []ent.Value {
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *GenomeMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 2)
-	if m.clearedlocuses {
-		edges = append(edges, genome.EdgeLocuses)
+	if m.clearedgenes {
+		edges = append(edges, genome.EdgeGenes)
 	}
 	if m.clearedscaffolds {
 		edges = append(edges, genome.EdgeScaffolds)
@@ -1591,8 +1998,8 @@ func (m *GenomeMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *GenomeMutation) EdgeCleared(name string) bool {
 	switch name {
-	case genome.EdgeLocuses:
-		return m.clearedlocuses
+	case genome.EdgeGenes:
+		return m.clearedgenes
 	case genome.EdgeScaffolds:
 		return m.clearedscaffolds
 	}
@@ -1611,8 +2018,8 @@ func (m *GenomeMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *GenomeMutation) ResetEdge(name string) error {
 	switch name {
-	case genome.EdgeLocuses:
-		m.ResetLocuses()
+	case genome.EdgeGenes:
+		m.ResetGenes()
 		return nil
 	case genome.EdgeScaffolds:
 		m.ResetScaffolds()
@@ -4240,413 +4647,6 @@ func (m *KeggReactionMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown KeggReaction edge %s", name)
 }
 
-// LocusMutation represents an operation that mutates the Locus nodes in the graph.
-type LocusMutation struct {
-	config
-	op                 Op
-	typ                string
-	id                 *string
-	clearedFields      map[string]struct{}
-	transcripts        map[string]struct{}
-	removedtranscripts map[string]struct{}
-	clearedtranscripts bool
-	genome             *string
-	clearedgenome      bool
-	done               bool
-	oldValue           func(context.Context) (*Locus, error)
-	predicates         []predicate.Locus
-}
-
-var _ ent.Mutation = (*LocusMutation)(nil)
-
-// locusOption allows management of the mutation configuration using functional options.
-type locusOption func(*LocusMutation)
-
-// newLocusMutation creates new mutation for the Locus entity.
-func newLocusMutation(c config, op Op, opts ...locusOption) *LocusMutation {
-	m := &LocusMutation{
-		config:        c,
-		op:            op,
-		typ:           TypeLocus,
-		clearedFields: make(map[string]struct{}),
-	}
-	for _, opt := range opts {
-		opt(m)
-	}
-	return m
-}
-
-// withLocusID sets the ID field of the mutation.
-func withLocusID(id string) locusOption {
-	return func(m *LocusMutation) {
-		var (
-			err   error
-			once  sync.Once
-			value *Locus
-		)
-		m.oldValue = func(ctx context.Context) (*Locus, error) {
-			once.Do(func() {
-				if m.done {
-					err = errors.New("querying old values post mutation is not allowed")
-				} else {
-					value, err = m.Client().Locus.Get(ctx, id)
-				}
-			})
-			return value, err
-		}
-		m.id = &id
-	}
-}
-
-// withLocus sets the old Locus of the mutation.
-func withLocus(node *Locus) locusOption {
-	return func(m *LocusMutation) {
-		m.oldValue = func(context.Context) (*Locus, error) {
-			return node, nil
-		}
-		m.id = &node.ID
-	}
-}
-
-// Client returns a new `ent.Client` from the mutation. If the mutation was
-// executed in a transaction (ent.Tx), a transactional client is returned.
-func (m LocusMutation) Client() *Client {
-	client := &Client{config: m.config}
-	client.init()
-	return client
-}
-
-// Tx returns an `ent.Tx` for mutations that were executed in transactions;
-// it returns an error otherwise.
-func (m LocusMutation) Tx() (*Tx, error) {
-	if _, ok := m.driver.(*txDriver); !ok {
-		return nil, errors.New("ent: mutation is not running in a transaction")
-	}
-	tx := &Tx{config: m.config}
-	tx.init()
-	return tx, nil
-}
-
-// SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of Locus entities.
-func (m *LocusMutation) SetID(id string) {
-	m.id = &id
-}
-
-// ID returns the ID value in the mutation. Note that the ID is only available
-// if it was provided to the builder or after it was returned from the database.
-func (m *LocusMutation) ID() (id string, exists bool) {
-	if m.id == nil {
-		return
-	}
-	return *m.id, true
-}
-
-// IDs queries the database and returns the entity ids that match the mutation's predicate.
-// That means, if the mutation is applied within a transaction with an isolation level such
-// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
-// or updated by the mutation.
-func (m *LocusMutation) IDs(ctx context.Context) ([]string, error) {
-	switch {
-	case m.op.Is(OpUpdateOne | OpDeleteOne):
-		id, exists := m.ID()
-		if exists {
-			return []string{id}, nil
-		}
-		fallthrough
-	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().Locus.Query().Where(m.predicates...).IDs(ctx)
-	default:
-		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
-	}
-}
-
-// AddTranscriptIDs adds the "transcripts" edge to the Transcript entity by ids.
-func (m *LocusMutation) AddTranscriptIDs(ids ...string) {
-	if m.transcripts == nil {
-		m.transcripts = make(map[string]struct{})
-	}
-	for i := range ids {
-		m.transcripts[ids[i]] = struct{}{}
-	}
-}
-
-// ClearTranscripts clears the "transcripts" edge to the Transcript entity.
-func (m *LocusMutation) ClearTranscripts() {
-	m.clearedtranscripts = true
-}
-
-// TranscriptsCleared reports if the "transcripts" edge to the Transcript entity was cleared.
-func (m *LocusMutation) TranscriptsCleared() bool {
-	return m.clearedtranscripts
-}
-
-// RemoveTranscriptIDs removes the "transcripts" edge to the Transcript entity by IDs.
-func (m *LocusMutation) RemoveTranscriptIDs(ids ...string) {
-	if m.removedtranscripts == nil {
-		m.removedtranscripts = make(map[string]struct{})
-	}
-	for i := range ids {
-		delete(m.transcripts, ids[i])
-		m.removedtranscripts[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedTranscripts returns the removed IDs of the "transcripts" edge to the Transcript entity.
-func (m *LocusMutation) RemovedTranscriptsIDs() (ids []string) {
-	for id := range m.removedtranscripts {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// TranscriptsIDs returns the "transcripts" edge IDs in the mutation.
-func (m *LocusMutation) TranscriptsIDs() (ids []string) {
-	for id := range m.transcripts {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetTranscripts resets all changes to the "transcripts" edge.
-func (m *LocusMutation) ResetTranscripts() {
-	m.transcripts = nil
-	m.clearedtranscripts = false
-	m.removedtranscripts = nil
-}
-
-// SetGenomeID sets the "genome" edge to the Genome entity by id.
-func (m *LocusMutation) SetGenomeID(id string) {
-	m.genome = &id
-}
-
-// ClearGenome clears the "genome" edge to the Genome entity.
-func (m *LocusMutation) ClearGenome() {
-	m.clearedgenome = true
-}
-
-// GenomeCleared reports if the "genome" edge to the Genome entity was cleared.
-func (m *LocusMutation) GenomeCleared() bool {
-	return m.clearedgenome
-}
-
-// GenomeID returns the "genome" edge ID in the mutation.
-func (m *LocusMutation) GenomeID() (id string, exists bool) {
-	if m.genome != nil {
-		return *m.genome, true
-	}
-	return
-}
-
-// GenomeIDs returns the "genome" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// GenomeID instead. It exists only for internal usage by the builders.
-func (m *LocusMutation) GenomeIDs() (ids []string) {
-	if id := m.genome; id != nil {
-		ids = append(ids, *id)
-	}
-	return
-}
-
-// ResetGenome resets all changes to the "genome" edge.
-func (m *LocusMutation) ResetGenome() {
-	m.genome = nil
-	m.clearedgenome = false
-}
-
-// Where appends a list predicates to the LocusMutation builder.
-func (m *LocusMutation) Where(ps ...predicate.Locus) {
-	m.predicates = append(m.predicates, ps...)
-}
-
-// Op returns the operation name.
-func (m *LocusMutation) Op() Op {
-	return m.op
-}
-
-// Type returns the node type of this mutation (Locus).
-func (m *LocusMutation) Type() string {
-	return m.typ
-}
-
-// Fields returns all fields that were changed during this mutation. Note that in
-// order to get all numeric fields that were incremented/decremented, call
-// AddedFields().
-func (m *LocusMutation) Fields() []string {
-	fields := make([]string, 0, 0)
-	return fields
-}
-
-// Field returns the value of a field with the given name. The second boolean
-// return value indicates that this field was not set, or was not defined in the
-// schema.
-func (m *LocusMutation) Field(name string) (ent.Value, bool) {
-	return nil, false
-}
-
-// OldField returns the old value of the field from the database. An error is
-// returned if the mutation operation is not UpdateOne, or the query to the
-// database failed.
-func (m *LocusMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
-	return nil, fmt.Errorf("unknown Locus field %s", name)
-}
-
-// SetField sets the value of a field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *LocusMutation) SetField(name string, value ent.Value) error {
-	switch name {
-	}
-	return fmt.Errorf("unknown Locus field %s", name)
-}
-
-// AddedFields returns all numeric fields that were incremented/decremented during
-// this mutation.
-func (m *LocusMutation) AddedFields() []string {
-	return nil
-}
-
-// AddedField returns the numeric value that was incremented/decremented on a field
-// with the given name. The second boolean return value indicates that this field
-// was not set, or was not defined in the schema.
-func (m *LocusMutation) AddedField(name string) (ent.Value, bool) {
-	return nil, false
-}
-
-// AddField adds the value to the field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *LocusMutation) AddField(name string, value ent.Value) error {
-	return fmt.Errorf("unknown Locus numeric field %s", name)
-}
-
-// ClearedFields returns all nullable fields that were cleared during this
-// mutation.
-func (m *LocusMutation) ClearedFields() []string {
-	return nil
-}
-
-// FieldCleared returns a boolean indicating if a field with the given name was
-// cleared in this mutation.
-func (m *LocusMutation) FieldCleared(name string) bool {
-	_, ok := m.clearedFields[name]
-	return ok
-}
-
-// ClearField clears the value of the field with the given name. It returns an
-// error if the field is not defined in the schema.
-func (m *LocusMutation) ClearField(name string) error {
-	return fmt.Errorf("unknown Locus nullable field %s", name)
-}
-
-// ResetField resets all changes in the mutation for the field with the given name.
-// It returns an error if the field is not defined in the schema.
-func (m *LocusMutation) ResetField(name string) error {
-	return fmt.Errorf("unknown Locus field %s", name)
-}
-
-// AddedEdges returns all edge names that were set/added in this mutation.
-func (m *LocusMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
-	if m.transcripts != nil {
-		edges = append(edges, locus.EdgeTranscripts)
-	}
-	if m.genome != nil {
-		edges = append(edges, locus.EdgeGenome)
-	}
-	return edges
-}
-
-// AddedIDs returns all IDs (to other nodes) that were added for the given edge
-// name in this mutation.
-func (m *LocusMutation) AddedIDs(name string) []ent.Value {
-	switch name {
-	case locus.EdgeTranscripts:
-		ids := make([]ent.Value, 0, len(m.transcripts))
-		for id := range m.transcripts {
-			ids = append(ids, id)
-		}
-		return ids
-	case locus.EdgeGenome:
-		if id := m.genome; id != nil {
-			return []ent.Value{*id}
-		}
-	}
-	return nil
-}
-
-// RemovedEdges returns all edge names that were removed in this mutation.
-func (m *LocusMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
-	if m.removedtranscripts != nil {
-		edges = append(edges, locus.EdgeTranscripts)
-	}
-	return edges
-}
-
-// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
-// the given name in this mutation.
-func (m *LocusMutation) RemovedIDs(name string) []ent.Value {
-	switch name {
-	case locus.EdgeTranscripts:
-		ids := make([]ent.Value, 0, len(m.removedtranscripts))
-		for id := range m.removedtranscripts {
-			ids = append(ids, id)
-		}
-		return ids
-	}
-	return nil
-}
-
-// ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *LocusMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
-	if m.clearedtranscripts {
-		edges = append(edges, locus.EdgeTranscripts)
-	}
-	if m.clearedgenome {
-		edges = append(edges, locus.EdgeGenome)
-	}
-	return edges
-}
-
-// EdgeCleared returns a boolean which indicates if the edge with the given name
-// was cleared in this mutation.
-func (m *LocusMutation) EdgeCleared(name string) bool {
-	switch name {
-	case locus.EdgeTranscripts:
-		return m.clearedtranscripts
-	case locus.EdgeGenome:
-		return m.clearedgenome
-	}
-	return false
-}
-
-// ClearEdge clears the value of the edge with the given name. It returns an error
-// if that edge is not defined in the schema.
-func (m *LocusMutation) ClearEdge(name string) error {
-	switch name {
-	case locus.EdgeGenome:
-		m.ClearGenome()
-		return nil
-	}
-	return fmt.Errorf("unknown Locus unique edge %s", name)
-}
-
-// ResetEdge resets all changes to the edge with the given name in this mutation.
-// It returns an error if the edge is not defined in the schema.
-func (m *LocusMutation) ResetEdge(name string) error {
-	switch name {
-	case locus.EdgeTranscripts:
-		m.ResetTranscripts()
-		return nil
-	case locus.EdgeGenome:
-		m.ResetGenome()
-		return nil
-	}
-	return fmt.Errorf("unknown Locus edge %s", name)
-}
-
 // ScaffoldMutation represents an operation that mutates the Scaffold nodes in the graph.
 type ScaffoldMutation struct {
 	config
@@ -5106,8 +5106,8 @@ type TranscriptMutation struct {
 	cds_sequence          *string
 	protein_sequence      *string
 	clearedFields         map[string]struct{}
-	locus                 *string
-	clearedlocus          bool
+	gene                  *string
+	clearedgene           bool
 	goterms               map[string]struct{}
 	removedgoterms        map[string]struct{}
 	clearedgoterms        bool
@@ -5827,43 +5827,43 @@ func (m *TranscriptMutation) ResetProteinSequence() {
 	m.protein_sequence = nil
 }
 
-// SetLocusID sets the "locus" edge to the Locus entity by id.
-func (m *TranscriptMutation) SetLocusID(id string) {
-	m.locus = &id
+// SetGeneID sets the "gene" edge to the Gene entity by id.
+func (m *TranscriptMutation) SetGeneID(id string) {
+	m.gene = &id
 }
 
-// ClearLocus clears the "locus" edge to the Locus entity.
-func (m *TranscriptMutation) ClearLocus() {
-	m.clearedlocus = true
+// ClearGene clears the "gene" edge to the Gene entity.
+func (m *TranscriptMutation) ClearGene() {
+	m.clearedgene = true
 }
 
-// LocusCleared reports if the "locus" edge to the Locus entity was cleared.
-func (m *TranscriptMutation) LocusCleared() bool {
-	return m.clearedlocus
+// GeneCleared reports if the "gene" edge to the Gene entity was cleared.
+func (m *TranscriptMutation) GeneCleared() bool {
+	return m.clearedgene
 }
 
-// LocusID returns the "locus" edge ID in the mutation.
-func (m *TranscriptMutation) LocusID() (id string, exists bool) {
-	if m.locus != nil {
-		return *m.locus, true
+// GeneID returns the "gene" edge ID in the mutation.
+func (m *TranscriptMutation) GeneID() (id string, exists bool) {
+	if m.gene != nil {
+		return *m.gene, true
 	}
 	return
 }
 
-// LocusIDs returns the "locus" edge IDs in the mutation.
+// GeneIDs returns the "gene" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// LocusID instead. It exists only for internal usage by the builders.
-func (m *TranscriptMutation) LocusIDs() (ids []string) {
-	if id := m.locus; id != nil {
+// GeneID instead. It exists only for internal usage by the builders.
+func (m *TranscriptMutation) GeneIDs() (ids []string) {
+	if id := m.gene; id != nil {
 		ids = append(ids, *id)
 	}
 	return
 }
 
-// ResetLocus resets all changes to the "locus" edge.
-func (m *TranscriptMutation) ResetLocus() {
-	m.locus = nil
-	m.clearedlocus = false
+// ResetGene resets all changes to the "gene" edge.
+func (m *TranscriptMutation) ResetGene() {
+	m.gene = nil
+	m.clearedgene = false
 }
 
 // AddGotermIDs adds the "goterms" edge to the GoTerm entity by ids.
@@ -6341,8 +6341,8 @@ func (m *TranscriptMutation) ResetField(name string) error {
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TranscriptMutation) AddedEdges() []string {
 	edges := make([]string, 0, 3)
-	if m.locus != nil {
-		edges = append(edges, transcript.EdgeLocus)
+	if m.gene != nil {
+		edges = append(edges, transcript.EdgeGene)
 	}
 	if m.goterms != nil {
 		edges = append(edges, transcript.EdgeGoterms)
@@ -6357,8 +6357,8 @@ func (m *TranscriptMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *TranscriptMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case transcript.EdgeLocus:
-		if id := m.locus; id != nil {
+	case transcript.EdgeGene:
+		if id := m.gene; id != nil {
 			return []ent.Value{*id}
 		}
 	case transcript.EdgeGoterms:
@@ -6412,8 +6412,8 @@ func (m *TranscriptMutation) RemovedIDs(name string) []ent.Value {
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TranscriptMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 3)
-	if m.clearedlocus {
-		edges = append(edges, transcript.EdgeLocus)
+	if m.clearedgene {
+		edges = append(edges, transcript.EdgeGene)
 	}
 	if m.clearedgoterms {
 		edges = append(edges, transcript.EdgeGoterms)
@@ -6428,8 +6428,8 @@ func (m *TranscriptMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *TranscriptMutation) EdgeCleared(name string) bool {
 	switch name {
-	case transcript.EdgeLocus:
-		return m.clearedlocus
+	case transcript.EdgeGene:
+		return m.clearedgene
 	case transcript.EdgeGoterms:
 		return m.clearedgoterms
 	case transcript.EdgeDomains:
@@ -6442,8 +6442,8 @@ func (m *TranscriptMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *TranscriptMutation) ClearEdge(name string) error {
 	switch name {
-	case transcript.EdgeLocus:
-		m.ClearLocus()
+	case transcript.EdgeGene:
+		m.ClearGene()
 		return nil
 	}
 	return fmt.Errorf("unknown Transcript unique edge %s", name)
@@ -6453,8 +6453,8 @@ func (m *TranscriptMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *TranscriptMutation) ResetEdge(name string) error {
 	switch name {
-	case transcript.EdgeLocus:
-		m.ResetLocus()
+	case transcript.EdgeGene:
+		m.ResetGene()
 		return nil
 	case transcript.EdgeGoterms:
 		m.ResetGoterms()

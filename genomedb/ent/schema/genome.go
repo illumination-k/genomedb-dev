@@ -27,7 +27,7 @@ func (Genome) Fields() []ent.Field {
 // Edges of the Genome.
 func (Genome) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("locuses", Locus.Type),
+		edge.To("genes", Gene.Type),
 		edge.To("scaffolds", Scaffold.Type),
 	}
 }

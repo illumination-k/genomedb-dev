@@ -34,6 +34,19 @@ func (f DomainAnnotationToTranscriptFunc) Mutate(ctx context.Context, m ent.Muta
 	return f(ctx, mv)
 }
 
+// The GeneFunc type is an adapter to allow the use of ordinary
+// function as Gene mutator.
+type GeneFunc func(context.Context, *ent.GeneMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f GeneFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.GeneMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GeneMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The GenomeFunc type is an adapter to allow the use of ordinary
 // function as Genome mutator.
 type GenomeFunc func(context.Context, *ent.GenomeMutation) (ent.Value, error)
@@ -134,19 +147,6 @@ func (f KeggReactionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 	mv, ok := m.(*ent.KeggReactionMutation)
 	if !ok {
 		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KeggReactionMutation", m)
-	}
-	return f(ctx, mv)
-}
-
-// The LocusFunc type is an adapter to allow the use of ordinary
-// function as Locus mutator.
-type LocusFunc func(context.Context, *ent.LocusMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f LocusFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	mv, ok := m.(*ent.LocusMutation)
-	if !ok {
-		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.LocusMutation", m)
 	}
 	return f(ctx, mv)
 }

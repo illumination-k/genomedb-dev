@@ -12,6 +12,9 @@ type DomainAnnotation func(*sql.Selector)
 // DomainAnnotationToTranscript is the predicate function for domainannotationtotranscript builders.
 type DomainAnnotationToTranscript func(*sql.Selector)
 
+// Gene is the predicate function for gene builders.
+type Gene func(*sql.Selector)
+
 // Genome is the predicate function for genome builders.
 type Genome func(*sql.Selector)
 
@@ -35,9 +38,6 @@ type KeggPathway func(*sql.Selector)
 
 // KeggReaction is the predicate function for keggreaction builders.
 type KeggReaction func(*sql.Selector)
-
-// Locus is the predicate function for locus builders.
-type Locus func(*sql.Selector)
 
 // Scaffold is the predicate function for scaffold builders.
 type Scaffold func(*sql.Selector)

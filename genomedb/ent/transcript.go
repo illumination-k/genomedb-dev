@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"genomedb/bio/gffio"
-	"genomedb/ent/locus"
+	"genomedb/ent/gene"
 	"genomedb/ent/transcript"
 	"strings"
 
@@ -48,14 +48,14 @@ type Transcript struct {
 	ProteinSequence string `json:"protein_sequence,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TranscriptQuery when eager-loading is set.
-	Edges             TranscriptEdges `json:"edges"`
-	locus_transcripts *string
+	Edges            TranscriptEdges `json:"edges"`
+	gene_transcripts *string
 }
 
 // TranscriptEdges holds the relations/edges for other nodes in the graph.
 type TranscriptEdges struct {
-	// Locus holds the value of the locus edge.
-	Locus *Locus `json:"locus,omitempty"`
+	// Gene holds the value of the gene edge.
+	Gene *Gene `json:"gene,omitempty"`
 	// Goterms holds the value of the goterms edge.
 	Goterms []*GoTerm `json:"goterms,omitempty"`
 	// Domains holds the value of the domains edge.
@@ -69,17 +69,17 @@ type TranscriptEdges struct {
 	loadedTypes [5]bool
 }
 
-// LocusOrErr returns the Locus value or an error if the edge
+// GeneOrErr returns the Gene value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e TranscriptEdges) LocusOrErr() (*Locus, error) {
+func (e TranscriptEdges) GeneOrErr() (*Gene, error) {
 	if e.loadedTypes[0] {
-		if e.Locus == nil {
+		if e.Gene == nil {
 			// Edge was loaded but was not found.
-			return nil, &NotFoundError{label: locus.Label}
+			return nil, &NotFoundError{label: gene.Label}
 		}
-		return e.Locus, nil
+		return e.Gene, nil
 	}
-	return nil, &NotLoadedError{edge: "locus"}
+	return nil, &NotLoadedError{edge: "gene"}
 }
 
 // GotermsOrErr returns the Goterms value or an error if the edge
@@ -129,7 +129,7 @@ func (*Transcript) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case transcript.FieldID, transcript.FieldSeqname, transcript.FieldStrand, transcript.FieldType, transcript.FieldSource, transcript.FieldGenomicSequence, transcript.FieldExonSequence, transcript.FieldCdsSequence, transcript.FieldProteinSequence:
 			values[i] = new(sql.NullString)
-		case transcript.ForeignKeys[0]: // locus_transcripts
+		case transcript.ForeignKeys[0]: // gene_transcripts
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Transcript", columns[i])
@@ -246,19 +246,19 @@ func (t *Transcript) assignValues(columns []string, values []any) error {
 			}
 		case transcript.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field locus_transcripts", values[i])
+				return fmt.Errorf("unexpected type %T for field gene_transcripts", values[i])
 			} else if value.Valid {
-				t.locus_transcripts = new(string)
-				*t.locus_transcripts = value.String
+				t.gene_transcripts = new(string)
+				*t.gene_transcripts = value.String
 			}
 		}
 	}
 	return nil
 }
 
-// QueryLocus queries the "locus" edge of the Transcript entity.
-func (t *Transcript) QueryLocus() *LocusQuery {
-	return (&TranscriptClient{config: t.config}).QueryLocus(t)
+// QueryGene queries the "gene" edge of the Transcript entity.
+func (t *Transcript) QueryGene() *GeneQuery {
+	return (&TranscriptClient{config: t.config}).QueryGene(t)
 }
 
 // QueryGoterms queries the "goterms" edge of the Transcript entity.

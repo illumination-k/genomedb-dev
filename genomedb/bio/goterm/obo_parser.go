@@ -69,7 +69,7 @@ func (p *OboParser) ConsumeLine(line string) (err error) {
 		case "name":
 			p.curGoTerm.Name = value
 		case "namespace":
-			p.curGoTerm.Namespace = value
+			p.curGoTerm.SetNamespace(value)
 		case "def":
 			p.curGoTerm.Def = value
 		case "is_obsolete":

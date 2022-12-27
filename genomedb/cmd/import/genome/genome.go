@@ -9,6 +9,7 @@ import (
 	"genomedb/bio/seqio"
 	"genomedb/ds/hashset"
 	"genomedb/ent"
+	"genomedb/util"
 	"os"
 	"strings"
 )
@@ -58,7 +59,7 @@ func Run(genomeName string, genomeFasta string, genomeGff string, databaseUri st
 	for transcriptId, rec := range transcriptId2recs {
 		scaffoldSeq, ok := seqname2seq[rec.SeqName]
 
-		genes.Add(rec.LocusId)
+		genes.Add(rec.GeneId)
 
 		if !ok {
 			return fmt.Errorf("seqname=%v does not exist in %v\n rec: %v\n", rec.SeqName, genomeFasta, rec)
@@ -88,39 +89,41 @@ func Run(genomeName string, genomeFasta string, genomeGff string, databaseUri st
 				SetProteinSequence(protein).
 				SetFivePrimeUtr(rec.FivePrimeUtrRecords).
 				SetThreePrimeUtr(rec.ThreePrimeUtrRecords).
-				SetLocusID(rec.LocusId),
+				SetGeneID(rec.GeneId),
 		)
 	}
 
-	geneDtos := []*ent.LocusCreate{}
+	geneDtos := []*ent.GeneCreate{}
 	for geneId := range genes {
-		geneDtos = append(geneDtos, client.Locus.Create().SetID(geneId).SetGenomeID(genomeName))
+		geneDtos = append(geneDtos, client.Gene.Create().SetID(geneId).SetGenomeID(genomeName))
 	}
 
 	stepNum := 100
 
-	fmt.Printf("Upsert %d Locuses ...\n", len(geneDtos))
-	for i := 0; i < len(geneDtos); i += stepNum {
-		var dtos []*ent.LocusCreate
-		if i+stepNum > len(geneDtos) {
-			dtos = geneDtos[i:]
-		} else {
-			dtos = geneDtos[i : i+stepNum]
+	fmt.Printf("Upsert %d Genees ...\n", len(geneDtos))
+	genes_batch_iter := util.NewBatchIter(stepNum, geneDtos)
+	for {
+		dtos, finish := genes_batch_iter.Next()
+
+		if finish {
+			break
 		}
 
-		if err := client.Locus.CreateBulk(dtos...).OnConflict().UpdateNewValues().Exec(ctx); err != nil {
+		if err := client.Gene.CreateBulk(dtos...).OnConflict().UpdateNewValues().Exec(ctx); err != nil {
 			return err
 		}
 	}
 
 	fmt.Printf("Upsert %d Transcript ...\n", len(transcriptDtos))
-	for i := 0; i < len(transcriptDtos); i += stepNum {
-		var dtos []*ent.TranscriptCreate
-		if i+stepNum > len(transcriptDtos) {
-			dtos = transcriptDtos[i:]
-		} else {
-			dtos = transcriptDtos[i : i+stepNum]
+
+	transcripts_batch_iter := util.NewBatchIter(stepNum, transcriptDtos)
+	for {
+		dtos, finish := transcripts_batch_iter.Next()
+
+		if finish {
+			break
 		}
+
 		if err := client.Transcript.CreateBulk(dtos...).OnConflict().UpdateNewValues().Exec(ctx); err != nil {
 			return err
 		}
@@ -165,7 +168,7 @@ func ReadGenomeFasta(fastaPath string) (map[string]string, error) {
 
 // reading a gff file
 type TranscriptRecords struct {
-	LocusId              string
+	GeneId               string
 	Source               string
 	Type                 string
 	SeqName              string
@@ -191,7 +194,7 @@ func NewTranscriptRecords(record gffio.GffRecord) (TranscriptRecords, error) {
 		return *transcriptRecord, fmt.Errorf("")
 	}
 
-	transcriptRecord.LocusId = geneId
+	transcriptRecord.GeneId = geneId
 	transcriptRecord.Source = record.Source
 	transcriptRecord.Type = record.Type
 	transcriptRecord.SeqName = record.Seqname

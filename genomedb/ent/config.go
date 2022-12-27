@@ -26,6 +26,7 @@ type config struct {
 type hooks struct {
 	DomainAnnotation             []ent.Hook
 	DomainAnnotationToTranscript []ent.Hook
+	Gene                         []ent.Hook
 	Genome                       []ent.Hook
 	GoTerm                       []ent.Hook
 	GoTermOnTranscripts          []ent.Hook
@@ -34,7 +35,6 @@ type hooks struct {
 	KeggOntology                 []ent.Hook
 	KeggPathway                  []ent.Hook
 	KeggReaction                 []ent.Hook
-	Locus                        []ent.Hook
 	Scaffold                     []ent.Hook
 	Transcript                   []ent.Hook
 }

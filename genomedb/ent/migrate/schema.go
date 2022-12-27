@@ -48,6 +48,25 @@ var (
 			},
 		},
 	}
+	// GenesColumns holds the columns for the "genes" table.
+	GenesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString},
+		{Name: "genome_genes", Type: field.TypeString, Nullable: true},
+	}
+	// GenesTable holds the schema information for the "genes" table.
+	GenesTable = &schema.Table{
+		Name:       "genes",
+		Columns:    GenesColumns,
+		PrimaryKey: []*schema.Column{GenesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "genes_genomes_genes",
+				Columns:    []*schema.Column{GenesColumns[1]},
+				RefColumns: []*schema.Column{GenomesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// GenomesColumns holds the columns for the "genomes" table.
 	GenomesColumns = []*schema.Column{
 		{Name: "name", Type: field.TypeString},
@@ -161,25 +180,6 @@ var (
 		Columns:    KeggReactionsColumns,
 		PrimaryKey: []*schema.Column{KeggReactionsColumns[0]},
 	}
-	// LocusColumns holds the columns for the "locus" table.
-	LocusColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeString},
-		{Name: "genome_locuses", Type: field.TypeString, Nullable: true},
-	}
-	// LocusTable holds the schema information for the "locus" table.
-	LocusTable = &schema.Table{
-		Name:       "locus",
-		Columns:    LocusColumns,
-		PrimaryKey: []*schema.Column{LocusColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "locus_genomes_locuses",
-				Columns:    []*schema.Column{LocusColumns[1]},
-				RefColumns: []*schema.Column{GenomesColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-		},
-	}
 	// ScaffoldsColumns holds the columns for the "scaffolds" table.
 	ScaffoldsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -218,7 +218,7 @@ var (
 		{Name: "exon_sequence", Type: field.TypeString, Size: 2147483647},
 		{Name: "cds_sequence", Type: field.TypeString, Size: 2147483647},
 		{Name: "protein_sequence", Type: field.TypeString, Size: 2147483647},
-		{Name: "locus_transcripts", Type: field.TypeString, Nullable: true},
+		{Name: "gene_transcripts", Type: field.TypeString, Nullable: true},
 	}
 	// TranscriptsTable holds the schema information for the "transcripts" table.
 	TranscriptsTable = &schema.Table{
@@ -227,9 +227,9 @@ var (
 		PrimaryKey: []*schema.Column{TranscriptsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "transcripts_locus_transcripts",
+				Symbol:     "transcripts_genes_transcripts",
 				Columns:    []*schema.Column{TranscriptsColumns[15]},
-				RefColumns: []*schema.Column{LocusColumns[0]},
+				RefColumns: []*schema.Column{GenesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
@@ -238,6 +238,7 @@ var (
 	Tables = []*schema.Table{
 		DomainAnnotationsTable,
 		DomainAnnotationToTranscriptsTable,
+		GenesTable,
 		GenomesTable,
 		GoTermsTable,
 		GoTermOnTranscriptsTable,
@@ -246,7 +247,6 @@ var (
 		KeggOntologiesTable,
 		KeggPathwaysTable,
 		KeggReactionsTable,
-		LocusTable,
 		ScaffoldsTable,
 		TranscriptsTable,
 	}
@@ -255,10 +255,10 @@ var (
 func init() {
 	DomainAnnotationToTranscriptsTable.ForeignKeys[0].RefTable = DomainAnnotationsTable
 	DomainAnnotationToTranscriptsTable.ForeignKeys[1].RefTable = TranscriptsTable
+	GenesTable.ForeignKeys[0].RefTable = GenomesTable
 	GoTermsTable.ForeignKeys[0].RefTable = GoTermsTable
 	GoTermOnTranscriptsTable.ForeignKeys[0].RefTable = GoTermsTable
 	GoTermOnTranscriptsTable.ForeignKeys[1].RefTable = TranscriptsTable
-	LocusTable.ForeignKeys[0].RefTable = GenomesTable
 	ScaffoldsTable.ForeignKeys[0].RefTable = GenomesTable
-	TranscriptsTable.ForeignKeys[0].RefTable = LocusTable
+	TranscriptsTable.ForeignKeys[0].RefTable = GenesTable
 }

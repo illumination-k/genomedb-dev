@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"genomedb/ent/domainannotation"
 	"genomedb/ent/domainannotationtotranscript"
+	"genomedb/ent/gene"
 	"genomedb/ent/goterm"
 	"genomedb/ent/gotermontranscripts"
-	"genomedb/ent/locus"
 	"genomedb/ent/predicate"
 	"genomedb/ent/transcript"
 	"math"
@@ -29,7 +29,7 @@ type TranscriptQuery struct {
 	order                []OrderFunc
 	fields               []string
 	predicates           []predicate.Transcript
-	withLocus            *LocusQuery
+	withGene             *GeneQuery
 	withGoterms          *GoTermQuery
 	withDomains          *DomainAnnotationQuery
 	withGotermTranscript *GoTermOnTranscriptsQuery
@@ -71,9 +71,9 @@ func (tq *TranscriptQuery) Order(o ...OrderFunc) *TranscriptQuery {
 	return tq
 }
 
-// QueryLocus chains the current query on the "locus" edge.
-func (tq *TranscriptQuery) QueryLocus() *LocusQuery {
-	query := &LocusQuery{config: tq.config}
+// QueryGene chains the current query on the "gene" edge.
+func (tq *TranscriptQuery) QueryGene() *GeneQuery {
+	query := &GeneQuery{config: tq.config}
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := tq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -84,8 +84,8 @@ func (tq *TranscriptQuery) QueryLocus() *LocusQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(transcript.Table, transcript.FieldID, selector),
-			sqlgraph.To(locus.Table, locus.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, transcript.LocusTable, transcript.LocusColumn),
+			sqlgraph.To(gene.Table, gene.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, transcript.GeneTable, transcript.GeneColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -362,7 +362,7 @@ func (tq *TranscriptQuery) Clone() *TranscriptQuery {
 		offset:               tq.offset,
 		order:                append([]OrderFunc{}, tq.order...),
 		predicates:           append([]predicate.Transcript{}, tq.predicates...),
-		withLocus:            tq.withLocus.Clone(),
+		withGene:             tq.withGene.Clone(),
 		withGoterms:          tq.withGoterms.Clone(),
 		withDomains:          tq.withDomains.Clone(),
 		withGotermTranscript: tq.withGotermTranscript.Clone(),
@@ -374,14 +374,14 @@ func (tq *TranscriptQuery) Clone() *TranscriptQuery {
 	}
 }
 
-// WithLocus tells the query-builder to eager-load the nodes that are connected to
-// the "locus" edge. The optional arguments are used to configure the query builder of the edge.
-func (tq *TranscriptQuery) WithLocus(opts ...func(*LocusQuery)) *TranscriptQuery {
-	query := &LocusQuery{config: tq.config}
+// WithGene tells the query-builder to eager-load the nodes that are connected to
+// the "gene" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TranscriptQuery) WithGene(opts ...func(*GeneQuery)) *TranscriptQuery {
+	query := &GeneQuery{config: tq.config}
 	for _, opt := range opts {
 		opt(query)
 	}
-	tq.withLocus = query
+	tq.withGene = query
 	return tq
 }
 
@@ -504,14 +504,14 @@ func (tq *TranscriptQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*T
 		withFKs     = tq.withFKs
 		_spec       = tq.querySpec()
 		loadedTypes = [5]bool{
-			tq.withLocus != nil,
+			tq.withGene != nil,
 			tq.withGoterms != nil,
 			tq.withDomains != nil,
 			tq.withGotermTranscript != nil,
 			tq.withDomainTranscript != nil,
 		}
 	)
-	if tq.withLocus != nil {
+	if tq.withGene != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -535,9 +535,9 @@ func (tq *TranscriptQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*T
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := tq.withLocus; query != nil {
-		if err := tq.loadLocus(ctx, query, nodes, nil,
-			func(n *Transcript, e *Locus) { n.Edges.Locus = e }); err != nil {
+	if query := tq.withGene; query != nil {
+		if err := tq.loadGene(ctx, query, nodes, nil,
+			func(n *Transcript, e *Gene) { n.Edges.Gene = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -576,20 +576,20 @@ func (tq *TranscriptQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*T
 	return nodes, nil
 }
 
-func (tq *TranscriptQuery) loadLocus(ctx context.Context, query *LocusQuery, nodes []*Transcript, init func(*Transcript), assign func(*Transcript, *Locus)) error {
+func (tq *TranscriptQuery) loadGene(ctx context.Context, query *GeneQuery, nodes []*Transcript, init func(*Transcript), assign func(*Transcript, *Gene)) error {
 	ids := make([]string, 0, len(nodes))
 	nodeids := make(map[string][]*Transcript)
 	for i := range nodes {
-		if nodes[i].locus_transcripts == nil {
+		if nodes[i].gene_transcripts == nil {
 			continue
 		}
-		fk := *nodes[i].locus_transcripts
+		fk := *nodes[i].gene_transcripts
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
 		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	query.Where(locus.IDIn(ids...))
+	query.Where(gene.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
@@ -597,7 +597,7 @@ func (tq *TranscriptQuery) loadLocus(ctx context.Context, query *LocusQuery, nod
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "locus_transcripts" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "gene_transcripts" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)

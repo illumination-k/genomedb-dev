@@ -84,7 +84,7 @@ is_a: regulates ! regulates
 			{
 				Id:            "GO:0000001",
 				Name:          "mitochondrion inheritance",
-				Namespace:     "biological_process",
+				Namespace:     "BP",
 				Def:           "\"The distribution of mitochondria, including the mitochondrial genome, into daughter cells after mitosis or meiosis, mediated by interactions between mitochondria and the cytoskeleton.\" [GOC:mcc, PMID:10873824, PMID:11389764]",
 				IsObsolete:    false,
 				Xrefs:         []string(nil),
@@ -95,7 +95,7 @@ is_a: regulates ! regulates
 			{
 				Id:            "GO:0000009",
 				Name:          "alpha-1,6-mannosyltransferase activity",
-				Namespace:     "molecular_function",
+				Namespace:     "MF",
 				Def:           "\"Catalysis of the transfer of a mannose residue to an oligosaccharide, forming an alpha-(1->6) linkage.\" [GOC:mcc, PMID:2644248]",
 				IsObsolete:    false,
 				Xrefs:         []string{"EC:2.4.1.232", "Reactome:R-HSA-449718 \"Addition of a third mannose to the N-glycan precursor by ALG2\""},
@@ -106,7 +106,7 @@ is_a: regulates ! regulates
 			{
 				Id:         "GO:0000039",
 				Name:       "obsolete plasma membrane long-chain fatty acid transporter",
-				Namespace:  "molecular_function",
+				Namespace:  "MF",
 				Def:        "\"OBSOLETE. (Was not defined before being made obsolete).\" [GOC:ai]",
 				IsObsolete: true,
 				Xrefs:      []string(nil),
@@ -116,7 +116,7 @@ is_a: regulates ! regulates
 			{
 				Id:            "GO:2001286",
 				Name:          "regulation of caveolin-mediated endocytosis",
-				Namespace:     "biological_process",
+				Namespace:     "BP",
 				Def:           "\"Any process that modulates the frequency, rate or extent of caveolin-mediated endocytosis.\" [GOC:obol]",
 				IsObsolete:    false,
 				Xrefs:         []string(nil),

@@ -8,7 +8,7 @@ option go_package = "genomedb/protogen/genomedb/v1;genomedbv1";
 
 message Genome {
   string name = 1;
-  repeated string locus_ids = 2;
+  repeated string gene_ids = 2;
 }
 
 message GenomeServiceGetRequest {

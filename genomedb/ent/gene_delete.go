@@ -5,7 +5,7 @@ package ent
 import (
 	"context"
 	"fmt"
-	"genomedb/ent/locus"
+	"genomedb/ent/gene"
 	"genomedb/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
@@ -13,45 +13,45 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// LocusDelete is the builder for deleting a Locus entity.
-type LocusDelete struct {
+// GeneDelete is the builder for deleting a Gene entity.
+type GeneDelete struct {
 	config
 	hooks    []Hook
-	mutation *LocusMutation
+	mutation *GeneMutation
 }
 
-// Where appends a list predicates to the LocusDelete builder.
-func (ld *LocusDelete) Where(ps ...predicate.Locus) *LocusDelete {
-	ld.mutation.Where(ps...)
-	return ld
+// Where appends a list predicates to the GeneDelete builder.
+func (gd *GeneDelete) Where(ps ...predicate.Gene) *GeneDelete {
+	gd.mutation.Where(ps...)
+	return gd
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (ld *LocusDelete) Exec(ctx context.Context) (int, error) {
+func (gd *GeneDelete) Exec(ctx context.Context) (int, error) {
 	var (
 		err      error
 		affected int
 	)
-	if len(ld.hooks) == 0 {
-		affected, err = ld.sqlExec(ctx)
+	if len(gd.hooks) == 0 {
+		affected, err = gd.sqlExec(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*LocusMutation)
+			mutation, ok := m.(*GeneMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
 			}
-			ld.mutation = mutation
-			affected, err = ld.sqlExec(ctx)
+			gd.mutation = mutation
+			affected, err = gd.sqlExec(ctx)
 			mutation.done = true
 			return affected, err
 		})
-		for i := len(ld.hooks) - 1; i >= 0; i-- {
-			if ld.hooks[i] == nil {
+		for i := len(gd.hooks) - 1; i >= 0; i-- {
+			if gd.hooks[i] == nil {
 				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
 			}
-			mut = ld.hooks[i](mut)
+			mut = gd.hooks[i](mut)
 		}
-		if _, err := mut.Mutate(ctx, ld.mutation); err != nil {
+		if _, err := mut.Mutate(ctx, gd.mutation); err != nil {
 			return 0, err
 		}
 	}
@@ -59,57 +59,57 @@ func (ld *LocusDelete) Exec(ctx context.Context) (int, error) {
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (ld *LocusDelete) ExecX(ctx context.Context) int {
-	n, err := ld.Exec(ctx)
+func (gd *GeneDelete) ExecX(ctx context.Context) int {
+	n, err := gd.Exec(ctx)
 	if err != nil {
 		panic(err)
 	}
 	return n
 }
 
-func (ld *LocusDelete) sqlExec(ctx context.Context) (int, error) {
+func (gd *GeneDelete) sqlExec(ctx context.Context) (int, error) {
 	_spec := &sqlgraph.DeleteSpec{
 		Node: &sqlgraph.NodeSpec{
-			Table: locus.Table,
+			Table: gene.Table,
 			ID: &sqlgraph.FieldSpec{
 				Type:   field.TypeString,
-				Column: locus.FieldID,
+				Column: gene.FieldID,
 			},
 		},
 	}
-	if ps := ld.mutation.predicates; len(ps) > 0 {
+	if ps := gd.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	affected, err := sqlgraph.DeleteNodes(ctx, ld.driver, _spec)
+	affected, err := sqlgraph.DeleteNodes(ctx, gd.driver, _spec)
 	if err != nil && sqlgraph.IsConstraintError(err) {
 		err = &ConstraintError{msg: err.Error(), wrap: err}
 	}
 	return affected, err
 }
 
-// LocusDeleteOne is the builder for deleting a single Locus entity.
-type LocusDeleteOne struct {
-	ld *LocusDelete
+// GeneDeleteOne is the builder for deleting a single Gene entity.
+type GeneDeleteOne struct {
+	gd *GeneDelete
 }
 
 // Exec executes the deletion query.
-func (ldo *LocusDeleteOne) Exec(ctx context.Context) error {
-	n, err := ldo.ld.Exec(ctx)
+func (gdo *GeneDeleteOne) Exec(ctx context.Context) error {
+	n, err := gdo.gd.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
 	case n == 0:
-		return &NotFoundError{locus.Label}
+		return &NotFoundError{gene.Label}
 	default:
 		return nil
 	}
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (ldo *LocusDeleteOne) ExecX(ctx context.Context) {
-	ldo.ld.ExecX(ctx)
+func (gdo *GeneDeleteOne) ExecX(ctx context.Context) {
+	gdo.gd.ExecX(ctx)
 }

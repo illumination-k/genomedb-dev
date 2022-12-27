@@ -6,8 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"genomedb/ent/gene"
 	"genomedb/ent/genome"
-	"genomedb/ent/locus"
 	"genomedb/ent/predicate"
 	"genomedb/ent/scaffold"
 
@@ -42,19 +42,19 @@ func (gu *GenomeUpdate) AddCodonTable(i int32) *GenomeUpdate {
 	return gu
 }
 
-// AddLocuseIDs adds the "locuses" edge to the Locus entity by IDs.
-func (gu *GenomeUpdate) AddLocuseIDs(ids ...string) *GenomeUpdate {
-	gu.mutation.AddLocuseIDs(ids...)
+// AddGeneIDs adds the "genes" edge to the Gene entity by IDs.
+func (gu *GenomeUpdate) AddGeneIDs(ids ...string) *GenomeUpdate {
+	gu.mutation.AddGeneIDs(ids...)
 	return gu
 }
 
-// AddLocuses adds the "locuses" edges to the Locus entity.
-func (gu *GenomeUpdate) AddLocuses(l ...*Locus) *GenomeUpdate {
-	ids := make([]string, len(l))
-	for i := range l {
-		ids[i] = l[i].ID
+// AddGenes adds the "genes" edges to the Gene entity.
+func (gu *GenomeUpdate) AddGenes(g ...*Gene) *GenomeUpdate {
+	ids := make([]string, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
 	}
-	return gu.AddLocuseIDs(ids...)
+	return gu.AddGeneIDs(ids...)
 }
 
 // AddScaffoldIDs adds the "scaffolds" edge to the Scaffold entity by IDs.
@@ -77,25 +77,25 @@ func (gu *GenomeUpdate) Mutation() *GenomeMutation {
 	return gu.mutation
 }
 
-// ClearLocuses clears all "locuses" edges to the Locus entity.
-func (gu *GenomeUpdate) ClearLocuses() *GenomeUpdate {
-	gu.mutation.ClearLocuses()
+// ClearGenes clears all "genes" edges to the Gene entity.
+func (gu *GenomeUpdate) ClearGenes() *GenomeUpdate {
+	gu.mutation.ClearGenes()
 	return gu
 }
 
-// RemoveLocuseIDs removes the "locuses" edge to Locus entities by IDs.
-func (gu *GenomeUpdate) RemoveLocuseIDs(ids ...string) *GenomeUpdate {
-	gu.mutation.RemoveLocuseIDs(ids...)
+// RemoveGeneIDs removes the "genes" edge to Gene entities by IDs.
+func (gu *GenomeUpdate) RemoveGeneIDs(ids ...string) *GenomeUpdate {
+	gu.mutation.RemoveGeneIDs(ids...)
 	return gu
 }
 
-// RemoveLocuses removes "locuses" edges to Locus entities.
-func (gu *GenomeUpdate) RemoveLocuses(l ...*Locus) *GenomeUpdate {
-	ids := make([]string, len(l))
-	for i := range l {
-		ids[i] = l[i].ID
+// RemoveGenes removes "genes" edges to Gene entities.
+func (gu *GenomeUpdate) RemoveGenes(g ...*Gene) *GenomeUpdate {
+	ids := make([]string, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
 	}
-	return gu.RemoveLocuseIDs(ids...)
+	return gu.RemoveGeneIDs(ids...)
 }
 
 // ClearScaffolds clears all "scaffolds" edges to the Scaffold entity.
@@ -213,33 +213,33 @@ func (gu *GenomeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := gu.mutation.AddedCodonTable(); ok {
 		_spec.AddField(genome.FieldCodonTable, field.TypeInt32, value)
 	}
-	if gu.mutation.LocusesCleared() {
+	if gu.mutation.GenesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   genome.LocusesTable,
-			Columns: []string{genome.LocusesColumn},
+			Table:   genome.GenesTable,
+			Columns: []string{genome.GenesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
-					Column: locus.FieldID,
+					Column: gene.FieldID,
 				},
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.RemovedLocusesIDs(); len(nodes) > 0 && !gu.mutation.LocusesCleared() {
+	if nodes := gu.mutation.RemovedGenesIDs(); len(nodes) > 0 && !gu.mutation.GenesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   genome.LocusesTable,
-			Columns: []string{genome.LocusesColumn},
+			Table:   genome.GenesTable,
+			Columns: []string{genome.GenesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
-					Column: locus.FieldID,
+					Column: gene.FieldID,
 				},
 			},
 		}
@@ -248,17 +248,17 @@ func (gu *GenomeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.LocusesIDs(); len(nodes) > 0 {
+	if nodes := gu.mutation.GenesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   genome.LocusesTable,
-			Columns: []string{genome.LocusesColumn},
+			Table:   genome.GenesTable,
+			Columns: []string{genome.GenesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
-					Column: locus.FieldID,
+					Column: gene.FieldID,
 				},
 			},
 		}
@@ -353,19 +353,19 @@ func (guo *GenomeUpdateOne) AddCodonTable(i int32) *GenomeUpdateOne {
 	return guo
 }
 
-// AddLocuseIDs adds the "locuses" edge to the Locus entity by IDs.
-func (guo *GenomeUpdateOne) AddLocuseIDs(ids ...string) *GenomeUpdateOne {
-	guo.mutation.AddLocuseIDs(ids...)
+// AddGeneIDs adds the "genes" edge to the Gene entity by IDs.
+func (guo *GenomeUpdateOne) AddGeneIDs(ids ...string) *GenomeUpdateOne {
+	guo.mutation.AddGeneIDs(ids...)
 	return guo
 }
 
-// AddLocuses adds the "locuses" edges to the Locus entity.
-func (guo *GenomeUpdateOne) AddLocuses(l ...*Locus) *GenomeUpdateOne {
-	ids := make([]string, len(l))
-	for i := range l {
-		ids[i] = l[i].ID
+// AddGenes adds the "genes" edges to the Gene entity.
+func (guo *GenomeUpdateOne) AddGenes(g ...*Gene) *GenomeUpdateOne {
+	ids := make([]string, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
 	}
-	return guo.AddLocuseIDs(ids...)
+	return guo.AddGeneIDs(ids...)
 }
 
 // AddScaffoldIDs adds the "scaffolds" edge to the Scaffold entity by IDs.
@@ -388,25 +388,25 @@ func (guo *GenomeUpdateOne) Mutation() *GenomeMutation {
 	return guo.mutation
 }
 
-// ClearLocuses clears all "locuses" edges to the Locus entity.
-func (guo *GenomeUpdateOne) ClearLocuses() *GenomeUpdateOne {
-	guo.mutation.ClearLocuses()
+// ClearGenes clears all "genes" edges to the Gene entity.
+func (guo *GenomeUpdateOne) ClearGenes() *GenomeUpdateOne {
+	guo.mutation.ClearGenes()
 	return guo
 }
 
-// RemoveLocuseIDs removes the "locuses" edge to Locus entities by IDs.
-func (guo *GenomeUpdateOne) RemoveLocuseIDs(ids ...string) *GenomeUpdateOne {
-	guo.mutation.RemoveLocuseIDs(ids...)
+// RemoveGeneIDs removes the "genes" edge to Gene entities by IDs.
+func (guo *GenomeUpdateOne) RemoveGeneIDs(ids ...string) *GenomeUpdateOne {
+	guo.mutation.RemoveGeneIDs(ids...)
 	return guo
 }
 
-// RemoveLocuses removes "locuses" edges to Locus entities.
-func (guo *GenomeUpdateOne) RemoveLocuses(l ...*Locus) *GenomeUpdateOne {
-	ids := make([]string, len(l))
-	for i := range l {
-		ids[i] = l[i].ID
+// RemoveGenes removes "genes" edges to Gene entities.
+func (guo *GenomeUpdateOne) RemoveGenes(g ...*Gene) *GenomeUpdateOne {
+	ids := make([]string, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
 	}
-	return guo.RemoveLocuseIDs(ids...)
+	return guo.RemoveGeneIDs(ids...)
 }
 
 // ClearScaffolds clears all "scaffolds" edges to the Scaffold entity.
@@ -554,33 +554,33 @@ func (guo *GenomeUpdateOne) sqlSave(ctx context.Context) (_node *Genome, err err
 	if value, ok := guo.mutation.AddedCodonTable(); ok {
 		_spec.AddField(genome.FieldCodonTable, field.TypeInt32, value)
 	}
-	if guo.mutation.LocusesCleared() {
+	if guo.mutation.GenesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   genome.LocusesTable,
-			Columns: []string{genome.LocusesColumn},
+			Table:   genome.GenesTable,
+			Columns: []string{genome.GenesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
-					Column: locus.FieldID,
+					Column: gene.FieldID,
 				},
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.RemovedLocusesIDs(); len(nodes) > 0 && !guo.mutation.LocusesCleared() {
+	if nodes := guo.mutation.RemovedGenesIDs(); len(nodes) > 0 && !guo.mutation.GenesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   genome.LocusesTable,
-			Columns: []string{genome.LocusesColumn},
+			Table:   genome.GenesTable,
+			Columns: []string{genome.GenesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
-					Column: locus.FieldID,
+					Column: gene.FieldID,
 				},
 			},
 		}
@@ -589,17 +589,17 @@ func (guo *GenomeUpdateOne) sqlSave(ctx context.Context) (_node *Genome, err err
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.LocusesIDs(); len(nodes) > 0 {
+	if nodes := guo.mutation.GenesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   genome.LocusesTable,
-			Columns: []string{genome.LocusesColumn},
+			Table:   genome.GenesTable,
+			Columns: []string{genome.GenesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
-					Column: locus.FieldID,
+					Column: gene.FieldID,
 				},
 			},
 		}

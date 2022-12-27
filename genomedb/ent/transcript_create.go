@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"genomedb/bio/gffio"
 	"genomedb/ent/domainannotation"
+	"genomedb/ent/gene"
 	"genomedb/ent/goterm"
-	"genomedb/ent/locus"
 	"genomedb/ent/transcript"
 
 	"entgo.io/ent/dialect"
@@ -116,23 +116,23 @@ func (tc *TranscriptCreate) SetID(s string) *TranscriptCreate {
 	return tc
 }
 
-// SetLocusID sets the "locus" edge to the Locus entity by ID.
-func (tc *TranscriptCreate) SetLocusID(id string) *TranscriptCreate {
-	tc.mutation.SetLocusID(id)
+// SetGeneID sets the "gene" edge to the Gene entity by ID.
+func (tc *TranscriptCreate) SetGeneID(id string) *TranscriptCreate {
+	tc.mutation.SetGeneID(id)
 	return tc
 }
 
-// SetNillableLocusID sets the "locus" edge to the Locus entity by ID if the given value is not nil.
-func (tc *TranscriptCreate) SetNillableLocusID(id *string) *TranscriptCreate {
+// SetNillableGeneID sets the "gene" edge to the Gene entity by ID if the given value is not nil.
+func (tc *TranscriptCreate) SetNillableGeneID(id *string) *TranscriptCreate {
 	if id != nil {
-		tc = tc.SetLocusID(*id)
+		tc = tc.SetGeneID(*id)
 	}
 	return tc
 }
 
-// SetLocus sets the "locus" edge to the Locus entity.
-func (tc *TranscriptCreate) SetLocus(l *Locus) *TranscriptCreate {
-	return tc.SetLocusID(l.ID)
+// SetGene sets the "gene" edge to the Gene entity.
+func (tc *TranscriptCreate) SetGene(g *Gene) *TranscriptCreate {
+	return tc.SetGeneID(g.ID)
 }
 
 // AddGotermIDs adds the "goterms" edge to the GoTerm entity by IDs.
@@ -386,24 +386,24 @@ func (tc *TranscriptCreate) createSpec() (*Transcript, *sqlgraph.CreateSpec) {
 		_spec.SetField(transcript.FieldProteinSequence, field.TypeString, value)
 		_node.ProteinSequence = value
 	}
-	if nodes := tc.mutation.LocusIDs(); len(nodes) > 0 {
+	if nodes := tc.mutation.GeneIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   transcript.LocusTable,
-			Columns: []string{transcript.LocusColumn},
+			Table:   transcript.GeneTable,
+			Columns: []string{transcript.GeneColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
-					Column: locus.FieldID,
+					Column: gene.FieldID,
 				},
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.locus_transcripts = &nodes[0]
+		_node.gene_transcripts = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := tc.mutation.GotermsIDs(); len(nodes) > 0 {

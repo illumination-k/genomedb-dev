@@ -35,8 +35,8 @@ const (
 	FieldCdsSequence = "cds_sequence"
 	// FieldProteinSequence holds the string denoting the protein_sequence field in the database.
 	FieldProteinSequence = "protein_sequence"
-	// EdgeLocus holds the string denoting the locus edge name in mutations.
-	EdgeLocus = "locus"
+	// EdgeGene holds the string denoting the gene edge name in mutations.
+	EdgeGene = "gene"
 	// EdgeGoterms holds the string denoting the goterms edge name in mutations.
 	EdgeGoterms = "goterms"
 	// EdgeDomains holds the string denoting the domains edge name in mutations.
@@ -47,13 +47,13 @@ const (
 	EdgeDomainTranscript = "domain_transcript"
 	// Table holds the table name of the transcript in the database.
 	Table = "transcripts"
-	// LocusTable is the table that holds the locus relation/edge.
-	LocusTable = "transcripts"
-	// LocusInverseTable is the table name for the Locus entity.
-	// It exists in this package in order to avoid circular dependency with the "locus" package.
-	LocusInverseTable = "locus"
-	// LocusColumn is the table column denoting the locus relation/edge.
-	LocusColumn = "locus_transcripts"
+	// GeneTable is the table that holds the gene relation/edge.
+	GeneTable = "transcripts"
+	// GeneInverseTable is the table name for the Gene entity.
+	// It exists in this package in order to avoid circular dependency with the "gene" package.
+	GeneInverseTable = "genes"
+	// GeneColumn is the table column denoting the gene relation/edge.
+	GeneColumn = "gene_transcripts"
 	// GotermsTable is the table that holds the goterms relation/edge. The primary key declared below.
 	GotermsTable = "go_term_on_transcripts"
 	// GotermsInverseTable is the table name for the GoTerm entity.
@@ -102,7 +102,7 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "transcripts"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"locus_transcripts",
+	"gene_transcripts",
 }
 
 var (

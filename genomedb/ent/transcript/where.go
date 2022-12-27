@@ -1070,25 +1070,25 @@ func ProteinSequenceContainsFold(v string) predicate.Transcript {
 	})
 }
 
-// HasLocus applies the HasEdge predicate on the "locus" edge.
-func HasLocus() predicate.Transcript {
+// HasGene applies the HasEdge predicate on the "gene" edge.
+func HasGene() predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(LocusTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, LocusTable, LocusColumn),
+			sqlgraph.To(GeneTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, GeneTable, GeneColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasLocusWith applies the HasEdge predicate on the "locus" edge with a given conditions (other predicates).
-func HasLocusWith(preds ...predicate.Locus) predicate.Transcript {
+// HasGeneWith applies the HasEdge predicate on the "gene" edge with a given conditions (other predicates).
+func HasGeneWith(preds ...predicate.Gene) predicate.Transcript {
 	return predicate.Transcript(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(LocusInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, LocusTable, LocusColumn),
+			sqlgraph.To(GeneInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, GeneTable, GeneColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

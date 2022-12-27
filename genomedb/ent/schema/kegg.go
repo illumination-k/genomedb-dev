@@ -15,7 +15,6 @@ func (KeggOntology) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("id"),
 		field.String("name"),
-		field.String("symbol"),
 	}
 }
 
@@ -32,6 +31,7 @@ type KeggPathway struct {
 func (KeggPathway) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("id"),
+		field.String("name"),
 	}
 }
 
@@ -62,7 +62,9 @@ type KeggReaction struct {
 
 // Fields of the Kegg.
 func (KeggReaction) Fields() []ent.Field {
-	return nil
+	return []ent.Field{
+		field.String("id"),
+	}
 }
 
 // Edges of the Kegg.

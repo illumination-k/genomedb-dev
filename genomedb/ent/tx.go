@@ -16,6 +16,8 @@ type Tx struct {
 	DomainAnnotation *DomainAnnotationClient
 	// DomainAnnotationToTranscript is the client for interacting with the DomainAnnotationToTranscript builders.
 	DomainAnnotationToTranscript *DomainAnnotationToTranscriptClient
+	// Gene is the client for interacting with the Gene builders.
+	Gene *GeneClient
 	// Genome is the client for interacting with the Genome builders.
 	Genome *GenomeClient
 	// GoTerm is the client for interacting with the GoTerm builders.
@@ -32,8 +34,6 @@ type Tx struct {
 	KeggPathway *KeggPathwayClient
 	// KeggReaction is the client for interacting with the KeggReaction builders.
 	KeggReaction *KeggReactionClient
-	// Locus is the client for interacting with the Locus builders.
-	Locus *LocusClient
 	// Scaffold is the client for interacting with the Scaffold builders.
 	Scaffold *ScaffoldClient
 	// Transcript is the client for interacting with the Transcript builders.
@@ -171,6 +171,7 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.DomainAnnotation = NewDomainAnnotationClient(tx.config)
 	tx.DomainAnnotationToTranscript = NewDomainAnnotationToTranscriptClient(tx.config)
+	tx.Gene = NewGeneClient(tx.config)
 	tx.Genome = NewGenomeClient(tx.config)
 	tx.GoTerm = NewGoTermClient(tx.config)
 	tx.GoTermOnTranscripts = NewGoTermOnTranscriptsClient(tx.config)
@@ -179,7 +180,6 @@ func (tx *Tx) init() {
 	tx.KeggOntology = NewKeggOntologyClient(tx.config)
 	tx.KeggPathway = NewKeggPathwayClient(tx.config)
 	tx.KeggReaction = NewKeggReactionClient(tx.config)
-	tx.Locus = NewLocusClient(tx.config)
 	tx.Scaffold = NewScaffoldClient(tx.config)
 	tx.Transcript = NewTranscriptClient(tx.config)
 }

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"genomedb/ent/domainannotation"
 	"genomedb/ent/domainannotationtotranscript"
+	"genomedb/ent/gene"
 	"genomedb/ent/genome"
 	"genomedb/ent/goterm"
 	"genomedb/ent/gotermontranscripts"
@@ -16,7 +17,6 @@ import (
 	"genomedb/ent/keggontology"
 	"genomedb/ent/keggpathway"
 	"genomedb/ent/keggreaction"
-	"genomedb/ent/locus"
 	"genomedb/ent/scaffold"
 	"genomedb/ent/transcript"
 
@@ -45,6 +45,7 @@ func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
 		domainannotation.Table:             domainannotation.ValidColumn,
 		domainannotationtotranscript.Table: domainannotationtotranscript.ValidColumn,
+		gene.Table:                         gene.ValidColumn,
 		genome.Table:                       genome.ValidColumn,
 		goterm.Table:                       goterm.ValidColumn,
 		gotermontranscripts.Table:          gotermontranscripts.ValidColumn,
@@ -53,7 +54,6 @@ func columnChecker(table string) func(string) error {
 		keggontology.Table:                 keggontology.ValidColumn,
 		keggpathway.Table:                  keggpathway.ValidColumn,
 		keggreaction.Table:                 keggreaction.ValidColumn,
-		locus.Table:                        locus.ValidColumn,
 		scaffold.Table:                     scaffold.ValidColumn,
 		transcript.Table:                   transcript.ValidColumn,
 	}

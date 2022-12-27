@@ -11,8 +11,6 @@ import (
 	"genomedb/protogen/genomedb/v1/genomedbv1connect"
 	"net/http"
 
-	"log"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/http2"
@@ -62,7 +60,7 @@ to quickly create a Cobra application.`,
 		defer client.Close()
 
 		if err != nil {
-			log.Fatalf("failed listening: %s", err)
+			return err
 		}
 
 		genomeServer := &GenomeServer{}
