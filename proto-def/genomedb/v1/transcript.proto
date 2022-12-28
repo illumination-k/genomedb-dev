@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package genomedb.v1;
+
+option go_package = "genomedb/protogen/genomedb/v1;genomedbv1";
+
+enum SequenceType {
+  SEQUENCE_TYPE_UNSPECIFIED = 0;
+  SEQUENCE_TYPE_GENOMIC = 1;
+  SEQUENCE_TYPE_EXON = 2;
+  SEQUENCE_TYPE_CDS = 3;
+  SEQUENCE_TYPE_PROTEIN = 4;
+}
+
+message AttributeValues {
+    repeated string values = 1;
+}
+
+message GffRecord {
+    string seqname = 1;
+    string source = 2;
+    string type = 3;
+    int32 start = 4;
+    int32 end = 5;
+    string strand = 6;
+    string phase = 7;
+    map<string, AttributeValues> attributes = 8;
+}
+
+message DomainAnnotation {
+    int32 start = 1;
+    int32 end = 2;
+    string accession = 3;
+    string description = 4;
+    string analysis = 5;
+}
+
+message Transcript {
+    string id = 1;
+    string type = 2;
+    string seqname = 3;
+    int32 start = 4;
+    int32 end = 5;
+    string strand = 6;
+    repeated GffRecord exon_records = 7;
+    repeated GffRecord cds_records = 8;
+    repeated DomainAnnotation domains = 9;
+}
+
+message TranscriptServiceGetSequenceRequest {
+    SequenceType type = 1;
+    string transcript_id = 2;
+  }
+  
+  message TranscriptServiceGetSequenceResponse {
+      SequenceType type = 1;
+      string transcript_id = 2;
+      string sequence = 3;
+  }
+  
+  service TranscriptService {
+      rpc GetSequence(TranscriptServiceGetSequenceRequest) returns (TranscriptServiceGetSequenceResponse) {}
+  }

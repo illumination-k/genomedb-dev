@@ -8,22 +8,22 @@ option go_package = "genomedb/protogen/genomedb/v1;genomedbv1";
 
 message Genome {
   string name = 1;
-  repeated string locus_ids = 2;
+  repeated string gene_ids = 2;
 }
 
-message GenomeGetRequest {
+message GenomeServiceGetRequest {
   string genome_name = 1;
 }
 
-message GenomeGetResponse {
+message GenomeServiceGetResponse {
   Genome genome = 1;
 }
 
-message ListGenomeNamesResponse {
+message GenomeServiceListGenomeNamesResponse {
   repeated string names = 1;
 }
 
 service GenomeService {
-  rpc Get(GenomeGetRequest) returns (GenomeGetResponse) {}
-  rpc ListGenomeNames(google.protobuf.Empty) returns (ListGenomeNamesResponse) {}
+  rpc Get(GenomeServiceGetRequest) returns (GenomeServiceGetResponse) {}
+  rpc ListGenomeNames(google.protobuf.Empty) returns (GenomeServiceListGenomeNamesResponse) {}
 }
