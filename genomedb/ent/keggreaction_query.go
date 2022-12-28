@@ -4,7 +4,9 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
+	"genomedb/ent/keggpathway"
 	"genomedb/ent/keggreaction"
 	"genomedb/ent/predicate"
 	"math"
@@ -17,12 +19,13 @@ import (
 // KeggReactionQuery is the builder for querying KeggReaction entities.
 type KeggReactionQuery struct {
 	config
-	limit      *int
-	offset     *int
-	unique     *bool
-	order      []OrderFunc
-	fields     []string
-	predicates []predicate.KeggReaction
+	limit        *int
+	offset       *int
+	unique       *bool
+	order        []OrderFunc
+	fields       []string
+	predicates   []predicate.KeggReaction
+	withPathways *KeggPathwayQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -59,6 +62,28 @@ func (krq *KeggReactionQuery) Order(o ...OrderFunc) *KeggReactionQuery {
 	return krq
 }
 
+// QueryPathways chains the current query on the "pathways" edge.
+func (krq *KeggReactionQuery) QueryPathways() *KeggPathwayQuery {
+	query := &KeggPathwayQuery{config: krq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := krq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := krq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(keggreaction.Table, keggreaction.FieldID, selector),
+			sqlgraph.To(keggpathway.Table, keggpathway.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, keggreaction.PathwaysTable, keggreaction.PathwaysPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(krq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first KeggReaction entity from the query.
 // Returns a *NotFoundError when no KeggReaction was found.
 func (krq *KeggReactionQuery) First(ctx context.Context) (*KeggReaction, error) {
@@ -83,8 +108,8 @@ func (krq *KeggReactionQuery) FirstX(ctx context.Context) *KeggReaction {
 
 // FirstID returns the first KeggReaction ID from the query.
 // Returns a *NotFoundError when no KeggReaction ID was found.
-func (krq *KeggReactionQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (krq *KeggReactionQuery) FirstID(ctx context.Context) (id string, err error) {
+	var ids []string
 	if ids, err = krq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
@@ -96,7 +121,7 @@ func (krq *KeggReactionQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (krq *KeggReactionQuery) FirstIDX(ctx context.Context) int {
+func (krq *KeggReactionQuery) FirstIDX(ctx context.Context) string {
 	id, err := krq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -134,8 +159,8 @@ func (krq *KeggReactionQuery) OnlyX(ctx context.Context) *KeggReaction {
 // OnlyID is like Only, but returns the only KeggReaction ID in the query.
 // Returns a *NotSingularError when more than one KeggReaction ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (krq *KeggReactionQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (krq *KeggReactionQuery) OnlyID(ctx context.Context) (id string, err error) {
+	var ids []string
 	if ids, err = krq.Limit(2).IDs(ctx); err != nil {
 		return
 	}
@@ -151,7 +176,7 @@ func (krq *KeggReactionQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (krq *KeggReactionQuery) OnlyIDX(ctx context.Context) int {
+func (krq *KeggReactionQuery) OnlyIDX(ctx context.Context) string {
 	id, err := krq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -177,8 +202,8 @@ func (krq *KeggReactionQuery) AllX(ctx context.Context) []*KeggReaction {
 }
 
 // IDs executes the query and returns a list of KeggReaction IDs.
-func (krq *KeggReactionQuery) IDs(ctx context.Context) ([]int, error) {
-	var ids []int
+func (krq *KeggReactionQuery) IDs(ctx context.Context) ([]string, error) {
+	var ids []string
 	if err := krq.Select(keggreaction.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -186,7 +211,7 @@ func (krq *KeggReactionQuery) IDs(ctx context.Context) ([]int, error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (krq *KeggReactionQuery) IDsX(ctx context.Context) []int {
+func (krq *KeggReactionQuery) IDsX(ctx context.Context) []string {
 	ids, err := krq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -235,11 +260,12 @@ func (krq *KeggReactionQuery) Clone() *KeggReactionQuery {
 		return nil
 	}
 	return &KeggReactionQuery{
-		config:     krq.config,
-		limit:      krq.limit,
-		offset:     krq.offset,
-		order:      append([]OrderFunc{}, krq.order...),
-		predicates: append([]predicate.KeggReaction{}, krq.predicates...),
+		config:       krq.config,
+		limit:        krq.limit,
+		offset:       krq.offset,
+		order:        append([]OrderFunc{}, krq.order...),
+		predicates:   append([]predicate.KeggReaction{}, krq.predicates...),
+		withPathways: krq.withPathways.Clone(),
 		// clone intermediate query.
 		sql:    krq.sql.Clone(),
 		path:   krq.path,
@@ -247,8 +273,31 @@ func (krq *KeggReactionQuery) Clone() *KeggReactionQuery {
 	}
 }
 
+// WithPathways tells the query-builder to eager-load the nodes that are connected to
+// the "pathways" edge. The optional arguments are used to configure the query builder of the edge.
+func (krq *KeggReactionQuery) WithPathways(opts ...func(*KeggPathwayQuery)) *KeggReactionQuery {
+	query := &KeggPathwayQuery{config: krq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	krq.withPathways = query
+	return krq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
+//
+// Example:
+//
+//	var v []struct {
+//		Name string `json:"name,omitempty"`
+//		Count int `json:"count,omitempty"`
+//	}
+//
+//	client.KeggReaction.Query().
+//		GroupBy(keggreaction.FieldName).
+//		Aggregate(ent.Count()).
+//		Scan(ctx, &v)
 func (krq *KeggReactionQuery) GroupBy(field string, fields ...string) *KeggReactionGroupBy {
 	grbuild := &KeggReactionGroupBy{config: krq.config}
 	grbuild.fields = append([]string{field}, fields...)
@@ -265,6 +314,16 @@ func (krq *KeggReactionQuery) GroupBy(field string, fields ...string) *KeggReact
 
 // Select allows the selection one or more fields/columns for the given query,
 // instead of selecting all fields in the entity.
+//
+// Example:
+//
+//	var v []struct {
+//		Name string `json:"name,omitempty"`
+//	}
+//
+//	client.KeggReaction.Query().
+//		Select(keggreaction.FieldName).
+//		Scan(ctx, &v)
 func (krq *KeggReactionQuery) Select(fields ...string) *KeggReactionSelect {
 	krq.fields = append(krq.fields, fields...)
 	selbuild := &KeggReactionSelect{KeggReactionQuery: krq}
@@ -296,8 +355,11 @@ func (krq *KeggReactionQuery) prepareQuery(ctx context.Context) error {
 
 func (krq *KeggReactionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*KeggReaction, error) {
 	var (
-		nodes = []*KeggReaction{}
-		_spec = krq.querySpec()
+		nodes       = []*KeggReaction{}
+		_spec       = krq.querySpec()
+		loadedTypes = [1]bool{
+			krq.withPathways != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*KeggReaction).scanValues(nil, columns)
@@ -305,6 +367,7 @@ func (krq *KeggReactionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &KeggReaction{config: krq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -316,7 +379,73 @@ func (krq *KeggReactionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := krq.withPathways; query != nil {
+		if err := krq.loadPathways(ctx, query, nodes,
+			func(n *KeggReaction) { n.Edges.Pathways = []*KeggPathway{} },
+			func(n *KeggReaction, e *KeggPathway) { n.Edges.Pathways = append(n.Edges.Pathways, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (krq *KeggReactionQuery) loadPathways(ctx context.Context, query *KeggPathwayQuery, nodes []*KeggReaction, init func(*KeggReaction), assign func(*KeggReaction, *KeggPathway)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[string]*KeggReaction)
+	nids := make(map[string]map[*KeggReaction]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(keggreaction.PathwaysTable)
+		s.Join(joinT).On(s.C(keggpathway.FieldID), joinT.C(keggreaction.PathwaysPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(keggreaction.PathwaysPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(keggreaction.PathwaysPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	neighbors, err := query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+		assign := spec.Assign
+		values := spec.ScanValues
+		spec.ScanValues = func(columns []string) ([]any, error) {
+			values, err := values(columns[1:])
+			if err != nil {
+				return nil, err
+			}
+			return append([]any{new(sql.NullString)}, values...), nil
+		}
+		spec.Assign = func(columns []string, values []any) error {
+			outValue := values[0].(*sql.NullString).String
+			inValue := values[1].(*sql.NullString).String
+			if nids[inValue] == nil {
+				nids[inValue] = map[*KeggReaction]struct{}{byID[outValue]: {}}
+				return assign(columns[1:], values[1:])
+			}
+			nids[inValue][byID[outValue]] = struct{}{}
+			return nil
+		}
+	})
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "pathways" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
 }
 
 func (krq *KeggReactionQuery) sqlCount(ctx context.Context) (int, error) {
@@ -345,7 +474,7 @@ func (krq *KeggReactionQuery) querySpec() *sqlgraph.QuerySpec {
 			Table:   keggreaction.Table,
 			Columns: keggreaction.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: keggreaction.FieldID,
 			},
 		},

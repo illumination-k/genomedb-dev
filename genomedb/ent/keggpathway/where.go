@@ -6,6 +6,7 @@ import (
 	"genomedb/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // ID filters vertices based on their ID field.
@@ -76,6 +77,224 @@ func IDLT(id string) predicate.KeggPathway {
 func IDLTE(id string) predicate.KeggPathway {
 	return predicate.KeggPathway(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldID), id))
+	})
+}
+
+// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
+func Name(v string) predicate.KeggPathway {
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldName), v))
+	})
+}
+
+// NameEQ applies the EQ predicate on the "name" field.
+func NameEQ(v string) predicate.KeggPathway {
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldName), v))
+	})
+}
+
+// NameNEQ applies the NEQ predicate on the "name" field.
+func NameNEQ(v string) predicate.KeggPathway {
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldName), v))
+	})
+}
+
+// NameIn applies the In predicate on the "name" field.
+func NameIn(vs ...string) predicate.KeggPathway {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		s.Where(sql.In(s.C(FieldName), v...))
+	})
+}
+
+// NameNotIn applies the NotIn predicate on the "name" field.
+func NameNotIn(vs ...string) predicate.KeggPathway {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		s.Where(sql.NotIn(s.C(FieldName), v...))
+	})
+}
+
+// NameGT applies the GT predicate on the "name" field.
+func NameGT(v string) predicate.KeggPathway {
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldName), v))
+	})
+}
+
+// NameGTE applies the GTE predicate on the "name" field.
+func NameGTE(v string) predicate.KeggPathway {
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldName), v))
+	})
+}
+
+// NameLT applies the LT predicate on the "name" field.
+func NameLT(v string) predicate.KeggPathway {
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldName), v))
+	})
+}
+
+// NameLTE applies the LTE predicate on the "name" field.
+func NameLTE(v string) predicate.KeggPathway {
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldName), v))
+	})
+}
+
+// NameContains applies the Contains predicate on the "name" field.
+func NameContains(v string) predicate.KeggPathway {
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldName), v))
+	})
+}
+
+// NameHasPrefix applies the HasPrefix predicate on the "name" field.
+func NameHasPrefix(v string) predicate.KeggPathway {
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldName), v))
+	})
+}
+
+// NameHasSuffix applies the HasSuffix predicate on the "name" field.
+func NameHasSuffix(v string) predicate.KeggPathway {
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldName), v))
+	})
+}
+
+// NameEqualFold applies the EqualFold predicate on the "name" field.
+func NameEqualFold(v string) predicate.KeggPathway {
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldName), v))
+	})
+}
+
+// NameContainsFold applies the ContainsFold predicate on the "name" field.
+func NameContainsFold(v string) predicate.KeggPathway {
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldName), v))
+	})
+}
+
+// HasRelatingMap applies the HasEdge predicate on the "relating_map" edge.
+func HasRelatingMap() predicate.KeggPathway {
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(RelatingMapTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, RelatingMapTable, RelatingMapPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRelatingMapWith applies the HasEdge predicate on the "relating_map" edge with a given conditions (other predicates).
+func HasRelatingMapWith(preds ...predicate.KeggPathway) predicate.KeggPathway {
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, RelatingMapTable, RelatingMapPrimaryKey...),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasRelatedMap applies the HasEdge predicate on the "related_map" edge.
+func HasRelatedMap() predicate.KeggPathway {
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(RelatedMapTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, RelatedMapTable, RelatedMapPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRelatedMapWith applies the HasEdge predicate on the "related_map" edge with a given conditions (other predicates).
+func HasRelatedMapWith(preds ...predicate.KeggPathway) predicate.KeggPathway {
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, RelatedMapTable, RelatedMapPrimaryKey...),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasReactions applies the HasEdge predicate on the "reactions" edge.
+func HasReactions() predicate.KeggPathway {
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ReactionsTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, ReactionsTable, ReactionsPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasReactionsWith applies the HasEdge predicate on the "reactions" edge with a given conditions (other predicates).
+func HasReactionsWith(preds ...predicate.KeggReaction) predicate.KeggPathway {
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ReactionsInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, ReactionsTable, ReactionsPrimaryKey...),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasOrthologies applies the HasEdge predicate on the "orthologies" edge.
+func HasOrthologies() predicate.KeggPathway {
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(OrthologiesTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, OrthologiesTable, OrthologiesPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasOrthologiesWith applies the HasEdge predicate on the "orthologies" edge with a given conditions (other predicates).
+func HasOrthologiesWith(preds ...predicate.KeggOrthlogy) predicate.KeggPathway {
+	return predicate.KeggPathway(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(OrthologiesInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, OrthologiesTable, OrthologiesPrimaryKey...),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
 	})
 }
 

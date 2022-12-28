@@ -18,9 +18,11 @@ import (
 	"genomedb/ent/gotermontranscripts"
 	"genomedb/ent/keggcompound"
 	"genomedb/ent/keggmodule"
-	"genomedb/ent/keggontology"
+	"genomedb/ent/keggorthlogy"
 	"genomedb/ent/keggpathway"
 	"genomedb/ent/keggreaction"
+	"genomedb/ent/kog"
+	"genomedb/ent/nomeclature"
 	"genomedb/ent/scaffold"
 	"genomedb/ent/transcript"
 
@@ -46,16 +48,20 @@ type Client struct {
 	GoTerm *GoTermClient
 	// GoTermOnTranscripts is the client for interacting with the GoTermOnTranscripts builders.
 	GoTermOnTranscripts *GoTermOnTranscriptsClient
+	// KOG is the client for interacting with the KOG builders.
+	KOG *KOGClient
 	// KeggCompound is the client for interacting with the KeggCompound builders.
 	KeggCompound *KeggCompoundClient
 	// KeggModule is the client for interacting with the KeggModule builders.
 	KeggModule *KeggModuleClient
-	// KeggOntology is the client for interacting with the KeggOntology builders.
-	KeggOntology *KeggOntologyClient
+	// KeggOrthlogy is the client for interacting with the KeggOrthlogy builders.
+	KeggOrthlogy *KeggOrthlogyClient
 	// KeggPathway is the client for interacting with the KeggPathway builders.
 	KeggPathway *KeggPathwayClient
 	// KeggReaction is the client for interacting with the KeggReaction builders.
 	KeggReaction *KeggReactionClient
+	// Nomeclature is the client for interacting with the Nomeclature builders.
+	Nomeclature *NomeclatureClient
 	// Scaffold is the client for interacting with the Scaffold builders.
 	Scaffold *ScaffoldClient
 	// Transcript is the client for interacting with the Transcript builders.
@@ -79,11 +85,13 @@ func (c *Client) init() {
 	c.Genome = NewGenomeClient(c.config)
 	c.GoTerm = NewGoTermClient(c.config)
 	c.GoTermOnTranscripts = NewGoTermOnTranscriptsClient(c.config)
+	c.KOG = NewKOGClient(c.config)
 	c.KeggCompound = NewKeggCompoundClient(c.config)
 	c.KeggModule = NewKeggModuleClient(c.config)
-	c.KeggOntology = NewKeggOntologyClient(c.config)
+	c.KeggOrthlogy = NewKeggOrthlogyClient(c.config)
 	c.KeggPathway = NewKeggPathwayClient(c.config)
 	c.KeggReaction = NewKeggReactionClient(c.config)
+	c.Nomeclature = NewNomeclatureClient(c.config)
 	c.Scaffold = NewScaffoldClient(c.config)
 	c.Transcript = NewTranscriptClient(c.config)
 }
@@ -125,11 +133,13 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Genome:                       NewGenomeClient(cfg),
 		GoTerm:                       NewGoTermClient(cfg),
 		GoTermOnTranscripts:          NewGoTermOnTranscriptsClient(cfg),
+		KOG:                          NewKOGClient(cfg),
 		KeggCompound:                 NewKeggCompoundClient(cfg),
 		KeggModule:                   NewKeggModuleClient(cfg),
-		KeggOntology:                 NewKeggOntologyClient(cfg),
+		KeggOrthlogy:                 NewKeggOrthlogyClient(cfg),
 		KeggPathway:                  NewKeggPathwayClient(cfg),
 		KeggReaction:                 NewKeggReactionClient(cfg),
+		Nomeclature:                  NewNomeclatureClient(cfg),
 		Scaffold:                     NewScaffoldClient(cfg),
 		Transcript:                   NewTranscriptClient(cfg),
 	}, nil
@@ -157,11 +167,13 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Genome:                       NewGenomeClient(cfg),
 		GoTerm:                       NewGoTermClient(cfg),
 		GoTermOnTranscripts:          NewGoTermOnTranscriptsClient(cfg),
+		KOG:                          NewKOGClient(cfg),
 		KeggCompound:                 NewKeggCompoundClient(cfg),
 		KeggModule:                   NewKeggModuleClient(cfg),
-		KeggOntology:                 NewKeggOntologyClient(cfg),
+		KeggOrthlogy:                 NewKeggOrthlogyClient(cfg),
 		KeggPathway:                  NewKeggPathwayClient(cfg),
 		KeggReaction:                 NewKeggReactionClient(cfg),
+		Nomeclature:                  NewNomeclatureClient(cfg),
 		Scaffold:                     NewScaffoldClient(cfg),
 		Transcript:                   NewTranscriptClient(cfg),
 	}, nil
@@ -198,11 +210,13 @@ func (c *Client) Use(hooks ...Hook) {
 	c.Genome.Use(hooks...)
 	c.GoTerm.Use(hooks...)
 	c.GoTermOnTranscripts.Use(hooks...)
+	c.KOG.Use(hooks...)
 	c.KeggCompound.Use(hooks...)
 	c.KeggModule.Use(hooks...)
-	c.KeggOntology.Use(hooks...)
+	c.KeggOrthlogy.Use(hooks...)
 	c.KeggPathway.Use(hooks...)
 	c.KeggReaction.Use(hooks...)
+	c.Nomeclature.Use(hooks...)
 	c.Scaffold.Use(hooks...)
 	c.Transcript.Use(hooks...)
 }
@@ -873,6 +887,96 @@ func (c *GoTermOnTranscriptsClient) Hooks() []Hook {
 	return c.hooks.GoTermOnTranscripts
 }
 
+// KOGClient is a client for the KOG schema.
+type KOGClient struct {
+	config
+}
+
+// NewKOGClient returns a client for the KOG from the given config.
+func NewKOGClient(c config) *KOGClient {
+	return &KOGClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `kog.Hooks(f(g(h())))`.
+func (c *KOGClient) Use(hooks ...Hook) {
+	c.hooks.KOG = append(c.hooks.KOG, hooks...)
+}
+
+// Create returns a builder for creating a KOG entity.
+func (c *KOGClient) Create() *KOGCreate {
+	mutation := newKOGMutation(c.config, OpCreate)
+	return &KOGCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of KOG entities.
+func (c *KOGClient) CreateBulk(builders ...*KOGCreate) *KOGCreateBulk {
+	return &KOGCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for KOG.
+func (c *KOGClient) Update() *KOGUpdate {
+	mutation := newKOGMutation(c.config, OpUpdate)
+	return &KOGUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *KOGClient) UpdateOne(k *KOG) *KOGUpdateOne {
+	mutation := newKOGMutation(c.config, OpUpdateOne, withKOG(k))
+	return &KOGUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *KOGClient) UpdateOneID(id string) *KOGUpdateOne {
+	mutation := newKOGMutation(c.config, OpUpdateOne, withKOGID(id))
+	return &KOGUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for KOG.
+func (c *KOGClient) Delete() *KOGDelete {
+	mutation := newKOGMutation(c.config, OpDelete)
+	return &KOGDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *KOGClient) DeleteOne(k *KOG) *KOGDeleteOne {
+	return c.DeleteOneID(k.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *KOGClient) DeleteOneID(id string) *KOGDeleteOne {
+	builder := c.Delete().Where(kog.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &KOGDeleteOne{builder}
+}
+
+// Query returns a query builder for KOG.
+func (c *KOGClient) Query() *KOGQuery {
+	return &KOGQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a KOG entity by its id.
+func (c *KOGClient) Get(ctx context.Context, id string) (*KOG, error) {
+	return c.Query().Where(kog.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *KOGClient) GetX(ctx context.Context, id string) *KOG {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *KOGClient) Hooks() []Hook {
+	return c.hooks.KOG
+}
+
 // KeggCompoundClient is a client for the KeggCompound schema.
 type KeggCompoundClient struct {
 	config
@@ -1053,84 +1157,84 @@ func (c *KeggModuleClient) Hooks() []Hook {
 	return c.hooks.KeggModule
 }
 
-// KeggOntologyClient is a client for the KeggOntology schema.
-type KeggOntologyClient struct {
+// KeggOrthlogyClient is a client for the KeggOrthlogy schema.
+type KeggOrthlogyClient struct {
 	config
 }
 
-// NewKeggOntologyClient returns a client for the KeggOntology from the given config.
-func NewKeggOntologyClient(c config) *KeggOntologyClient {
-	return &KeggOntologyClient{config: c}
+// NewKeggOrthlogyClient returns a client for the KeggOrthlogy from the given config.
+func NewKeggOrthlogyClient(c config) *KeggOrthlogyClient {
+	return &KeggOrthlogyClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `keggontology.Hooks(f(g(h())))`.
-func (c *KeggOntologyClient) Use(hooks ...Hook) {
-	c.hooks.KeggOntology = append(c.hooks.KeggOntology, hooks...)
+// A call to `Use(f, g, h)` equals to `keggorthlogy.Hooks(f(g(h())))`.
+func (c *KeggOrthlogyClient) Use(hooks ...Hook) {
+	c.hooks.KeggOrthlogy = append(c.hooks.KeggOrthlogy, hooks...)
 }
 
-// Create returns a builder for creating a KeggOntology entity.
-func (c *KeggOntologyClient) Create() *KeggOntologyCreate {
-	mutation := newKeggOntologyMutation(c.config, OpCreate)
-	return &KeggOntologyCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a KeggOrthlogy entity.
+func (c *KeggOrthlogyClient) Create() *KeggOrthlogyCreate {
+	mutation := newKeggOrthlogyMutation(c.config, OpCreate)
+	return &KeggOrthlogyCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of KeggOntology entities.
-func (c *KeggOntologyClient) CreateBulk(builders ...*KeggOntologyCreate) *KeggOntologyCreateBulk {
-	return &KeggOntologyCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of KeggOrthlogy entities.
+func (c *KeggOrthlogyClient) CreateBulk(builders ...*KeggOrthlogyCreate) *KeggOrthlogyCreateBulk {
+	return &KeggOrthlogyCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for KeggOntology.
-func (c *KeggOntologyClient) Update() *KeggOntologyUpdate {
-	mutation := newKeggOntologyMutation(c.config, OpUpdate)
-	return &KeggOntologyUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for KeggOrthlogy.
+func (c *KeggOrthlogyClient) Update() *KeggOrthlogyUpdate {
+	mutation := newKeggOrthlogyMutation(c.config, OpUpdate)
+	return &KeggOrthlogyUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *KeggOntologyClient) UpdateOne(ko *KeggOntology) *KeggOntologyUpdateOne {
-	mutation := newKeggOntologyMutation(c.config, OpUpdateOne, withKeggOntology(ko))
-	return &KeggOntologyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *KeggOrthlogyClient) UpdateOne(ko *KeggOrthlogy) *KeggOrthlogyUpdateOne {
+	mutation := newKeggOrthlogyMutation(c.config, OpUpdateOne, withKeggOrthlogy(ko))
+	return &KeggOrthlogyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *KeggOntologyClient) UpdateOneID(id string) *KeggOntologyUpdateOne {
-	mutation := newKeggOntologyMutation(c.config, OpUpdateOne, withKeggOntologyID(id))
-	return &KeggOntologyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *KeggOrthlogyClient) UpdateOneID(id string) *KeggOrthlogyUpdateOne {
+	mutation := newKeggOrthlogyMutation(c.config, OpUpdateOne, withKeggOrthlogyID(id))
+	return &KeggOrthlogyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for KeggOntology.
-func (c *KeggOntologyClient) Delete() *KeggOntologyDelete {
-	mutation := newKeggOntologyMutation(c.config, OpDelete)
-	return &KeggOntologyDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for KeggOrthlogy.
+func (c *KeggOrthlogyClient) Delete() *KeggOrthlogyDelete {
+	mutation := newKeggOrthlogyMutation(c.config, OpDelete)
+	return &KeggOrthlogyDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *KeggOntologyClient) DeleteOne(ko *KeggOntology) *KeggOntologyDeleteOne {
+func (c *KeggOrthlogyClient) DeleteOne(ko *KeggOrthlogy) *KeggOrthlogyDeleteOne {
 	return c.DeleteOneID(ko.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *KeggOntologyClient) DeleteOneID(id string) *KeggOntologyDeleteOne {
-	builder := c.Delete().Where(keggontology.ID(id))
+func (c *KeggOrthlogyClient) DeleteOneID(id string) *KeggOrthlogyDeleteOne {
+	builder := c.Delete().Where(keggorthlogy.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &KeggOntologyDeleteOne{builder}
+	return &KeggOrthlogyDeleteOne{builder}
 }
 
-// Query returns a query builder for KeggOntology.
-func (c *KeggOntologyClient) Query() *KeggOntologyQuery {
-	return &KeggOntologyQuery{
+// Query returns a query builder for KeggOrthlogy.
+func (c *KeggOrthlogyClient) Query() *KeggOrthlogyQuery {
+	return &KeggOrthlogyQuery{
 		config: c.config,
 	}
 }
 
-// Get returns a KeggOntology entity by its id.
-func (c *KeggOntologyClient) Get(ctx context.Context, id string) (*KeggOntology, error) {
-	return c.Query().Where(keggontology.ID(id)).Only(ctx)
+// Get returns a KeggOrthlogy entity by its id.
+func (c *KeggOrthlogyClient) Get(ctx context.Context, id string) (*KeggOrthlogy, error) {
+	return c.Query().Where(keggorthlogy.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *KeggOntologyClient) GetX(ctx context.Context, id string) *KeggOntology {
+func (c *KeggOrthlogyClient) GetX(ctx context.Context, id string) *KeggOrthlogy {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -1138,9 +1242,25 @@ func (c *KeggOntologyClient) GetX(ctx context.Context, id string) *KeggOntology 
 	return obj
 }
 
+// QueryPathways queries the pathways edge of a KeggOrthlogy.
+func (c *KeggOrthlogyClient) QueryPathways(ko *KeggOrthlogy) *KeggPathwayQuery {
+	query := &KeggPathwayQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ko.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(keggorthlogy.Table, keggorthlogy.FieldID, id),
+			sqlgraph.To(keggpathway.Table, keggpathway.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, keggorthlogy.PathwaysTable, keggorthlogy.PathwaysPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(ko.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
-func (c *KeggOntologyClient) Hooks() []Hook {
-	return c.hooks.KeggOntology
+func (c *KeggOrthlogyClient) Hooks() []Hook {
+	return c.hooks.KeggOrthlogy
 }
 
 // KeggPathwayClient is a client for the KeggPathway schema.
@@ -1228,6 +1348,70 @@ func (c *KeggPathwayClient) GetX(ctx context.Context, id string) *KeggPathway {
 	return obj
 }
 
+// QueryRelatingMap queries the relating_map edge of a KeggPathway.
+func (c *KeggPathwayClient) QueryRelatingMap(kp *KeggPathway) *KeggPathwayQuery {
+	query := &KeggPathwayQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := kp.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(keggpathway.Table, keggpathway.FieldID, id),
+			sqlgraph.To(keggpathway.Table, keggpathway.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, keggpathway.RelatingMapTable, keggpathway.RelatingMapPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(kp.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRelatedMap queries the related_map edge of a KeggPathway.
+func (c *KeggPathwayClient) QueryRelatedMap(kp *KeggPathway) *KeggPathwayQuery {
+	query := &KeggPathwayQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := kp.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(keggpathway.Table, keggpathway.FieldID, id),
+			sqlgraph.To(keggpathway.Table, keggpathway.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, keggpathway.RelatedMapTable, keggpathway.RelatedMapPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(kp.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReactions queries the reactions edge of a KeggPathway.
+func (c *KeggPathwayClient) QueryReactions(kp *KeggPathway) *KeggReactionQuery {
+	query := &KeggReactionQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := kp.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(keggpathway.Table, keggpathway.FieldID, id),
+			sqlgraph.To(keggreaction.Table, keggreaction.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, keggpathway.ReactionsTable, keggpathway.ReactionsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(kp.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrthologies queries the orthologies edge of a KeggPathway.
+func (c *KeggPathwayClient) QueryOrthologies(kp *KeggPathway) *KeggOrthlogyQuery {
+	query := &KeggOrthlogyQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := kp.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(keggpathway.Table, keggpathway.FieldID, id),
+			sqlgraph.To(keggorthlogy.Table, keggorthlogy.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, keggpathway.OrthologiesTable, keggpathway.OrthologiesPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(kp.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *KeggPathwayClient) Hooks() []Hook {
 	return c.hooks.KeggPathway
@@ -1273,7 +1457,7 @@ func (c *KeggReactionClient) UpdateOne(kr *KeggReaction) *KeggReactionUpdateOne 
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *KeggReactionClient) UpdateOneID(id int) *KeggReactionUpdateOne {
+func (c *KeggReactionClient) UpdateOneID(id string) *KeggReactionUpdateOne {
 	mutation := newKeggReactionMutation(c.config, OpUpdateOne, withKeggReactionID(id))
 	return &KeggReactionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -1290,7 +1474,7 @@ func (c *KeggReactionClient) DeleteOne(kr *KeggReaction) *KeggReactionDeleteOne 
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *KeggReactionClient) DeleteOneID(id int) *KeggReactionDeleteOne {
+func (c *KeggReactionClient) DeleteOneID(id string) *KeggReactionDeleteOne {
 	builder := c.Delete().Where(keggreaction.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -1305,12 +1489,118 @@ func (c *KeggReactionClient) Query() *KeggReactionQuery {
 }
 
 // Get returns a KeggReaction entity by its id.
-func (c *KeggReactionClient) Get(ctx context.Context, id int) (*KeggReaction, error) {
+func (c *KeggReactionClient) Get(ctx context.Context, id string) (*KeggReaction, error) {
 	return c.Query().Where(keggreaction.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *KeggReactionClient) GetX(ctx context.Context, id int) *KeggReaction {
+func (c *KeggReactionClient) GetX(ctx context.Context, id string) *KeggReaction {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPathways queries the pathways edge of a KeggReaction.
+func (c *KeggReactionClient) QueryPathways(kr *KeggReaction) *KeggPathwayQuery {
+	query := &KeggPathwayQuery{config: c.config}
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := kr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(keggreaction.Table, keggreaction.FieldID, id),
+			sqlgraph.To(keggpathway.Table, keggpathway.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, keggreaction.PathwaysTable, keggreaction.PathwaysPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(kr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *KeggReactionClient) Hooks() []Hook {
+	return c.hooks.KeggReaction
+}
+
+// NomeclatureClient is a client for the Nomeclature schema.
+type NomeclatureClient struct {
+	config
+}
+
+// NewNomeclatureClient returns a client for the Nomeclature from the given config.
+func NewNomeclatureClient(c config) *NomeclatureClient {
+	return &NomeclatureClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `nomeclature.Hooks(f(g(h())))`.
+func (c *NomeclatureClient) Use(hooks ...Hook) {
+	c.hooks.Nomeclature = append(c.hooks.Nomeclature, hooks...)
+}
+
+// Create returns a builder for creating a Nomeclature entity.
+func (c *NomeclatureClient) Create() *NomeclatureCreate {
+	mutation := newNomeclatureMutation(c.config, OpCreate)
+	return &NomeclatureCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Nomeclature entities.
+func (c *NomeclatureClient) CreateBulk(builders ...*NomeclatureCreate) *NomeclatureCreateBulk {
+	return &NomeclatureCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Nomeclature.
+func (c *NomeclatureClient) Update() *NomeclatureUpdate {
+	mutation := newNomeclatureMutation(c.config, OpUpdate)
+	return &NomeclatureUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *NomeclatureClient) UpdateOne(n *Nomeclature) *NomeclatureUpdateOne {
+	mutation := newNomeclatureMutation(c.config, OpUpdateOne, withNomeclature(n))
+	return &NomeclatureUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *NomeclatureClient) UpdateOneID(id int) *NomeclatureUpdateOne {
+	mutation := newNomeclatureMutation(c.config, OpUpdateOne, withNomeclatureID(id))
+	return &NomeclatureUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Nomeclature.
+func (c *NomeclatureClient) Delete() *NomeclatureDelete {
+	mutation := newNomeclatureMutation(c.config, OpDelete)
+	return &NomeclatureDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *NomeclatureClient) DeleteOne(n *Nomeclature) *NomeclatureDeleteOne {
+	return c.DeleteOneID(n.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *NomeclatureClient) DeleteOneID(id int) *NomeclatureDeleteOne {
+	builder := c.Delete().Where(nomeclature.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &NomeclatureDeleteOne{builder}
+}
+
+// Query returns a query builder for Nomeclature.
+func (c *NomeclatureClient) Query() *NomeclatureQuery {
+	return &NomeclatureQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Nomeclature entity by its id.
+func (c *NomeclatureClient) Get(ctx context.Context, id int) (*Nomeclature, error) {
+	return c.Query().Where(nomeclature.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *NomeclatureClient) GetX(ctx context.Context, id int) *Nomeclature {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -1319,8 +1609,8 @@ func (c *KeggReactionClient) GetX(ctx context.Context, id int) *KeggReaction {
 }
 
 // Hooks returns the client hooks.
-func (c *KeggReactionClient) Hooks() []Hook {
-	return c.hooks.KeggReaction
+func (c *NomeclatureClient) Hooks() []Hook {
+	return c.hooks.Nomeclature
 }
 
 // ScaffoldClient is a client for the Scaffold schema.

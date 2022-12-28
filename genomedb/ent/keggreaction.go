@@ -12,9 +12,32 @@ import (
 
 // KeggReaction is the model entity for the KeggReaction schema.
 type KeggReaction struct {
-	config
+	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID string `json:"id,omitempty"`
+	// Name holds the value of the "name" field.
+	Name string `json:"name,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the KeggReactionQuery when eager-loading is set.
+	Edges KeggReactionEdges `json:"edges"`
+}
+
+// KeggReactionEdges holds the relations/edges for other nodes in the graph.
+type KeggReactionEdges struct {
+	// Pathways holds the value of the pathways edge.
+	Pathways []*KeggPathway `json:"pathways,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// PathwaysOrErr returns the Pathways value or an error if the edge
+// was not loaded in eager-loading.
+func (e KeggReactionEdges) PathwaysOrErr() ([]*KeggPathway, error) {
+	if e.loadedTypes[0] {
+		return e.Pathways, nil
+	}
+	return nil, &NotLoadedError{edge: "pathways"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -22,8 +45,8 @@ func (*KeggReaction) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case keggreaction.FieldID:
-			values[i] = new(sql.NullInt64)
+		case keggreaction.FieldID, keggreaction.FieldName:
+			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type KeggReaction", columns[i])
 		}
@@ -40,14 +63,25 @@ func (kr *KeggReaction) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case keggreaction.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value.Valid {
+				kr.ID = value.String
 			}
-			kr.ID = int(value.Int64)
+		case keggreaction.FieldName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field name", values[i])
+			} else if value.Valid {
+				kr.Name = value.String
+			}
 		}
 	}
 	return nil
+}
+
+// QueryPathways queries the "pathways" edge of the KeggReaction entity.
+func (kr *KeggReaction) QueryPathways() *KeggPathwayQuery {
+	return (&KeggReactionClient{config: kr.config}).QueryPathways(kr)
 }
 
 // Update returns a builder for updating this KeggReaction.
@@ -72,7 +106,9 @@ func (kr *KeggReaction) Unwrap() *KeggReaction {
 func (kr *KeggReaction) String() string {
 	var builder strings.Builder
 	builder.WriteString("KeggReaction(")
-	builder.WriteString(fmt.Sprintf("id=%v", kr.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", kr.ID))
+	builder.WriteString("name=")
+	builder.WriteString(kr.Name)
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -14,9 +14,11 @@ import (
 	"genomedb/ent/gotermontranscripts"
 	"genomedb/ent/keggcompound"
 	"genomedb/ent/keggmodule"
-	"genomedb/ent/keggontology"
+	"genomedb/ent/keggorthlogy"
 	"genomedb/ent/keggpathway"
 	"genomedb/ent/keggreaction"
+	"genomedb/ent/kog"
+	"genomedb/ent/nomeclature"
 	"genomedb/ent/scaffold"
 	"genomedb/ent/transcript"
 
@@ -49,11 +51,13 @@ func columnChecker(table string) func(string) error {
 		genome.Table:                       genome.ValidColumn,
 		goterm.Table:                       goterm.ValidColumn,
 		gotermontranscripts.Table:          gotermontranscripts.ValidColumn,
+		kog.Table:                          kog.ValidColumn,
 		keggcompound.Table:                 keggcompound.ValidColumn,
 		keggmodule.Table:                   keggmodule.ValidColumn,
-		keggontology.Table:                 keggontology.ValidColumn,
+		keggorthlogy.Table:                 keggorthlogy.ValidColumn,
 		keggpathway.Table:                  keggpathway.ValidColumn,
 		keggreaction.Table:                 keggreaction.ValidColumn,
+		nomeclature.Table:                  nomeclature.ValidColumn,
 		scaffold.Table:                     scaffold.ValidColumn,
 		transcript.Table:                   transcript.ValidColumn,
 	}

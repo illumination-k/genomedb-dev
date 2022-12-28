@@ -1,26 +1,37 @@
 package schema
 
 import (
+	"fmt"
+	"strings"
+
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
 // Kegg holds the schema definition for the Kegg entity.
-type KeggOntology struct {
+type KeggOrthlogy struct {
 	ent.Schema
 }
 
 // Fields of the Kegg.
-func (KeggOntology) Fields() []ent.Field {
+func (KeggOrthlogy) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("id"),
+		field.String("id").Validate(func(s string) error {
+			if !strings.HasPrefix(s, "ko") {
+				return fmt.Errorf("Kegg Ontology ID should has prefix ko: %s", s)
+			}
+			return nil
+		}),
 		field.String("name"),
 	}
 }
 
 // Edges of the Kegg.
-func (KeggOntology) Edges() []ent.Edge {
-	return nil
+func (KeggOrthlogy) Edges() []ent.Edge {
+	return []ent.Edge{
+		edge.From("pathways", KeggPathway.Type).Ref("orthologies"),
+	}
 }
 
 type KeggPathway struct {
@@ -37,7 +48,12 @@ func (KeggPathway) Fields() []ent.Field {
 
 // Edges of the Kegg.
 func (KeggPathway) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("related_map", KeggPathway.Type).
+			From("relating_map"),
+		edge.To("reactions", KeggReaction.Type),
+		edge.To("orthologies", KeggOrthlogy.Type),
+	}
 }
 
 type KeggModule struct {
@@ -64,12 +80,15 @@ type KeggReaction struct {
 func (KeggReaction) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("id"),
+		field.String("name"),
 	}
 }
 
 // Edges of the Kegg.
 func (KeggReaction) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.From("pathways", KeggPathway.Type).Ref("reactions"),
+	}
 }
 
 type KeggCompound struct {

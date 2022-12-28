@@ -86,6 +86,19 @@ func (f GoTermOnTranscriptsFunc) Mutate(ctx context.Context, m ent.Mutation) (en
 	return f(ctx, mv)
 }
 
+// The KOGFunc type is an adapter to allow the use of ordinary
+// function as KOG mutator.
+type KOGFunc func(context.Context, *ent.KOGMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f KOGFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.KOGMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KOGMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The KeggCompoundFunc type is an adapter to allow the use of ordinary
 // function as KeggCompound mutator.
 type KeggCompoundFunc func(context.Context, *ent.KeggCompoundMutation) (ent.Value, error)
@@ -112,15 +125,15 @@ func (f KeggModuleFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 	return f(ctx, mv)
 }
 
-// The KeggOntologyFunc type is an adapter to allow the use of ordinary
-// function as KeggOntology mutator.
-type KeggOntologyFunc func(context.Context, *ent.KeggOntologyMutation) (ent.Value, error)
+// The KeggOrthlogyFunc type is an adapter to allow the use of ordinary
+// function as KeggOrthlogy mutator.
+type KeggOrthlogyFunc func(context.Context, *ent.KeggOrthlogyMutation) (ent.Value, error)
 
 // Mutate calls f(ctx, m).
-func (f KeggOntologyFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	mv, ok := m.(*ent.KeggOntologyMutation)
+func (f KeggOrthlogyFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.KeggOrthlogyMutation)
 	if !ok {
-		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KeggOntologyMutation", m)
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KeggOrthlogyMutation", m)
 	}
 	return f(ctx, mv)
 }
@@ -147,6 +160,19 @@ func (f KeggReactionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 	mv, ok := m.(*ent.KeggReactionMutation)
 	if !ok {
 		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.KeggReactionMutation", m)
+	}
+	return f(ctx, mv)
+}
+
+// The NomeclatureFunc type is an adapter to allow the use of ordinary
+// function as Nomeclature mutator.
+type NomeclatureFunc func(context.Context, *ent.NomeclatureMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f NomeclatureFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.NomeclatureMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.NomeclatureMutation", m)
 	}
 	return f(ctx, mv)
 }

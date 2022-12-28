@@ -6,7 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"genomedb/ent/keggontology"
+	"genomedb/ent/keggorthlogy"
+	"genomedb/ent/keggpathway"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
@@ -14,42 +15,51 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// KeggOntologyCreate is the builder for creating a KeggOntology entity.
-type KeggOntologyCreate struct {
+// KeggOrthlogyCreate is the builder for creating a KeggOrthlogy entity.
+type KeggOrthlogyCreate struct {
 	config
-	mutation *KeggOntologyMutation
+	mutation *KeggOrthlogyMutation
 	hooks    []Hook
 	conflict []sql.ConflictOption
 }
 
 // SetName sets the "name" field.
-func (koc *KeggOntologyCreate) SetName(s string) *KeggOntologyCreate {
+func (koc *KeggOrthlogyCreate) SetName(s string) *KeggOrthlogyCreate {
 	koc.mutation.SetName(s)
 	return koc
 }
 
-// SetSymbol sets the "symbol" field.
-func (koc *KeggOntologyCreate) SetSymbol(s string) *KeggOntologyCreate {
-	koc.mutation.SetSymbol(s)
-	return koc
-}
-
 // SetID sets the "id" field.
-func (koc *KeggOntologyCreate) SetID(s string) *KeggOntologyCreate {
+func (koc *KeggOrthlogyCreate) SetID(s string) *KeggOrthlogyCreate {
 	koc.mutation.SetID(s)
 	return koc
 }
 
-// Mutation returns the KeggOntologyMutation object of the builder.
-func (koc *KeggOntologyCreate) Mutation() *KeggOntologyMutation {
+// AddPathwayIDs adds the "pathways" edge to the KeggPathway entity by IDs.
+func (koc *KeggOrthlogyCreate) AddPathwayIDs(ids ...string) *KeggOrthlogyCreate {
+	koc.mutation.AddPathwayIDs(ids...)
+	return koc
+}
+
+// AddPathways adds the "pathways" edges to the KeggPathway entity.
+func (koc *KeggOrthlogyCreate) AddPathways(k ...*KeggPathway) *KeggOrthlogyCreate {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return koc.AddPathwayIDs(ids...)
+}
+
+// Mutation returns the KeggOrthlogyMutation object of the builder.
+func (koc *KeggOrthlogyCreate) Mutation() *KeggOrthlogyMutation {
 	return koc.mutation
 }
 
-// Save creates the KeggOntology in the database.
-func (koc *KeggOntologyCreate) Save(ctx context.Context) (*KeggOntology, error) {
+// Save creates the KeggOrthlogy in the database.
+func (koc *KeggOrthlogyCreate) Save(ctx context.Context) (*KeggOrthlogy, error) {
 	var (
 		err  error
-		node *KeggOntology
+		node *KeggOrthlogy
 	)
 	if len(koc.hooks) == 0 {
 		if err = koc.check(); err != nil {
@@ -58,7 +68,7 @@ func (koc *KeggOntologyCreate) Save(ctx context.Context) (*KeggOntology, error) 
 		node, err = koc.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*KeggOntologyMutation)
+			mutation, ok := m.(*KeggOrthlogyMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
 			}
@@ -83,9 +93,9 @@ func (koc *KeggOntologyCreate) Save(ctx context.Context) (*KeggOntology, error) 
 		if err != nil {
 			return nil, err
 		}
-		nv, ok := v.(*KeggOntology)
+		nv, ok := v.(*KeggOrthlogy)
 		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from KeggOntologyMutation", v)
+			return nil, fmt.Errorf("unexpected node type %T returned from KeggOrthlogyMutation", v)
 		}
 		node = nv
 	}
@@ -93,7 +103,7 @@ func (koc *KeggOntologyCreate) Save(ctx context.Context) (*KeggOntology, error) 
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (koc *KeggOntologyCreate) SaveX(ctx context.Context) *KeggOntology {
+func (koc *KeggOrthlogyCreate) SaveX(ctx context.Context) *KeggOrthlogy {
 	v, err := koc.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -102,30 +112,32 @@ func (koc *KeggOntologyCreate) SaveX(ctx context.Context) *KeggOntology {
 }
 
 // Exec executes the query.
-func (koc *KeggOntologyCreate) Exec(ctx context.Context) error {
+func (koc *KeggOrthlogyCreate) Exec(ctx context.Context) error {
 	_, err := koc.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (koc *KeggOntologyCreate) ExecX(ctx context.Context) {
+func (koc *KeggOrthlogyCreate) ExecX(ctx context.Context) {
 	if err := koc.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (koc *KeggOntologyCreate) check() error {
+func (koc *KeggOrthlogyCreate) check() error {
 	if _, ok := koc.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "KeggOntology.name"`)}
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "KeggOrthlogy.name"`)}
 	}
-	if _, ok := koc.mutation.Symbol(); !ok {
-		return &ValidationError{Name: "symbol", err: errors.New(`ent: missing required field "KeggOntology.symbol"`)}
+	if v, ok := koc.mutation.ID(); ok {
+		if err := keggorthlogy.IDValidator(v); err != nil {
+			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "KeggOrthlogy.id": %w`, err)}
+		}
 	}
 	return nil
 }
 
-func (koc *KeggOntologyCreate) sqlSave(ctx context.Context) (*KeggOntology, error) {
+func (koc *KeggOrthlogyCreate) sqlSave(ctx context.Context) (*KeggOrthlogy, error) {
 	_node, _spec := koc.createSpec()
 	if err := sqlgraph.CreateNode(ctx, koc.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
@@ -137,20 +149,20 @@ func (koc *KeggOntologyCreate) sqlSave(ctx context.Context) (*KeggOntology, erro
 		if id, ok := _spec.ID.Value.(string); ok {
 			_node.ID = id
 		} else {
-			return nil, fmt.Errorf("unexpected KeggOntology.ID type: %T", _spec.ID.Value)
+			return nil, fmt.Errorf("unexpected KeggOrthlogy.ID type: %T", _spec.ID.Value)
 		}
 	}
 	return _node, nil
 }
 
-func (koc *KeggOntologyCreate) createSpec() (*KeggOntology, *sqlgraph.CreateSpec) {
+func (koc *KeggOrthlogyCreate) createSpec() (*KeggOrthlogy, *sqlgraph.CreateSpec) {
 	var (
-		_node = &KeggOntology{config: koc.config}
+		_node = &KeggOrthlogy{config: koc.config}
 		_spec = &sqlgraph.CreateSpec{
-			Table: keggontology.Table,
+			Table: keggorthlogy.Table,
 			ID: &sqlgraph.FieldSpec{
 				Type:   field.TypeString,
-				Column: keggontology.FieldID,
+				Column: keggorthlogy.FieldID,
 			},
 		}
 	)
@@ -160,12 +172,27 @@ func (koc *KeggOntologyCreate) createSpec() (*KeggOntology, *sqlgraph.CreateSpec
 		_spec.ID.Value = id
 	}
 	if value, ok := koc.mutation.Name(); ok {
-		_spec.SetField(keggontology.FieldName, field.TypeString, value)
+		_spec.SetField(keggorthlogy.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
-	if value, ok := koc.mutation.Symbol(); ok {
-		_spec.SetField(keggontology.FieldSymbol, field.TypeString, value)
-		_node.Symbol = value
+	if nodes := koc.mutation.PathwaysIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   keggorthlogy.PathwaysTable,
+			Columns: keggorthlogy.PathwaysPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggpathway.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }
@@ -173,7 +200,7 @@ func (koc *KeggOntologyCreate) createSpec() (*KeggOntology, *sqlgraph.CreateSpec
 // OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
 // of the `INSERT` statement. For example:
 //
-//	client.KeggOntology.Create().
+//	client.KeggOrthlogy.Create().
 //		SetName(v).
 //		OnConflict(
 //			// Update the row with the new values
@@ -182,13 +209,13 @@ func (koc *KeggOntologyCreate) createSpec() (*KeggOntology, *sqlgraph.CreateSpec
 //		).
 //		// Override some of the fields with custom
 //		// update values.
-//		Update(func(u *ent.KeggOntologyUpsert) {
+//		Update(func(u *ent.KeggOrthlogyUpsert) {
 //			SetName(v+v).
 //		}).
 //		Exec(ctx)
-func (koc *KeggOntologyCreate) OnConflict(opts ...sql.ConflictOption) *KeggOntologyUpsertOne {
+func (koc *KeggOrthlogyCreate) OnConflict(opts ...sql.ConflictOption) *KeggOrthlogyUpsertOne {
 	koc.conflict = opts
-	return &KeggOntologyUpsertOne{
+	return &KeggOrthlogyUpsertOne{
 		create: koc,
 	}
 }
@@ -196,69 +223,57 @@ func (koc *KeggOntologyCreate) OnConflict(opts ...sql.ConflictOption) *KeggOntol
 // OnConflictColumns calls `OnConflict` and configures the columns
 // as conflict target. Using this option is equivalent to using:
 //
-//	client.KeggOntology.Create().
+//	client.KeggOrthlogy.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-func (koc *KeggOntologyCreate) OnConflictColumns(columns ...string) *KeggOntologyUpsertOne {
+func (koc *KeggOrthlogyCreate) OnConflictColumns(columns ...string) *KeggOrthlogyUpsertOne {
 	koc.conflict = append(koc.conflict, sql.ConflictColumns(columns...))
-	return &KeggOntologyUpsertOne{
+	return &KeggOrthlogyUpsertOne{
 		create: koc,
 	}
 }
 
 type (
-	// KeggOntologyUpsertOne is the builder for "upsert"-ing
-	//  one KeggOntology node.
-	KeggOntologyUpsertOne struct {
-		create *KeggOntologyCreate
+	// KeggOrthlogyUpsertOne is the builder for "upsert"-ing
+	//  one KeggOrthlogy node.
+	KeggOrthlogyUpsertOne struct {
+		create *KeggOrthlogyCreate
 	}
 
-	// KeggOntologyUpsert is the "OnConflict" setter.
-	KeggOntologyUpsert struct {
+	// KeggOrthlogyUpsert is the "OnConflict" setter.
+	KeggOrthlogyUpsert struct {
 		*sql.UpdateSet
 	}
 )
 
 // SetName sets the "name" field.
-func (u *KeggOntologyUpsert) SetName(v string) *KeggOntologyUpsert {
-	u.Set(keggontology.FieldName, v)
+func (u *KeggOrthlogyUpsert) SetName(v string) *KeggOrthlogyUpsert {
+	u.Set(keggorthlogy.FieldName, v)
 	return u
 }
 
 // UpdateName sets the "name" field to the value that was provided on create.
-func (u *KeggOntologyUpsert) UpdateName() *KeggOntologyUpsert {
-	u.SetExcluded(keggontology.FieldName)
-	return u
-}
-
-// SetSymbol sets the "symbol" field.
-func (u *KeggOntologyUpsert) SetSymbol(v string) *KeggOntologyUpsert {
-	u.Set(keggontology.FieldSymbol, v)
-	return u
-}
-
-// UpdateSymbol sets the "symbol" field to the value that was provided on create.
-func (u *KeggOntologyUpsert) UpdateSymbol() *KeggOntologyUpsert {
-	u.SetExcluded(keggontology.FieldSymbol)
+func (u *KeggOrthlogyUpsert) UpdateName() *KeggOrthlogyUpsert {
+	u.SetExcluded(keggorthlogy.FieldName)
 	return u
 }
 
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
-//	client.KeggOntology.Create().
+//	client.KeggOrthlogy.Create().
 //		OnConflict(
 //			sql.ResolveWithNewValues(),
 //			sql.ResolveWith(func(u *sql.UpdateSet) {
-//				u.SetIgnore(keggontology.FieldID)
+//				u.SetIgnore(keggorthlogy.FieldID)
 //			}),
 //		).
 //		Exec(ctx)
-func (u *KeggOntologyUpsertOne) UpdateNewValues() *KeggOntologyUpsertOne {
+func (u *KeggOrthlogyUpsertOne) UpdateNewValues() *KeggOrthlogyUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		if _, exists := u.create.mutation.ID(); exists {
-			s.SetIgnore(keggontology.FieldID)
+			s.SetIgnore(keggorthlogy.FieldID)
 		}
 	}))
 	return u
@@ -267,79 +282,65 @@ func (u *KeggOntologyUpsertOne) UpdateNewValues() *KeggOntologyUpsertOne {
 // Ignore sets each column to itself in case of conflict.
 // Using this option is equivalent to using:
 //
-//	client.KeggOntology.Create().
+//	client.KeggOrthlogy.Create().
 //	    OnConflict(sql.ResolveWithIgnore()).
 //	    Exec(ctx)
-func (u *KeggOntologyUpsertOne) Ignore() *KeggOntologyUpsertOne {
+func (u *KeggOrthlogyUpsertOne) Ignore() *KeggOrthlogyUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
 	return u
 }
 
 // DoNothing configures the conflict_action to `DO NOTHING`.
 // Supported only by SQLite and PostgreSQL.
-func (u *KeggOntologyUpsertOne) DoNothing() *KeggOntologyUpsertOne {
+func (u *KeggOrthlogyUpsertOne) DoNothing() *KeggOrthlogyUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.DoNothing())
 	return u
 }
 
-// Update allows overriding fields `UPDATE` values. See the KeggOntologyCreate.OnConflict
+// Update allows overriding fields `UPDATE` values. See the KeggOrthlogyCreate.OnConflict
 // documentation for more info.
-func (u *KeggOntologyUpsertOne) Update(set func(*KeggOntologyUpsert)) *KeggOntologyUpsertOne {
+func (u *KeggOrthlogyUpsertOne) Update(set func(*KeggOrthlogyUpsert)) *KeggOrthlogyUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
-		set(&KeggOntologyUpsert{UpdateSet: update})
+		set(&KeggOrthlogyUpsert{UpdateSet: update})
 	}))
 	return u
 }
 
 // SetName sets the "name" field.
-func (u *KeggOntologyUpsertOne) SetName(v string) *KeggOntologyUpsertOne {
-	return u.Update(func(s *KeggOntologyUpsert) {
+func (u *KeggOrthlogyUpsertOne) SetName(v string) *KeggOrthlogyUpsertOne {
+	return u.Update(func(s *KeggOrthlogyUpsert) {
 		s.SetName(v)
 	})
 }
 
 // UpdateName sets the "name" field to the value that was provided on create.
-func (u *KeggOntologyUpsertOne) UpdateName() *KeggOntologyUpsertOne {
-	return u.Update(func(s *KeggOntologyUpsert) {
+func (u *KeggOrthlogyUpsertOne) UpdateName() *KeggOrthlogyUpsertOne {
+	return u.Update(func(s *KeggOrthlogyUpsert) {
 		s.UpdateName()
 	})
 }
 
-// SetSymbol sets the "symbol" field.
-func (u *KeggOntologyUpsertOne) SetSymbol(v string) *KeggOntologyUpsertOne {
-	return u.Update(func(s *KeggOntologyUpsert) {
-		s.SetSymbol(v)
-	})
-}
-
-// UpdateSymbol sets the "symbol" field to the value that was provided on create.
-func (u *KeggOntologyUpsertOne) UpdateSymbol() *KeggOntologyUpsertOne {
-	return u.Update(func(s *KeggOntologyUpsert) {
-		s.UpdateSymbol()
-	})
-}
-
 // Exec executes the query.
-func (u *KeggOntologyUpsertOne) Exec(ctx context.Context) error {
+func (u *KeggOrthlogyUpsertOne) Exec(ctx context.Context) error {
 	if len(u.create.conflict) == 0 {
-		return errors.New("ent: missing options for KeggOntologyCreate.OnConflict")
+		return errors.New("ent: missing options for KeggOrthlogyCreate.OnConflict")
 	}
 	return u.create.Exec(ctx)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (u *KeggOntologyUpsertOne) ExecX(ctx context.Context) {
+func (u *KeggOrthlogyUpsertOne) ExecX(ctx context.Context) {
 	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // Exec executes the UPSERT query and returns the inserted/updated ID.
-func (u *KeggOntologyUpsertOne) ID(ctx context.Context) (id string, err error) {
+func (u *KeggOrthlogyUpsertOne) ID(ctx context.Context) (id string, err error) {
 	if u.create.driver.Dialect() == dialect.MySQL {
 		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
 		// fields from the database since MySQL does not support the RETURNING clause.
-		return id, errors.New("ent: KeggOntologyUpsertOne.ID is not supported by MySQL driver. Use KeggOntologyUpsertOne.Exec instead")
+		return id, errors.New("ent: KeggOrthlogyUpsertOne.ID is not supported by MySQL driver. Use KeggOrthlogyUpsertOne.Exec instead")
 	}
 	node, err := u.create.Save(ctx)
 	if err != nil {
@@ -349,7 +350,7 @@ func (u *KeggOntologyUpsertOne) ID(ctx context.Context) (id string, err error) {
 }
 
 // IDX is like ID, but panics if an error occurs.
-func (u *KeggOntologyUpsertOne) IDX(ctx context.Context) string {
+func (u *KeggOrthlogyUpsertOne) IDX(ctx context.Context) string {
 	id, err := u.ID(ctx)
 	if err != nil {
 		panic(err)
@@ -357,23 +358,23 @@ func (u *KeggOntologyUpsertOne) IDX(ctx context.Context) string {
 	return id
 }
 
-// KeggOntologyCreateBulk is the builder for creating many KeggOntology entities in bulk.
-type KeggOntologyCreateBulk struct {
+// KeggOrthlogyCreateBulk is the builder for creating many KeggOrthlogy entities in bulk.
+type KeggOrthlogyCreateBulk struct {
 	config
-	builders []*KeggOntologyCreate
+	builders []*KeggOrthlogyCreate
 	conflict []sql.ConflictOption
 }
 
-// Save creates the KeggOntology entities in the database.
-func (kocb *KeggOntologyCreateBulk) Save(ctx context.Context) ([]*KeggOntology, error) {
+// Save creates the KeggOrthlogy entities in the database.
+func (kocb *KeggOrthlogyCreateBulk) Save(ctx context.Context) ([]*KeggOrthlogy, error) {
 	specs := make([]*sqlgraph.CreateSpec, len(kocb.builders))
-	nodes := make([]*KeggOntology, len(kocb.builders))
+	nodes := make([]*KeggOrthlogy, len(kocb.builders))
 	mutators := make([]Mutator, len(kocb.builders))
 	for i := range kocb.builders {
 		func(i int, root context.Context) {
 			builder := kocb.builders[i]
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-				mutation, ok := m.(*KeggOntologyMutation)
+				mutation, ok := m.(*KeggOrthlogyMutation)
 				if !ok {
 					return nil, fmt.Errorf("unexpected mutation type %T", m)
 				}
@@ -417,7 +418,7 @@ func (kocb *KeggOntologyCreateBulk) Save(ctx context.Context) ([]*KeggOntology, 
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (kocb *KeggOntologyCreateBulk) SaveX(ctx context.Context) []*KeggOntology {
+func (kocb *KeggOrthlogyCreateBulk) SaveX(ctx context.Context) []*KeggOrthlogy {
 	v, err := kocb.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -426,13 +427,13 @@ func (kocb *KeggOntologyCreateBulk) SaveX(ctx context.Context) []*KeggOntology {
 }
 
 // Exec executes the query.
-func (kocb *KeggOntologyCreateBulk) Exec(ctx context.Context) error {
+func (kocb *KeggOrthlogyCreateBulk) Exec(ctx context.Context) error {
 	_, err := kocb.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (kocb *KeggOntologyCreateBulk) ExecX(ctx context.Context) {
+func (kocb *KeggOrthlogyCreateBulk) ExecX(ctx context.Context) {
 	if err := kocb.Exec(ctx); err != nil {
 		panic(err)
 	}
@@ -441,7 +442,7 @@ func (kocb *KeggOntologyCreateBulk) ExecX(ctx context.Context) {
 // OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
 // of the `INSERT` statement. For example:
 //
-//	client.KeggOntology.CreateBulk(builders...).
+//	client.KeggOrthlogy.CreateBulk(builders...).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -449,13 +450,13 @@ func (kocb *KeggOntologyCreateBulk) ExecX(ctx context.Context) {
 //		).
 //		// Override some of the fields with custom
 //		// update values.
-//		Update(func(u *ent.KeggOntologyUpsert) {
+//		Update(func(u *ent.KeggOrthlogyUpsert) {
 //			SetName(v+v).
 //		}).
 //		Exec(ctx)
-func (kocb *KeggOntologyCreateBulk) OnConflict(opts ...sql.ConflictOption) *KeggOntologyUpsertBulk {
+func (kocb *KeggOrthlogyCreateBulk) OnConflict(opts ...sql.ConflictOption) *KeggOrthlogyUpsertBulk {
 	kocb.conflict = opts
-	return &KeggOntologyUpsertBulk{
+	return &KeggOrthlogyUpsertBulk{
 		create: kocb,
 	}
 }
@@ -463,39 +464,39 @@ func (kocb *KeggOntologyCreateBulk) OnConflict(opts ...sql.ConflictOption) *Kegg
 // OnConflictColumns calls `OnConflict` and configures the columns
 // as conflict target. Using this option is equivalent to using:
 //
-//	client.KeggOntology.Create().
+//	client.KeggOrthlogy.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-func (kocb *KeggOntologyCreateBulk) OnConflictColumns(columns ...string) *KeggOntologyUpsertBulk {
+func (kocb *KeggOrthlogyCreateBulk) OnConflictColumns(columns ...string) *KeggOrthlogyUpsertBulk {
 	kocb.conflict = append(kocb.conflict, sql.ConflictColumns(columns...))
-	return &KeggOntologyUpsertBulk{
+	return &KeggOrthlogyUpsertBulk{
 		create: kocb,
 	}
 }
 
-// KeggOntologyUpsertBulk is the builder for "upsert"-ing
-// a bulk of KeggOntology nodes.
-type KeggOntologyUpsertBulk struct {
-	create *KeggOntologyCreateBulk
+// KeggOrthlogyUpsertBulk is the builder for "upsert"-ing
+// a bulk of KeggOrthlogy nodes.
+type KeggOrthlogyUpsertBulk struct {
+	create *KeggOrthlogyCreateBulk
 }
 
 // UpdateNewValues updates the mutable fields using the new values that
 // were set on create. Using this option is equivalent to using:
 //
-//	client.KeggOntology.Create().
+//	client.KeggOrthlogy.Create().
 //		OnConflict(
 //			sql.ResolveWithNewValues(),
 //			sql.ResolveWith(func(u *sql.UpdateSet) {
-//				u.SetIgnore(keggontology.FieldID)
+//				u.SetIgnore(keggorthlogy.FieldID)
 //			}),
 //		).
 //		Exec(ctx)
-func (u *KeggOntologyUpsertBulk) UpdateNewValues() *KeggOntologyUpsertBulk {
+func (u *KeggOrthlogyUpsertBulk) UpdateNewValues() *KeggOrthlogyUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		for _, b := range u.create.builders {
 			if _, exists := b.mutation.ID(); exists {
-				s.SetIgnore(keggontology.FieldID)
+				s.SetIgnore(keggorthlogy.FieldID)
 			}
 		}
 	}))
@@ -505,73 +506,59 @@ func (u *KeggOntologyUpsertBulk) UpdateNewValues() *KeggOntologyUpsertBulk {
 // Ignore sets each column to itself in case of conflict.
 // Using this option is equivalent to using:
 //
-//	client.KeggOntology.Create().
+//	client.KeggOrthlogy.Create().
 //		OnConflict(sql.ResolveWithIgnore()).
 //		Exec(ctx)
-func (u *KeggOntologyUpsertBulk) Ignore() *KeggOntologyUpsertBulk {
+func (u *KeggOrthlogyUpsertBulk) Ignore() *KeggOrthlogyUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
 	return u
 }
 
 // DoNothing configures the conflict_action to `DO NOTHING`.
 // Supported only by SQLite and PostgreSQL.
-func (u *KeggOntologyUpsertBulk) DoNothing() *KeggOntologyUpsertBulk {
+func (u *KeggOrthlogyUpsertBulk) DoNothing() *KeggOrthlogyUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.DoNothing())
 	return u
 }
 
-// Update allows overriding fields `UPDATE` values. See the KeggOntologyCreateBulk.OnConflict
+// Update allows overriding fields `UPDATE` values. See the KeggOrthlogyCreateBulk.OnConflict
 // documentation for more info.
-func (u *KeggOntologyUpsertBulk) Update(set func(*KeggOntologyUpsert)) *KeggOntologyUpsertBulk {
+func (u *KeggOrthlogyUpsertBulk) Update(set func(*KeggOrthlogyUpsert)) *KeggOrthlogyUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
-		set(&KeggOntologyUpsert{UpdateSet: update})
+		set(&KeggOrthlogyUpsert{UpdateSet: update})
 	}))
 	return u
 }
 
 // SetName sets the "name" field.
-func (u *KeggOntologyUpsertBulk) SetName(v string) *KeggOntologyUpsertBulk {
-	return u.Update(func(s *KeggOntologyUpsert) {
+func (u *KeggOrthlogyUpsertBulk) SetName(v string) *KeggOrthlogyUpsertBulk {
+	return u.Update(func(s *KeggOrthlogyUpsert) {
 		s.SetName(v)
 	})
 }
 
 // UpdateName sets the "name" field to the value that was provided on create.
-func (u *KeggOntologyUpsertBulk) UpdateName() *KeggOntologyUpsertBulk {
-	return u.Update(func(s *KeggOntologyUpsert) {
+func (u *KeggOrthlogyUpsertBulk) UpdateName() *KeggOrthlogyUpsertBulk {
+	return u.Update(func(s *KeggOrthlogyUpsert) {
 		s.UpdateName()
 	})
 }
 
-// SetSymbol sets the "symbol" field.
-func (u *KeggOntologyUpsertBulk) SetSymbol(v string) *KeggOntologyUpsertBulk {
-	return u.Update(func(s *KeggOntologyUpsert) {
-		s.SetSymbol(v)
-	})
-}
-
-// UpdateSymbol sets the "symbol" field to the value that was provided on create.
-func (u *KeggOntologyUpsertBulk) UpdateSymbol() *KeggOntologyUpsertBulk {
-	return u.Update(func(s *KeggOntologyUpsert) {
-		s.UpdateSymbol()
-	})
-}
-
 // Exec executes the query.
-func (u *KeggOntologyUpsertBulk) Exec(ctx context.Context) error {
+func (u *KeggOrthlogyUpsertBulk) Exec(ctx context.Context) error {
 	for i, b := range u.create.builders {
 		if len(b.conflict) != 0 {
-			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the KeggOntologyCreateBulk instead", i)
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the KeggOrthlogyCreateBulk instead", i)
 		}
 	}
 	if len(u.create.conflict) == 0 {
-		return errors.New("ent: missing options for KeggOntologyCreateBulk.OnConflict")
+		return errors.New("ent: missing options for KeggOrthlogyCreateBulk.OnConflict")
 	}
 	return u.create.Exec(ctx)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (u *KeggOntologyUpsertBulk) ExecX(ctx context.Context) {
+func (u *KeggOrthlogyUpsertBulk) ExecX(ctx context.Context) {
 	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}

@@ -6,7 +6,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"genomedb/ent/keggorthlogy"
 	"genomedb/ent/keggpathway"
+	"genomedb/ent/keggreaction"
 	"genomedb/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
@@ -27,9 +29,159 @@ func (kpu *KeggPathwayUpdate) Where(ps ...predicate.KeggPathway) *KeggPathwayUpd
 	return kpu
 }
 
+// SetName sets the "name" field.
+func (kpu *KeggPathwayUpdate) SetName(s string) *KeggPathwayUpdate {
+	kpu.mutation.SetName(s)
+	return kpu
+}
+
+// AddRelatingMapIDs adds the "relating_map" edge to the KeggPathway entity by IDs.
+func (kpu *KeggPathwayUpdate) AddRelatingMapIDs(ids ...string) *KeggPathwayUpdate {
+	kpu.mutation.AddRelatingMapIDs(ids...)
+	return kpu
+}
+
+// AddRelatingMap adds the "relating_map" edges to the KeggPathway entity.
+func (kpu *KeggPathwayUpdate) AddRelatingMap(k ...*KeggPathway) *KeggPathwayUpdate {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return kpu.AddRelatingMapIDs(ids...)
+}
+
+// AddRelatedMapIDs adds the "related_map" edge to the KeggPathway entity by IDs.
+func (kpu *KeggPathwayUpdate) AddRelatedMapIDs(ids ...string) *KeggPathwayUpdate {
+	kpu.mutation.AddRelatedMapIDs(ids...)
+	return kpu
+}
+
+// AddRelatedMap adds the "related_map" edges to the KeggPathway entity.
+func (kpu *KeggPathwayUpdate) AddRelatedMap(k ...*KeggPathway) *KeggPathwayUpdate {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return kpu.AddRelatedMapIDs(ids...)
+}
+
+// AddReactionIDs adds the "reactions" edge to the KeggReaction entity by IDs.
+func (kpu *KeggPathwayUpdate) AddReactionIDs(ids ...string) *KeggPathwayUpdate {
+	kpu.mutation.AddReactionIDs(ids...)
+	return kpu
+}
+
+// AddReactions adds the "reactions" edges to the KeggReaction entity.
+func (kpu *KeggPathwayUpdate) AddReactions(k ...*KeggReaction) *KeggPathwayUpdate {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return kpu.AddReactionIDs(ids...)
+}
+
+// AddOrthologyIDs adds the "orthologies" edge to the KeggOrthlogy entity by IDs.
+func (kpu *KeggPathwayUpdate) AddOrthologyIDs(ids ...string) *KeggPathwayUpdate {
+	kpu.mutation.AddOrthologyIDs(ids...)
+	return kpu
+}
+
+// AddOrthologies adds the "orthologies" edges to the KeggOrthlogy entity.
+func (kpu *KeggPathwayUpdate) AddOrthologies(k ...*KeggOrthlogy) *KeggPathwayUpdate {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return kpu.AddOrthologyIDs(ids...)
+}
+
 // Mutation returns the KeggPathwayMutation object of the builder.
 func (kpu *KeggPathwayUpdate) Mutation() *KeggPathwayMutation {
 	return kpu.mutation
+}
+
+// ClearRelatingMap clears all "relating_map" edges to the KeggPathway entity.
+func (kpu *KeggPathwayUpdate) ClearRelatingMap() *KeggPathwayUpdate {
+	kpu.mutation.ClearRelatingMap()
+	return kpu
+}
+
+// RemoveRelatingMapIDs removes the "relating_map" edge to KeggPathway entities by IDs.
+func (kpu *KeggPathwayUpdate) RemoveRelatingMapIDs(ids ...string) *KeggPathwayUpdate {
+	kpu.mutation.RemoveRelatingMapIDs(ids...)
+	return kpu
+}
+
+// RemoveRelatingMap removes "relating_map" edges to KeggPathway entities.
+func (kpu *KeggPathwayUpdate) RemoveRelatingMap(k ...*KeggPathway) *KeggPathwayUpdate {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return kpu.RemoveRelatingMapIDs(ids...)
+}
+
+// ClearRelatedMap clears all "related_map" edges to the KeggPathway entity.
+func (kpu *KeggPathwayUpdate) ClearRelatedMap() *KeggPathwayUpdate {
+	kpu.mutation.ClearRelatedMap()
+	return kpu
+}
+
+// RemoveRelatedMapIDs removes the "related_map" edge to KeggPathway entities by IDs.
+func (kpu *KeggPathwayUpdate) RemoveRelatedMapIDs(ids ...string) *KeggPathwayUpdate {
+	kpu.mutation.RemoveRelatedMapIDs(ids...)
+	return kpu
+}
+
+// RemoveRelatedMap removes "related_map" edges to KeggPathway entities.
+func (kpu *KeggPathwayUpdate) RemoveRelatedMap(k ...*KeggPathway) *KeggPathwayUpdate {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return kpu.RemoveRelatedMapIDs(ids...)
+}
+
+// ClearReactions clears all "reactions" edges to the KeggReaction entity.
+func (kpu *KeggPathwayUpdate) ClearReactions() *KeggPathwayUpdate {
+	kpu.mutation.ClearReactions()
+	return kpu
+}
+
+// RemoveReactionIDs removes the "reactions" edge to KeggReaction entities by IDs.
+func (kpu *KeggPathwayUpdate) RemoveReactionIDs(ids ...string) *KeggPathwayUpdate {
+	kpu.mutation.RemoveReactionIDs(ids...)
+	return kpu
+}
+
+// RemoveReactions removes "reactions" edges to KeggReaction entities.
+func (kpu *KeggPathwayUpdate) RemoveReactions(k ...*KeggReaction) *KeggPathwayUpdate {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return kpu.RemoveReactionIDs(ids...)
+}
+
+// ClearOrthologies clears all "orthologies" edges to the KeggOrthlogy entity.
+func (kpu *KeggPathwayUpdate) ClearOrthologies() *KeggPathwayUpdate {
+	kpu.mutation.ClearOrthologies()
+	return kpu
+}
+
+// RemoveOrthologyIDs removes the "orthologies" edge to KeggOrthlogy entities by IDs.
+func (kpu *KeggPathwayUpdate) RemoveOrthologyIDs(ids ...string) *KeggPathwayUpdate {
+	kpu.mutation.RemoveOrthologyIDs(ids...)
+	return kpu
+}
+
+// RemoveOrthologies removes "orthologies" edges to KeggOrthlogy entities.
+func (kpu *KeggPathwayUpdate) RemoveOrthologies(k ...*KeggOrthlogy) *KeggPathwayUpdate {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return kpu.RemoveOrthologyIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -104,6 +256,225 @@ func (kpu *KeggPathwayUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
+	if value, ok := kpu.mutation.Name(); ok {
+		_spec.SetField(keggpathway.FieldName, field.TypeString, value)
+	}
+	if kpu.mutation.RelatingMapCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   keggpathway.RelatingMapTable,
+			Columns: keggpathway.RelatingMapPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggpathway.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kpu.mutation.RemovedRelatingMapIDs(); len(nodes) > 0 && !kpu.mutation.RelatingMapCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   keggpathway.RelatingMapTable,
+			Columns: keggpathway.RelatingMapPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggpathway.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kpu.mutation.RelatingMapIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   keggpathway.RelatingMapTable,
+			Columns: keggpathway.RelatingMapPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggpathway.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if kpu.mutation.RelatedMapCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.RelatedMapTable,
+			Columns: keggpathway.RelatedMapPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggpathway.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kpu.mutation.RemovedRelatedMapIDs(); len(nodes) > 0 && !kpu.mutation.RelatedMapCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.RelatedMapTable,
+			Columns: keggpathway.RelatedMapPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggpathway.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kpu.mutation.RelatedMapIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.RelatedMapTable,
+			Columns: keggpathway.RelatedMapPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggpathway.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if kpu.mutation.ReactionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.ReactionsTable,
+			Columns: keggpathway.ReactionsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggreaction.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kpu.mutation.RemovedReactionsIDs(); len(nodes) > 0 && !kpu.mutation.ReactionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.ReactionsTable,
+			Columns: keggpathway.ReactionsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggreaction.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kpu.mutation.ReactionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.ReactionsTable,
+			Columns: keggpathway.ReactionsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggreaction.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if kpu.mutation.OrthologiesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.OrthologiesTable,
+			Columns: keggpathway.OrthologiesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggorthlogy.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kpu.mutation.RemovedOrthologiesIDs(); len(nodes) > 0 && !kpu.mutation.OrthologiesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.OrthologiesTable,
+			Columns: keggpathway.OrthologiesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggorthlogy.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kpu.mutation.OrthologiesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.OrthologiesTable,
+			Columns: keggpathway.OrthologiesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggorthlogy.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, kpu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{keggpathway.Label}
@@ -123,9 +494,159 @@ type KeggPathwayUpdateOne struct {
 	mutation *KeggPathwayMutation
 }
 
+// SetName sets the "name" field.
+func (kpuo *KeggPathwayUpdateOne) SetName(s string) *KeggPathwayUpdateOne {
+	kpuo.mutation.SetName(s)
+	return kpuo
+}
+
+// AddRelatingMapIDs adds the "relating_map" edge to the KeggPathway entity by IDs.
+func (kpuo *KeggPathwayUpdateOne) AddRelatingMapIDs(ids ...string) *KeggPathwayUpdateOne {
+	kpuo.mutation.AddRelatingMapIDs(ids...)
+	return kpuo
+}
+
+// AddRelatingMap adds the "relating_map" edges to the KeggPathway entity.
+func (kpuo *KeggPathwayUpdateOne) AddRelatingMap(k ...*KeggPathway) *KeggPathwayUpdateOne {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return kpuo.AddRelatingMapIDs(ids...)
+}
+
+// AddRelatedMapIDs adds the "related_map" edge to the KeggPathway entity by IDs.
+func (kpuo *KeggPathwayUpdateOne) AddRelatedMapIDs(ids ...string) *KeggPathwayUpdateOne {
+	kpuo.mutation.AddRelatedMapIDs(ids...)
+	return kpuo
+}
+
+// AddRelatedMap adds the "related_map" edges to the KeggPathway entity.
+func (kpuo *KeggPathwayUpdateOne) AddRelatedMap(k ...*KeggPathway) *KeggPathwayUpdateOne {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return kpuo.AddRelatedMapIDs(ids...)
+}
+
+// AddReactionIDs adds the "reactions" edge to the KeggReaction entity by IDs.
+func (kpuo *KeggPathwayUpdateOne) AddReactionIDs(ids ...string) *KeggPathwayUpdateOne {
+	kpuo.mutation.AddReactionIDs(ids...)
+	return kpuo
+}
+
+// AddReactions adds the "reactions" edges to the KeggReaction entity.
+func (kpuo *KeggPathwayUpdateOne) AddReactions(k ...*KeggReaction) *KeggPathwayUpdateOne {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return kpuo.AddReactionIDs(ids...)
+}
+
+// AddOrthologyIDs adds the "orthologies" edge to the KeggOrthlogy entity by IDs.
+func (kpuo *KeggPathwayUpdateOne) AddOrthologyIDs(ids ...string) *KeggPathwayUpdateOne {
+	kpuo.mutation.AddOrthologyIDs(ids...)
+	return kpuo
+}
+
+// AddOrthologies adds the "orthologies" edges to the KeggOrthlogy entity.
+func (kpuo *KeggPathwayUpdateOne) AddOrthologies(k ...*KeggOrthlogy) *KeggPathwayUpdateOne {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return kpuo.AddOrthologyIDs(ids...)
+}
+
 // Mutation returns the KeggPathwayMutation object of the builder.
 func (kpuo *KeggPathwayUpdateOne) Mutation() *KeggPathwayMutation {
 	return kpuo.mutation
+}
+
+// ClearRelatingMap clears all "relating_map" edges to the KeggPathway entity.
+func (kpuo *KeggPathwayUpdateOne) ClearRelatingMap() *KeggPathwayUpdateOne {
+	kpuo.mutation.ClearRelatingMap()
+	return kpuo
+}
+
+// RemoveRelatingMapIDs removes the "relating_map" edge to KeggPathway entities by IDs.
+func (kpuo *KeggPathwayUpdateOne) RemoveRelatingMapIDs(ids ...string) *KeggPathwayUpdateOne {
+	kpuo.mutation.RemoveRelatingMapIDs(ids...)
+	return kpuo
+}
+
+// RemoveRelatingMap removes "relating_map" edges to KeggPathway entities.
+func (kpuo *KeggPathwayUpdateOne) RemoveRelatingMap(k ...*KeggPathway) *KeggPathwayUpdateOne {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return kpuo.RemoveRelatingMapIDs(ids...)
+}
+
+// ClearRelatedMap clears all "related_map" edges to the KeggPathway entity.
+func (kpuo *KeggPathwayUpdateOne) ClearRelatedMap() *KeggPathwayUpdateOne {
+	kpuo.mutation.ClearRelatedMap()
+	return kpuo
+}
+
+// RemoveRelatedMapIDs removes the "related_map" edge to KeggPathway entities by IDs.
+func (kpuo *KeggPathwayUpdateOne) RemoveRelatedMapIDs(ids ...string) *KeggPathwayUpdateOne {
+	kpuo.mutation.RemoveRelatedMapIDs(ids...)
+	return kpuo
+}
+
+// RemoveRelatedMap removes "related_map" edges to KeggPathway entities.
+func (kpuo *KeggPathwayUpdateOne) RemoveRelatedMap(k ...*KeggPathway) *KeggPathwayUpdateOne {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return kpuo.RemoveRelatedMapIDs(ids...)
+}
+
+// ClearReactions clears all "reactions" edges to the KeggReaction entity.
+func (kpuo *KeggPathwayUpdateOne) ClearReactions() *KeggPathwayUpdateOne {
+	kpuo.mutation.ClearReactions()
+	return kpuo
+}
+
+// RemoveReactionIDs removes the "reactions" edge to KeggReaction entities by IDs.
+func (kpuo *KeggPathwayUpdateOne) RemoveReactionIDs(ids ...string) *KeggPathwayUpdateOne {
+	kpuo.mutation.RemoveReactionIDs(ids...)
+	return kpuo
+}
+
+// RemoveReactions removes "reactions" edges to KeggReaction entities.
+func (kpuo *KeggPathwayUpdateOne) RemoveReactions(k ...*KeggReaction) *KeggPathwayUpdateOne {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return kpuo.RemoveReactionIDs(ids...)
+}
+
+// ClearOrthologies clears all "orthologies" edges to the KeggOrthlogy entity.
+func (kpuo *KeggPathwayUpdateOne) ClearOrthologies() *KeggPathwayUpdateOne {
+	kpuo.mutation.ClearOrthologies()
+	return kpuo
+}
+
+// RemoveOrthologyIDs removes the "orthologies" edge to KeggOrthlogy entities by IDs.
+func (kpuo *KeggPathwayUpdateOne) RemoveOrthologyIDs(ids ...string) *KeggPathwayUpdateOne {
+	kpuo.mutation.RemoveOrthologyIDs(ids...)
+	return kpuo
+}
+
+// RemoveOrthologies removes "orthologies" edges to KeggOrthlogy entities.
+func (kpuo *KeggPathwayUpdateOne) RemoveOrthologies(k ...*KeggOrthlogy) *KeggPathwayUpdateOne {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return kpuo.RemoveOrthologyIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -229,6 +750,225 @@ func (kpuo *KeggPathwayUpdateOne) sqlSave(ctx context.Context) (_node *KeggPathw
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := kpuo.mutation.Name(); ok {
+		_spec.SetField(keggpathway.FieldName, field.TypeString, value)
+	}
+	if kpuo.mutation.RelatingMapCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   keggpathway.RelatingMapTable,
+			Columns: keggpathway.RelatingMapPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggpathway.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kpuo.mutation.RemovedRelatingMapIDs(); len(nodes) > 0 && !kpuo.mutation.RelatingMapCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   keggpathway.RelatingMapTable,
+			Columns: keggpathway.RelatingMapPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggpathway.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kpuo.mutation.RelatingMapIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   keggpathway.RelatingMapTable,
+			Columns: keggpathway.RelatingMapPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggpathway.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if kpuo.mutation.RelatedMapCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.RelatedMapTable,
+			Columns: keggpathway.RelatedMapPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggpathway.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kpuo.mutation.RemovedRelatedMapIDs(); len(nodes) > 0 && !kpuo.mutation.RelatedMapCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.RelatedMapTable,
+			Columns: keggpathway.RelatedMapPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggpathway.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kpuo.mutation.RelatedMapIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.RelatedMapTable,
+			Columns: keggpathway.RelatedMapPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggpathway.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if kpuo.mutation.ReactionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.ReactionsTable,
+			Columns: keggpathway.ReactionsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggreaction.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kpuo.mutation.RemovedReactionsIDs(); len(nodes) > 0 && !kpuo.mutation.ReactionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.ReactionsTable,
+			Columns: keggpathway.ReactionsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggreaction.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kpuo.mutation.ReactionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.ReactionsTable,
+			Columns: keggpathway.ReactionsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggreaction.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if kpuo.mutation.OrthologiesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.OrthologiesTable,
+			Columns: keggpathway.OrthologiesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggorthlogy.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kpuo.mutation.RemovedOrthologiesIDs(); len(nodes) > 0 && !kpuo.mutation.OrthologiesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.OrthologiesTable,
+			Columns: keggpathway.OrthologiesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggorthlogy.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := kpuo.mutation.OrthologiesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.OrthologiesTable,
+			Columns: keggpathway.OrthologiesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggorthlogy.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &KeggPathway{config: kpuo.config}
 	_spec.Assign = _node.assignValues

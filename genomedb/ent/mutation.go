@@ -13,7 +13,11 @@ import (
 	"genomedb/ent/genome"
 	"genomedb/ent/goterm"
 	"genomedb/ent/gotermontranscripts"
-	"genomedb/ent/keggontology"
+	"genomedb/ent/keggorthlogy"
+	"genomedb/ent/keggpathway"
+	"genomedb/ent/keggreaction"
+	"genomedb/ent/kog"
+	"genomedb/ent/nomeclature"
 	"genomedb/ent/predicate"
 	"genomedb/ent/scaffold"
 	"genomedb/ent/transcript"
@@ -37,11 +41,13 @@ const (
 	TypeGenome                       = "Genome"
 	TypeGoTerm                       = "GoTerm"
 	TypeGoTermOnTranscripts          = "GoTermOnTranscripts"
+	TypeKOG                          = "KOG"
 	TypeKeggCompound                 = "KeggCompound"
 	TypeKeggModule                   = "KeggModule"
-	TypeKeggOntology                 = "KeggOntology"
+	TypeKeggOrthlogy                 = "KeggOrthlogy"
 	TypeKeggPathway                  = "KeggPathway"
 	TypeKeggReaction                 = "KeggReaction"
+	TypeNomeclature                  = "Nomeclature"
 	TypeScaffold                     = "Scaffold"
 	TypeTranscript                   = "Transcript"
 )
@@ -3262,6 +3268,377 @@ func (m *GoTermOnTranscriptsMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown GoTermOnTranscripts edge %s", name)
 }
 
+// KOGMutation represents an operation that mutates the KOG nodes in the graph.
+type KOGMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *string
+	description   *string
+	category      *string
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*KOG, error)
+	predicates    []predicate.KOG
+}
+
+var _ ent.Mutation = (*KOGMutation)(nil)
+
+// kogOption allows management of the mutation configuration using functional options.
+type kogOption func(*KOGMutation)
+
+// newKOGMutation creates new mutation for the KOG entity.
+func newKOGMutation(c config, op Op, opts ...kogOption) *KOGMutation {
+	m := &KOGMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeKOG,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withKOGID sets the ID field of the mutation.
+func withKOGID(id string) kogOption {
+	return func(m *KOGMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *KOG
+		)
+		m.oldValue = func(ctx context.Context) (*KOG, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().KOG.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withKOG sets the old KOG of the mutation.
+func withKOG(node *KOG) kogOption {
+	return func(m *KOGMutation) {
+		m.oldValue = func(context.Context) (*KOG, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m KOGMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m KOGMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of KOG entities.
+func (m *KOGMutation) SetID(id string) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *KOGMutation) ID() (id string, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *KOGMutation) IDs(ctx context.Context) ([]string, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []string{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().KOG.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetDescription sets the "description" field.
+func (m *KOGMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *KOGMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the KOG entity.
+// If the KOG object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KOGMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *KOGMutation) ResetDescription() {
+	m.description = nil
+}
+
+// SetCategory sets the "category" field.
+func (m *KOGMutation) SetCategory(s string) {
+	m.category = &s
+}
+
+// Category returns the value of the "category" field in the mutation.
+func (m *KOGMutation) Category() (r string, exists bool) {
+	v := m.category
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCategory returns the old "category" field's value of the KOG entity.
+// If the KOG object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KOGMutation) OldCategory(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCategory is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCategory requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCategory: %w", err)
+	}
+	return oldValue.Category, nil
+}
+
+// ResetCategory resets all changes to the "category" field.
+func (m *KOGMutation) ResetCategory() {
+	m.category = nil
+}
+
+// Where appends a list predicates to the KOGMutation builder.
+func (m *KOGMutation) Where(ps ...predicate.KOG) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *KOGMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (KOG).
+func (m *KOGMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *KOGMutation) Fields() []string {
+	fields := make([]string, 0, 2)
+	if m.description != nil {
+		fields = append(fields, kog.FieldDescription)
+	}
+	if m.category != nil {
+		fields = append(fields, kog.FieldCategory)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *KOGMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case kog.FieldDescription:
+		return m.Description()
+	case kog.FieldCategory:
+		return m.Category()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *KOGMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case kog.FieldDescription:
+		return m.OldDescription(ctx)
+	case kog.FieldCategory:
+		return m.OldCategory(ctx)
+	}
+	return nil, fmt.Errorf("unknown KOG field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *KOGMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case kog.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case kog.FieldCategory:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCategory(v)
+		return nil
+	}
+	return fmt.Errorf("unknown KOG field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *KOGMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *KOGMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *KOGMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown KOG numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *KOGMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *KOGMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *KOGMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown KOG nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *KOGMutation) ResetField(name string) error {
+	switch name {
+	case kog.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case kog.FieldCategory:
+		m.ResetCategory()
+		return nil
+	}
+	return fmt.Errorf("unknown KOG field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *KOGMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *KOGMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *KOGMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *KOGMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *KOGMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *KOGMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *KOGMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown KOG unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *KOGMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown KOG edge %s", name)
+}
+
 // KeggCompoundMutation represents an operation that mutates the KeggCompound nodes in the graph.
 type KeggCompoundMutation struct {
 	config
@@ -3772,31 +4149,33 @@ func (m *KeggModuleMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown KeggModule edge %s", name)
 }
 
-// KeggOntologyMutation represents an operation that mutates the KeggOntology nodes in the graph.
-type KeggOntologyMutation struct {
+// KeggOrthlogyMutation represents an operation that mutates the KeggOrthlogy nodes in the graph.
+type KeggOrthlogyMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *string
-	name          *string
-	symbol        *string
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*KeggOntology, error)
-	predicates    []predicate.KeggOntology
+	op              Op
+	typ             string
+	id              *string
+	name            *string
+	clearedFields   map[string]struct{}
+	pathways        map[string]struct{}
+	removedpathways map[string]struct{}
+	clearedpathways bool
+	done            bool
+	oldValue        func(context.Context) (*KeggOrthlogy, error)
+	predicates      []predicate.KeggOrthlogy
 }
 
-var _ ent.Mutation = (*KeggOntologyMutation)(nil)
+var _ ent.Mutation = (*KeggOrthlogyMutation)(nil)
 
-// keggontologyOption allows management of the mutation configuration using functional options.
-type keggontologyOption func(*KeggOntologyMutation)
+// keggorthlogyOption allows management of the mutation configuration using functional options.
+type keggorthlogyOption func(*KeggOrthlogyMutation)
 
-// newKeggOntologyMutation creates new mutation for the KeggOntology entity.
-func newKeggOntologyMutation(c config, op Op, opts ...keggontologyOption) *KeggOntologyMutation {
-	m := &KeggOntologyMutation{
+// newKeggOrthlogyMutation creates new mutation for the KeggOrthlogy entity.
+func newKeggOrthlogyMutation(c config, op Op, opts ...keggorthlogyOption) *KeggOrthlogyMutation {
+	m := &KeggOrthlogyMutation{
 		config:        c,
 		op:            op,
-		typ:           TypeKeggOntology,
+		typ:           TypeKeggOrthlogy,
 		clearedFields: make(map[string]struct{}),
 	}
 	for _, opt := range opts {
@@ -3805,20 +4184,20 @@ func newKeggOntologyMutation(c config, op Op, opts ...keggontologyOption) *KeggO
 	return m
 }
 
-// withKeggOntologyID sets the ID field of the mutation.
-func withKeggOntologyID(id string) keggontologyOption {
-	return func(m *KeggOntologyMutation) {
+// withKeggOrthlogyID sets the ID field of the mutation.
+func withKeggOrthlogyID(id string) keggorthlogyOption {
+	return func(m *KeggOrthlogyMutation) {
 		var (
 			err   error
 			once  sync.Once
-			value *KeggOntology
+			value *KeggOrthlogy
 		)
-		m.oldValue = func(ctx context.Context) (*KeggOntology, error) {
+		m.oldValue = func(ctx context.Context) (*KeggOrthlogy, error) {
 			once.Do(func() {
 				if m.done {
 					err = errors.New("querying old values post mutation is not allowed")
 				} else {
-					value, err = m.Client().KeggOntology.Get(ctx, id)
+					value, err = m.Client().KeggOrthlogy.Get(ctx, id)
 				}
 			})
 			return value, err
@@ -3827,10 +4206,10 @@ func withKeggOntologyID(id string) keggontologyOption {
 	}
 }
 
-// withKeggOntology sets the old KeggOntology of the mutation.
-func withKeggOntology(node *KeggOntology) keggontologyOption {
-	return func(m *KeggOntologyMutation) {
-		m.oldValue = func(context.Context) (*KeggOntology, error) {
+// withKeggOrthlogy sets the old KeggOrthlogy of the mutation.
+func withKeggOrthlogy(node *KeggOrthlogy) keggorthlogyOption {
+	return func(m *KeggOrthlogyMutation) {
+		m.oldValue = func(context.Context) (*KeggOrthlogy, error) {
 			return node, nil
 		}
 		m.id = &node.ID
@@ -3839,7 +4218,7 @@ func withKeggOntology(node *KeggOntology) keggontologyOption {
 
 // Client returns a new `ent.Client` from the mutation. If the mutation was
 // executed in a transaction (ent.Tx), a transactional client is returned.
-func (m KeggOntologyMutation) Client() *Client {
+func (m KeggOrthlogyMutation) Client() *Client {
 	client := &Client{config: m.config}
 	client.init()
 	return client
@@ -3847,7 +4226,7 @@ func (m KeggOntologyMutation) Client() *Client {
 
 // Tx returns an `ent.Tx` for mutations that were executed in transactions;
 // it returns an error otherwise.
-func (m KeggOntologyMutation) Tx() (*Tx, error) {
+func (m KeggOrthlogyMutation) Tx() (*Tx, error) {
 	if _, ok := m.driver.(*txDriver); !ok {
 		return nil, errors.New("ent: mutation is not running in a transaction")
 	}
@@ -3857,14 +4236,14 @@ func (m KeggOntologyMutation) Tx() (*Tx, error) {
 }
 
 // SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of KeggOntology entities.
-func (m *KeggOntologyMutation) SetID(id string) {
+// operation is only accepted on creation of KeggOrthlogy entities.
+func (m *KeggOrthlogyMutation) SetID(id string) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *KeggOntologyMutation) ID() (id string, exists bool) {
+func (m *KeggOrthlogyMutation) ID() (id string, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -3875,7 +4254,7 @@ func (m *KeggOntologyMutation) ID() (id string, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *KeggOntologyMutation) IDs(ctx context.Context) ([]string, error) {
+func (m *KeggOrthlogyMutation) IDs(ctx context.Context) ([]string, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
@@ -3884,19 +4263,19 @@ func (m *KeggOntologyMutation) IDs(ctx context.Context) ([]string, error) {
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().KeggOntology.Query().Where(m.predicates...).IDs(ctx)
+		return m.Client().KeggOrthlogy.Query().Where(m.predicates...).IDs(ctx)
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
 }
 
 // SetName sets the "name" field.
-func (m *KeggOntologyMutation) SetName(s string) {
+func (m *KeggOrthlogyMutation) SetName(s string) {
 	m.name = &s
 }
 
 // Name returns the value of the "name" field in the mutation.
-func (m *KeggOntologyMutation) Name() (r string, exists bool) {
+func (m *KeggOrthlogyMutation) Name() (r string, exists bool) {
 	v := m.name
 	if v == nil {
 		return
@@ -3904,10 +4283,10 @@ func (m *KeggOntologyMutation) Name() (r string, exists bool) {
 	return *v, true
 }
 
-// OldName returns the old "name" field's value of the KeggOntology entity.
-// If the KeggOntology object wasn't provided to the builder, the object is fetched from the database.
+// OldName returns the old "name" field's value of the KeggOrthlogy entity.
+// If the KeggOrthlogy object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *KeggOntologyMutation) OldName(ctx context.Context) (v string, err error) {
+func (m *KeggOrthlogyMutation) OldName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldName is only allowed on UpdateOne operations")
 	}
@@ -3922,71 +4301,86 @@ func (m *KeggOntologyMutation) OldName(ctx context.Context) (v string, err error
 }
 
 // ResetName resets all changes to the "name" field.
-func (m *KeggOntologyMutation) ResetName() {
+func (m *KeggOrthlogyMutation) ResetName() {
 	m.name = nil
 }
 
-// SetSymbol sets the "symbol" field.
-func (m *KeggOntologyMutation) SetSymbol(s string) {
-	m.symbol = &s
+// AddPathwayIDs adds the "pathways" edge to the KeggPathway entity by ids.
+func (m *KeggOrthlogyMutation) AddPathwayIDs(ids ...string) {
+	if m.pathways == nil {
+		m.pathways = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.pathways[ids[i]] = struct{}{}
+	}
 }
 
-// Symbol returns the value of the "symbol" field in the mutation.
-func (m *KeggOntologyMutation) Symbol() (r string, exists bool) {
-	v := m.symbol
-	if v == nil {
-		return
-	}
-	return *v, true
+// ClearPathways clears the "pathways" edge to the KeggPathway entity.
+func (m *KeggOrthlogyMutation) ClearPathways() {
+	m.clearedpathways = true
 }
 
-// OldSymbol returns the old "symbol" field's value of the KeggOntology entity.
-// If the KeggOntology object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *KeggOntologyMutation) OldSymbol(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldSymbol is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldSymbol requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldSymbol: %w", err)
-	}
-	return oldValue.Symbol, nil
+// PathwaysCleared reports if the "pathways" edge to the KeggPathway entity was cleared.
+func (m *KeggOrthlogyMutation) PathwaysCleared() bool {
+	return m.clearedpathways
 }
 
-// ResetSymbol resets all changes to the "symbol" field.
-func (m *KeggOntologyMutation) ResetSymbol() {
-	m.symbol = nil
+// RemovePathwayIDs removes the "pathways" edge to the KeggPathway entity by IDs.
+func (m *KeggOrthlogyMutation) RemovePathwayIDs(ids ...string) {
+	if m.removedpathways == nil {
+		m.removedpathways = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.pathways, ids[i])
+		m.removedpathways[ids[i]] = struct{}{}
+	}
 }
 
-// Where appends a list predicates to the KeggOntologyMutation builder.
-func (m *KeggOntologyMutation) Where(ps ...predicate.KeggOntology) {
+// RemovedPathways returns the removed IDs of the "pathways" edge to the KeggPathway entity.
+func (m *KeggOrthlogyMutation) RemovedPathwaysIDs() (ids []string) {
+	for id := range m.removedpathways {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// PathwaysIDs returns the "pathways" edge IDs in the mutation.
+func (m *KeggOrthlogyMutation) PathwaysIDs() (ids []string) {
+	for id := range m.pathways {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetPathways resets all changes to the "pathways" edge.
+func (m *KeggOrthlogyMutation) ResetPathways() {
+	m.pathways = nil
+	m.clearedpathways = false
+	m.removedpathways = nil
+}
+
+// Where appends a list predicates to the KeggOrthlogyMutation builder.
+func (m *KeggOrthlogyMutation) Where(ps ...predicate.KeggOrthlogy) {
 	m.predicates = append(m.predicates, ps...)
 }
 
 // Op returns the operation name.
-func (m *KeggOntologyMutation) Op() Op {
+func (m *KeggOrthlogyMutation) Op() Op {
 	return m.op
 }
 
-// Type returns the node type of this mutation (KeggOntology).
-func (m *KeggOntologyMutation) Type() string {
+// Type returns the node type of this mutation (KeggOrthlogy).
+func (m *KeggOrthlogyMutation) Type() string {
 	return m.typ
 }
 
 // Fields returns all fields that were changed during this mutation. Note that in
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
-func (m *KeggOntologyMutation) Fields() []string {
-	fields := make([]string, 0, 2)
+func (m *KeggOrthlogyMutation) Fields() []string {
+	fields := make([]string, 0, 1)
 	if m.name != nil {
-		fields = append(fields, keggontology.FieldName)
-	}
-	if m.symbol != nil {
-		fields = append(fields, keggontology.FieldSymbol)
+		fields = append(fields, keggorthlogy.FieldName)
 	}
 	return fields
 }
@@ -3994,12 +4388,10 @@ func (m *KeggOntologyMutation) Fields() []string {
 // Field returns the value of a field with the given name. The second boolean
 // return value indicates that this field was not set, or was not defined in the
 // schema.
-func (m *KeggOntologyMutation) Field(name string) (ent.Value, bool) {
+func (m *KeggOrthlogyMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case keggontology.FieldName:
+	case keggorthlogy.FieldName:
 		return m.Name()
-	case keggontology.FieldSymbol:
-		return m.Symbol()
 	}
 	return nil, false
 }
@@ -4007,152 +4399,189 @@ func (m *KeggOntologyMutation) Field(name string) (ent.Value, bool) {
 // OldField returns the old value of the field from the database. An error is
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
-func (m *KeggOntologyMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+func (m *KeggOrthlogyMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case keggontology.FieldName:
+	case keggorthlogy.FieldName:
 		return m.OldName(ctx)
-	case keggontology.FieldSymbol:
-		return m.OldSymbol(ctx)
 	}
-	return nil, fmt.Errorf("unknown KeggOntology field %s", name)
+	return nil, fmt.Errorf("unknown KeggOrthlogy field %s", name)
 }
 
 // SetField sets the value of a field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *KeggOntologyMutation) SetField(name string, value ent.Value) error {
+func (m *KeggOrthlogyMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case keggontology.FieldName:
+	case keggorthlogy.FieldName:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
 		return nil
-	case keggontology.FieldSymbol:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetSymbol(v)
-		return nil
 	}
-	return fmt.Errorf("unknown KeggOntology field %s", name)
+	return fmt.Errorf("unknown KeggOrthlogy field %s", name)
 }
 
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
-func (m *KeggOntologyMutation) AddedFields() []string {
+func (m *KeggOrthlogyMutation) AddedFields() []string {
 	return nil
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
-func (m *KeggOntologyMutation) AddedField(name string) (ent.Value, bool) {
+func (m *KeggOrthlogyMutation) AddedField(name string) (ent.Value, bool) {
 	return nil, false
 }
 
 // AddField adds the value to the field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *KeggOntologyMutation) AddField(name string, value ent.Value) error {
+func (m *KeggOrthlogyMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	}
-	return fmt.Errorf("unknown KeggOntology numeric field %s", name)
+	return fmt.Errorf("unknown KeggOrthlogy numeric field %s", name)
 }
 
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
-func (m *KeggOntologyMutation) ClearedFields() []string {
+func (m *KeggOrthlogyMutation) ClearedFields() []string {
 	return nil
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
 // cleared in this mutation.
-func (m *KeggOntologyMutation) FieldCleared(name string) bool {
+func (m *KeggOrthlogyMutation) FieldCleared(name string) bool {
 	_, ok := m.clearedFields[name]
 	return ok
 }
 
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
-func (m *KeggOntologyMutation) ClearField(name string) error {
-	return fmt.Errorf("unknown KeggOntology nullable field %s", name)
+func (m *KeggOrthlogyMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown KeggOrthlogy nullable field %s", name)
 }
 
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
-func (m *KeggOntologyMutation) ResetField(name string) error {
+func (m *KeggOrthlogyMutation) ResetField(name string) error {
 	switch name {
-	case keggontology.FieldName:
+	case keggorthlogy.FieldName:
 		m.ResetName()
 		return nil
-	case keggontology.FieldSymbol:
-		m.ResetSymbol()
-		return nil
 	}
-	return fmt.Errorf("unknown KeggOntology field %s", name)
+	return fmt.Errorf("unknown KeggOrthlogy field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
-func (m *KeggOntologyMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+func (m *KeggOrthlogyMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.pathways != nil {
+		edges = append(edges, keggorthlogy.EdgePathways)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
-func (m *KeggOntologyMutation) AddedIDs(name string) []ent.Value {
+func (m *KeggOrthlogyMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case keggorthlogy.EdgePathways:
+		ids := make([]ent.Value, 0, len(m.pathways))
+		for id := range m.pathways {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
-func (m *KeggOntologyMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+func (m *KeggOrthlogyMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removedpathways != nil {
+		edges = append(edges, keggorthlogy.EdgePathways)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
-func (m *KeggOntologyMutation) RemovedIDs(name string) []ent.Value {
+func (m *KeggOrthlogyMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case keggorthlogy.EdgePathways:
+		ids := make([]ent.Value, 0, len(m.removedpathways))
+		for id := range m.removedpathways {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *KeggOntologyMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+func (m *KeggOrthlogyMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedpathways {
+		edges = append(edges, keggorthlogy.EdgePathways)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
-func (m *KeggOntologyMutation) EdgeCleared(name string) bool {
+func (m *KeggOrthlogyMutation) EdgeCleared(name string) bool {
+	switch name {
+	case keggorthlogy.EdgePathways:
+		return m.clearedpathways
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
-func (m *KeggOntologyMutation) ClearEdge(name string) error {
-	return fmt.Errorf("unknown KeggOntology unique edge %s", name)
+func (m *KeggOrthlogyMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown KeggOrthlogy unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
-func (m *KeggOntologyMutation) ResetEdge(name string) error {
-	return fmt.Errorf("unknown KeggOntology edge %s", name)
+func (m *KeggOrthlogyMutation) ResetEdge(name string) error {
+	switch name {
+	case keggorthlogy.EdgePathways:
+		m.ResetPathways()
+		return nil
+	}
+	return fmt.Errorf("unknown KeggOrthlogy edge %s", name)
 }
 
 // KeggPathwayMutation represents an operation that mutates the KeggPathway nodes in the graph.
 type KeggPathwayMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *string
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*KeggPathway, error)
-	predicates    []predicate.KeggPathway
+	op                  Op
+	typ                 string
+	id                  *string
+	name                *string
+	clearedFields       map[string]struct{}
+	relating_map        map[string]struct{}
+	removedrelating_map map[string]struct{}
+	clearedrelating_map bool
+	related_map         map[string]struct{}
+	removedrelated_map  map[string]struct{}
+	clearedrelated_map  bool
+	reactions           map[string]struct{}
+	removedreactions    map[string]struct{}
+	clearedreactions    bool
+	orthologies         map[string]struct{}
+	removedorthologies  map[string]struct{}
+	clearedorthologies  bool
+	done                bool
+	oldValue            func(context.Context) (*KeggPathway, error)
+	predicates          []predicate.KeggPathway
 }
 
 var _ ent.Mutation = (*KeggPathwayMutation)(nil)
@@ -4259,6 +4688,258 @@ func (m *KeggPathwayMutation) IDs(ctx context.Context) ([]string, error) {
 	}
 }
 
+// SetName sets the "name" field.
+func (m *KeggPathwayMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *KeggPathwayMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the KeggPathway entity.
+// If the KeggPathway object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KeggPathwayMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *KeggPathwayMutation) ResetName() {
+	m.name = nil
+}
+
+// AddRelatingMapIDs adds the "relating_map" edge to the KeggPathway entity by ids.
+func (m *KeggPathwayMutation) AddRelatingMapIDs(ids ...string) {
+	if m.relating_map == nil {
+		m.relating_map = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.relating_map[ids[i]] = struct{}{}
+	}
+}
+
+// ClearRelatingMap clears the "relating_map" edge to the KeggPathway entity.
+func (m *KeggPathwayMutation) ClearRelatingMap() {
+	m.clearedrelating_map = true
+}
+
+// RelatingMapCleared reports if the "relating_map" edge to the KeggPathway entity was cleared.
+func (m *KeggPathwayMutation) RelatingMapCleared() bool {
+	return m.clearedrelating_map
+}
+
+// RemoveRelatingMapIDs removes the "relating_map" edge to the KeggPathway entity by IDs.
+func (m *KeggPathwayMutation) RemoveRelatingMapIDs(ids ...string) {
+	if m.removedrelating_map == nil {
+		m.removedrelating_map = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.relating_map, ids[i])
+		m.removedrelating_map[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedRelatingMap returns the removed IDs of the "relating_map" edge to the KeggPathway entity.
+func (m *KeggPathwayMutation) RemovedRelatingMapIDs() (ids []string) {
+	for id := range m.removedrelating_map {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// RelatingMapIDs returns the "relating_map" edge IDs in the mutation.
+func (m *KeggPathwayMutation) RelatingMapIDs() (ids []string) {
+	for id := range m.relating_map {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetRelatingMap resets all changes to the "relating_map" edge.
+func (m *KeggPathwayMutation) ResetRelatingMap() {
+	m.relating_map = nil
+	m.clearedrelating_map = false
+	m.removedrelating_map = nil
+}
+
+// AddRelatedMapIDs adds the "related_map" edge to the KeggPathway entity by ids.
+func (m *KeggPathwayMutation) AddRelatedMapIDs(ids ...string) {
+	if m.related_map == nil {
+		m.related_map = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.related_map[ids[i]] = struct{}{}
+	}
+}
+
+// ClearRelatedMap clears the "related_map" edge to the KeggPathway entity.
+func (m *KeggPathwayMutation) ClearRelatedMap() {
+	m.clearedrelated_map = true
+}
+
+// RelatedMapCleared reports if the "related_map" edge to the KeggPathway entity was cleared.
+func (m *KeggPathwayMutation) RelatedMapCleared() bool {
+	return m.clearedrelated_map
+}
+
+// RemoveRelatedMapIDs removes the "related_map" edge to the KeggPathway entity by IDs.
+func (m *KeggPathwayMutation) RemoveRelatedMapIDs(ids ...string) {
+	if m.removedrelated_map == nil {
+		m.removedrelated_map = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.related_map, ids[i])
+		m.removedrelated_map[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedRelatedMap returns the removed IDs of the "related_map" edge to the KeggPathway entity.
+func (m *KeggPathwayMutation) RemovedRelatedMapIDs() (ids []string) {
+	for id := range m.removedrelated_map {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// RelatedMapIDs returns the "related_map" edge IDs in the mutation.
+func (m *KeggPathwayMutation) RelatedMapIDs() (ids []string) {
+	for id := range m.related_map {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetRelatedMap resets all changes to the "related_map" edge.
+func (m *KeggPathwayMutation) ResetRelatedMap() {
+	m.related_map = nil
+	m.clearedrelated_map = false
+	m.removedrelated_map = nil
+}
+
+// AddReactionIDs adds the "reactions" edge to the KeggReaction entity by ids.
+func (m *KeggPathwayMutation) AddReactionIDs(ids ...string) {
+	if m.reactions == nil {
+		m.reactions = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.reactions[ids[i]] = struct{}{}
+	}
+}
+
+// ClearReactions clears the "reactions" edge to the KeggReaction entity.
+func (m *KeggPathwayMutation) ClearReactions() {
+	m.clearedreactions = true
+}
+
+// ReactionsCleared reports if the "reactions" edge to the KeggReaction entity was cleared.
+func (m *KeggPathwayMutation) ReactionsCleared() bool {
+	return m.clearedreactions
+}
+
+// RemoveReactionIDs removes the "reactions" edge to the KeggReaction entity by IDs.
+func (m *KeggPathwayMutation) RemoveReactionIDs(ids ...string) {
+	if m.removedreactions == nil {
+		m.removedreactions = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.reactions, ids[i])
+		m.removedreactions[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedReactions returns the removed IDs of the "reactions" edge to the KeggReaction entity.
+func (m *KeggPathwayMutation) RemovedReactionsIDs() (ids []string) {
+	for id := range m.removedreactions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ReactionsIDs returns the "reactions" edge IDs in the mutation.
+func (m *KeggPathwayMutation) ReactionsIDs() (ids []string) {
+	for id := range m.reactions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetReactions resets all changes to the "reactions" edge.
+func (m *KeggPathwayMutation) ResetReactions() {
+	m.reactions = nil
+	m.clearedreactions = false
+	m.removedreactions = nil
+}
+
+// AddOrthologyIDs adds the "orthologies" edge to the KeggOrthlogy entity by ids.
+func (m *KeggPathwayMutation) AddOrthologyIDs(ids ...string) {
+	if m.orthologies == nil {
+		m.orthologies = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.orthologies[ids[i]] = struct{}{}
+	}
+}
+
+// ClearOrthologies clears the "orthologies" edge to the KeggOrthlogy entity.
+func (m *KeggPathwayMutation) ClearOrthologies() {
+	m.clearedorthologies = true
+}
+
+// OrthologiesCleared reports if the "orthologies" edge to the KeggOrthlogy entity was cleared.
+func (m *KeggPathwayMutation) OrthologiesCleared() bool {
+	return m.clearedorthologies
+}
+
+// RemoveOrthologyIDs removes the "orthologies" edge to the KeggOrthlogy entity by IDs.
+func (m *KeggPathwayMutation) RemoveOrthologyIDs(ids ...string) {
+	if m.removedorthologies == nil {
+		m.removedorthologies = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.orthologies, ids[i])
+		m.removedorthologies[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedOrthologies returns the removed IDs of the "orthologies" edge to the KeggOrthlogy entity.
+func (m *KeggPathwayMutation) RemovedOrthologiesIDs() (ids []string) {
+	for id := range m.removedorthologies {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// OrthologiesIDs returns the "orthologies" edge IDs in the mutation.
+func (m *KeggPathwayMutation) OrthologiesIDs() (ids []string) {
+	for id := range m.orthologies {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetOrthologies resets all changes to the "orthologies" edge.
+func (m *KeggPathwayMutation) ResetOrthologies() {
+	m.orthologies = nil
+	m.clearedorthologies = false
+	m.removedorthologies = nil
+}
+
 // Where appends a list predicates to the KeggPathwayMutation builder.
 func (m *KeggPathwayMutation) Where(ps ...predicate.KeggPathway) {
 	m.predicates = append(m.predicates, ps...)
@@ -4278,7 +4959,10 @@ func (m *KeggPathwayMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *KeggPathwayMutation) Fields() []string {
-	fields := make([]string, 0, 0)
+	fields := make([]string, 0, 1)
+	if m.name != nil {
+		fields = append(fields, keggpathway.FieldName)
+	}
 	return fields
 }
 
@@ -4286,6 +4970,10 @@ func (m *KeggPathwayMutation) Fields() []string {
 // return value indicates that this field was not set, or was not defined in the
 // schema.
 func (m *KeggPathwayMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case keggpathway.FieldName:
+		return m.Name()
+	}
 	return nil, false
 }
 
@@ -4293,6 +4981,10 @@ func (m *KeggPathwayMutation) Field(name string) (ent.Value, bool) {
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
 func (m *KeggPathwayMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case keggpathway.FieldName:
+		return m.OldName(ctx)
+	}
 	return nil, fmt.Errorf("unknown KeggPathway field %s", name)
 }
 
@@ -4301,6 +4993,13 @@ func (m *KeggPathwayMutation) OldField(ctx context.Context, name string) (ent.Va
 // type.
 func (m *KeggPathwayMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case keggpathway.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
 	}
 	return fmt.Errorf("unknown KeggPathway field %s", name)
 }
@@ -4322,6 +5021,8 @@ func (m *KeggPathwayMutation) AddedField(name string) (ent.Value, bool) {
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
 func (m *KeggPathwayMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown KeggPathway numeric field %s", name)
 }
 
@@ -4347,67 +5048,190 @@ func (m *KeggPathwayMutation) ClearField(name string) error {
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
 func (m *KeggPathwayMutation) ResetField(name string) error {
+	switch name {
+	case keggpathway.FieldName:
+		m.ResetName()
+		return nil
+	}
 	return fmt.Errorf("unknown KeggPathway field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *KeggPathwayMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 4)
+	if m.relating_map != nil {
+		edges = append(edges, keggpathway.EdgeRelatingMap)
+	}
+	if m.related_map != nil {
+		edges = append(edges, keggpathway.EdgeRelatedMap)
+	}
+	if m.reactions != nil {
+		edges = append(edges, keggpathway.EdgeReactions)
+	}
+	if m.orthologies != nil {
+		edges = append(edges, keggpathway.EdgeOrthologies)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *KeggPathwayMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case keggpathway.EdgeRelatingMap:
+		ids := make([]ent.Value, 0, len(m.relating_map))
+		for id := range m.relating_map {
+			ids = append(ids, id)
+		}
+		return ids
+	case keggpathway.EdgeRelatedMap:
+		ids := make([]ent.Value, 0, len(m.related_map))
+		for id := range m.related_map {
+			ids = append(ids, id)
+		}
+		return ids
+	case keggpathway.EdgeReactions:
+		ids := make([]ent.Value, 0, len(m.reactions))
+		for id := range m.reactions {
+			ids = append(ids, id)
+		}
+		return ids
+	case keggpathway.EdgeOrthologies:
+		ids := make([]ent.Value, 0, len(m.orthologies))
+		for id := range m.orthologies {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *KeggPathwayMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 4)
+	if m.removedrelating_map != nil {
+		edges = append(edges, keggpathway.EdgeRelatingMap)
+	}
+	if m.removedrelated_map != nil {
+		edges = append(edges, keggpathway.EdgeRelatedMap)
+	}
+	if m.removedreactions != nil {
+		edges = append(edges, keggpathway.EdgeReactions)
+	}
+	if m.removedorthologies != nil {
+		edges = append(edges, keggpathway.EdgeOrthologies)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *KeggPathwayMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case keggpathway.EdgeRelatingMap:
+		ids := make([]ent.Value, 0, len(m.removedrelating_map))
+		for id := range m.removedrelating_map {
+			ids = append(ids, id)
+		}
+		return ids
+	case keggpathway.EdgeRelatedMap:
+		ids := make([]ent.Value, 0, len(m.removedrelated_map))
+		for id := range m.removedrelated_map {
+			ids = append(ids, id)
+		}
+		return ids
+	case keggpathway.EdgeReactions:
+		ids := make([]ent.Value, 0, len(m.removedreactions))
+		for id := range m.removedreactions {
+			ids = append(ids, id)
+		}
+		return ids
+	case keggpathway.EdgeOrthologies:
+		ids := make([]ent.Value, 0, len(m.removedorthologies))
+		for id := range m.removedorthologies {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *KeggPathwayMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 4)
+	if m.clearedrelating_map {
+		edges = append(edges, keggpathway.EdgeRelatingMap)
+	}
+	if m.clearedrelated_map {
+		edges = append(edges, keggpathway.EdgeRelatedMap)
+	}
+	if m.clearedreactions {
+		edges = append(edges, keggpathway.EdgeReactions)
+	}
+	if m.clearedorthologies {
+		edges = append(edges, keggpathway.EdgeOrthologies)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *KeggPathwayMutation) EdgeCleared(name string) bool {
+	switch name {
+	case keggpathway.EdgeRelatingMap:
+		return m.clearedrelating_map
+	case keggpathway.EdgeRelatedMap:
+		return m.clearedrelated_map
+	case keggpathway.EdgeReactions:
+		return m.clearedreactions
+	case keggpathway.EdgeOrthologies:
+		return m.clearedorthologies
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *KeggPathwayMutation) ClearEdge(name string) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown KeggPathway unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *KeggPathwayMutation) ResetEdge(name string) error {
+	switch name {
+	case keggpathway.EdgeRelatingMap:
+		m.ResetRelatingMap()
+		return nil
+	case keggpathway.EdgeRelatedMap:
+		m.ResetRelatedMap()
+		return nil
+	case keggpathway.EdgeReactions:
+		m.ResetReactions()
+		return nil
+	case keggpathway.EdgeOrthologies:
+		m.ResetOrthologies()
+		return nil
+	}
 	return fmt.Errorf("unknown KeggPathway edge %s", name)
 }
 
 // KeggReactionMutation represents an operation that mutates the KeggReaction nodes in the graph.
 type KeggReactionMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*KeggReaction, error)
-	predicates    []predicate.KeggReaction
+	op              Op
+	typ             string
+	id              *string
+	name            *string
+	clearedFields   map[string]struct{}
+	pathways        map[string]struct{}
+	removedpathways map[string]struct{}
+	clearedpathways bool
+	done            bool
+	oldValue        func(context.Context) (*KeggReaction, error)
+	predicates      []predicate.KeggReaction
 }
 
 var _ ent.Mutation = (*KeggReactionMutation)(nil)
@@ -4430,7 +5254,7 @@ func newKeggReactionMutation(c config, op Op, opts ...keggreactionOption) *KeggR
 }
 
 // withKeggReactionID sets the ID field of the mutation.
-func withKeggReactionID(id int) keggreactionOption {
+func withKeggReactionID(id string) keggreactionOption {
 	return func(m *KeggReactionMutation) {
 		var (
 			err   error
@@ -4480,9 +5304,15 @@ func (m KeggReactionMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of KeggReaction entities.
+func (m *KeggReactionMutation) SetID(id string) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *KeggReactionMutation) ID() (id int, exists bool) {
+func (m *KeggReactionMutation) ID() (id string, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -4493,12 +5323,12 @@ func (m *KeggReactionMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *KeggReactionMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *KeggReactionMutation) IDs(ctx context.Context) ([]string, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []string{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -4506,6 +5336,96 @@ func (m *KeggReactionMutation) IDs(ctx context.Context) ([]int, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
+}
+
+// SetName sets the "name" field.
+func (m *KeggReactionMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *KeggReactionMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the KeggReaction entity.
+// If the KeggReaction object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *KeggReactionMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *KeggReactionMutation) ResetName() {
+	m.name = nil
+}
+
+// AddPathwayIDs adds the "pathways" edge to the KeggPathway entity by ids.
+func (m *KeggReactionMutation) AddPathwayIDs(ids ...string) {
+	if m.pathways == nil {
+		m.pathways = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.pathways[ids[i]] = struct{}{}
+	}
+}
+
+// ClearPathways clears the "pathways" edge to the KeggPathway entity.
+func (m *KeggReactionMutation) ClearPathways() {
+	m.clearedpathways = true
+}
+
+// PathwaysCleared reports if the "pathways" edge to the KeggPathway entity was cleared.
+func (m *KeggReactionMutation) PathwaysCleared() bool {
+	return m.clearedpathways
+}
+
+// RemovePathwayIDs removes the "pathways" edge to the KeggPathway entity by IDs.
+func (m *KeggReactionMutation) RemovePathwayIDs(ids ...string) {
+	if m.removedpathways == nil {
+		m.removedpathways = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.pathways, ids[i])
+		m.removedpathways[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedPathways returns the removed IDs of the "pathways" edge to the KeggPathway entity.
+func (m *KeggReactionMutation) RemovedPathwaysIDs() (ids []string) {
+	for id := range m.removedpathways {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// PathwaysIDs returns the "pathways" edge IDs in the mutation.
+func (m *KeggReactionMutation) PathwaysIDs() (ids []string) {
+	for id := range m.pathways {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetPathways resets all changes to the "pathways" edge.
+func (m *KeggReactionMutation) ResetPathways() {
+	m.pathways = nil
+	m.clearedpathways = false
+	m.removedpathways = nil
 }
 
 // Where appends a list predicates to the KeggReactionMutation builder.
@@ -4527,7 +5447,10 @@ func (m *KeggReactionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *KeggReactionMutation) Fields() []string {
-	fields := make([]string, 0, 0)
+	fields := make([]string, 0, 1)
+	if m.name != nil {
+		fields = append(fields, keggreaction.FieldName)
+	}
 	return fields
 }
 
@@ -4535,6 +5458,10 @@ func (m *KeggReactionMutation) Fields() []string {
 // return value indicates that this field was not set, or was not defined in the
 // schema.
 func (m *KeggReactionMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case keggreaction.FieldName:
+		return m.Name()
+	}
 	return nil, false
 }
 
@@ -4542,6 +5469,10 @@ func (m *KeggReactionMutation) Field(name string) (ent.Value, bool) {
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
 func (m *KeggReactionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case keggreaction.FieldName:
+		return m.OldName(ctx)
+	}
 	return nil, fmt.Errorf("unknown KeggReaction field %s", name)
 }
 
@@ -4550,6 +5481,13 @@ func (m *KeggReactionMutation) OldField(ctx context.Context, name string) (ent.V
 // type.
 func (m *KeggReactionMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case keggreaction.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
 	}
 	return fmt.Errorf("unknown KeggReaction field %s", name)
 }
@@ -4571,6 +5509,8 @@ func (m *KeggReactionMutation) AddedField(name string) (ent.Value, bool) {
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
 func (m *KeggReactionMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown KeggReaction numeric field %s", name)
 }
 
@@ -4596,55 +5536,477 @@ func (m *KeggReactionMutation) ClearField(name string) error {
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
 func (m *KeggReactionMutation) ResetField(name string) error {
+	switch name {
+	case keggreaction.FieldName:
+		m.ResetName()
+		return nil
+	}
 	return fmt.Errorf("unknown KeggReaction field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *KeggReactionMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.pathways != nil {
+		edges = append(edges, keggreaction.EdgePathways)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *KeggReactionMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case keggreaction.EdgePathways:
+		ids := make([]ent.Value, 0, len(m.pathways))
+		for id := range m.pathways {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *KeggReactionMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.removedpathways != nil {
+		edges = append(edges, keggreaction.EdgePathways)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *KeggReactionMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case keggreaction.EdgePathways:
+		ids := make([]ent.Value, 0, len(m.removedpathways))
+		for id := range m.removedpathways {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *KeggReactionMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedpathways {
+		edges = append(edges, keggreaction.EdgePathways)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *KeggReactionMutation) EdgeCleared(name string) bool {
+	switch name {
+	case keggreaction.EdgePathways:
+		return m.clearedpathways
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *KeggReactionMutation) ClearEdge(name string) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown KeggReaction unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *KeggReactionMutation) ResetEdge(name string) error {
+	switch name {
+	case keggreaction.EdgePathways:
+		m.ResetPathways()
+		return nil
+	}
 	return fmt.Errorf("unknown KeggReaction edge %s", name)
+}
+
+// NomeclatureMutation represents an operation that mutates the Nomeclature nodes in the graph.
+type NomeclatureMutation struct {
+	config
+	op             Op
+	typ            string
+	id             *int
+	name           *string
+	synonyms       *[]string
+	appendsynonyms []string
+	clearedFields  map[string]struct{}
+	done           bool
+	oldValue       func(context.Context) (*Nomeclature, error)
+	predicates     []predicate.Nomeclature
+}
+
+var _ ent.Mutation = (*NomeclatureMutation)(nil)
+
+// nomeclatureOption allows management of the mutation configuration using functional options.
+type nomeclatureOption func(*NomeclatureMutation)
+
+// newNomeclatureMutation creates new mutation for the Nomeclature entity.
+func newNomeclatureMutation(c config, op Op, opts ...nomeclatureOption) *NomeclatureMutation {
+	m := &NomeclatureMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeNomeclature,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withNomeclatureID sets the ID field of the mutation.
+func withNomeclatureID(id int) nomeclatureOption {
+	return func(m *NomeclatureMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Nomeclature
+		)
+		m.oldValue = func(ctx context.Context) (*Nomeclature, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Nomeclature.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withNomeclature sets the old Nomeclature of the mutation.
+func withNomeclature(node *Nomeclature) nomeclatureOption {
+	return func(m *NomeclatureMutation) {
+		m.oldValue = func(context.Context) (*Nomeclature, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m NomeclatureMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m NomeclatureMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *NomeclatureMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *NomeclatureMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Nomeclature.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetName sets the "name" field.
+func (m *NomeclatureMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *NomeclatureMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Nomeclature entity.
+// If the Nomeclature object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *NomeclatureMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *NomeclatureMutation) ResetName() {
+	m.name = nil
+}
+
+// SetSynonyms sets the "synonyms" field.
+func (m *NomeclatureMutation) SetSynonyms(s []string) {
+	m.synonyms = &s
+	m.appendsynonyms = nil
+}
+
+// Synonyms returns the value of the "synonyms" field in the mutation.
+func (m *NomeclatureMutation) Synonyms() (r []string, exists bool) {
+	v := m.synonyms
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSynonyms returns the old "synonyms" field's value of the Nomeclature entity.
+// If the Nomeclature object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *NomeclatureMutation) OldSynonyms(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSynonyms is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSynonyms requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSynonyms: %w", err)
+	}
+	return oldValue.Synonyms, nil
+}
+
+// AppendSynonyms adds s to the "synonyms" field.
+func (m *NomeclatureMutation) AppendSynonyms(s []string) {
+	m.appendsynonyms = append(m.appendsynonyms, s...)
+}
+
+// AppendedSynonyms returns the list of values that were appended to the "synonyms" field in this mutation.
+func (m *NomeclatureMutation) AppendedSynonyms() ([]string, bool) {
+	if len(m.appendsynonyms) == 0 {
+		return nil, false
+	}
+	return m.appendsynonyms, true
+}
+
+// ResetSynonyms resets all changes to the "synonyms" field.
+func (m *NomeclatureMutation) ResetSynonyms() {
+	m.synonyms = nil
+	m.appendsynonyms = nil
+}
+
+// Where appends a list predicates to the NomeclatureMutation builder.
+func (m *NomeclatureMutation) Where(ps ...predicate.Nomeclature) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *NomeclatureMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (Nomeclature).
+func (m *NomeclatureMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *NomeclatureMutation) Fields() []string {
+	fields := make([]string, 0, 2)
+	if m.name != nil {
+		fields = append(fields, nomeclature.FieldName)
+	}
+	if m.synonyms != nil {
+		fields = append(fields, nomeclature.FieldSynonyms)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *NomeclatureMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case nomeclature.FieldName:
+		return m.Name()
+	case nomeclature.FieldSynonyms:
+		return m.Synonyms()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *NomeclatureMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case nomeclature.FieldName:
+		return m.OldName(ctx)
+	case nomeclature.FieldSynonyms:
+		return m.OldSynonyms(ctx)
+	}
+	return nil, fmt.Errorf("unknown Nomeclature field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *NomeclatureMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case nomeclature.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case nomeclature.FieldSynonyms:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSynonyms(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Nomeclature field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *NomeclatureMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *NomeclatureMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *NomeclatureMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Nomeclature numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *NomeclatureMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *NomeclatureMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *NomeclatureMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Nomeclature nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *NomeclatureMutation) ResetField(name string) error {
+	switch name {
+	case nomeclature.FieldName:
+		m.ResetName()
+		return nil
+	case nomeclature.FieldSynonyms:
+		m.ResetSynonyms()
+		return nil
+	}
+	return fmt.Errorf("unknown Nomeclature field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *NomeclatureMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *NomeclatureMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *NomeclatureMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *NomeclatureMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *NomeclatureMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *NomeclatureMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *NomeclatureMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Nomeclature unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *NomeclatureMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Nomeclature edge %s", name)
 }
 
 // ScaffoldMutation represents an operation that mutates the Scaffold nodes in the graph.

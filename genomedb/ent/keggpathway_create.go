@@ -6,7 +6,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"genomedb/ent/keggorthlogy"
 	"genomedb/ent/keggpathway"
+	"genomedb/ent/keggreaction"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
@@ -22,10 +24,76 @@ type KeggPathwayCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetName sets the "name" field.
+func (kpc *KeggPathwayCreate) SetName(s string) *KeggPathwayCreate {
+	kpc.mutation.SetName(s)
+	return kpc
+}
+
 // SetID sets the "id" field.
 func (kpc *KeggPathwayCreate) SetID(s string) *KeggPathwayCreate {
 	kpc.mutation.SetID(s)
 	return kpc
+}
+
+// AddRelatingMapIDs adds the "relating_map" edge to the KeggPathway entity by IDs.
+func (kpc *KeggPathwayCreate) AddRelatingMapIDs(ids ...string) *KeggPathwayCreate {
+	kpc.mutation.AddRelatingMapIDs(ids...)
+	return kpc
+}
+
+// AddRelatingMap adds the "relating_map" edges to the KeggPathway entity.
+func (kpc *KeggPathwayCreate) AddRelatingMap(k ...*KeggPathway) *KeggPathwayCreate {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return kpc.AddRelatingMapIDs(ids...)
+}
+
+// AddRelatedMapIDs adds the "related_map" edge to the KeggPathway entity by IDs.
+func (kpc *KeggPathwayCreate) AddRelatedMapIDs(ids ...string) *KeggPathwayCreate {
+	kpc.mutation.AddRelatedMapIDs(ids...)
+	return kpc
+}
+
+// AddRelatedMap adds the "related_map" edges to the KeggPathway entity.
+func (kpc *KeggPathwayCreate) AddRelatedMap(k ...*KeggPathway) *KeggPathwayCreate {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return kpc.AddRelatedMapIDs(ids...)
+}
+
+// AddReactionIDs adds the "reactions" edge to the KeggReaction entity by IDs.
+func (kpc *KeggPathwayCreate) AddReactionIDs(ids ...string) *KeggPathwayCreate {
+	kpc.mutation.AddReactionIDs(ids...)
+	return kpc
+}
+
+// AddReactions adds the "reactions" edges to the KeggReaction entity.
+func (kpc *KeggPathwayCreate) AddReactions(k ...*KeggReaction) *KeggPathwayCreate {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return kpc.AddReactionIDs(ids...)
+}
+
+// AddOrthologyIDs adds the "orthologies" edge to the KeggOrthlogy entity by IDs.
+func (kpc *KeggPathwayCreate) AddOrthologyIDs(ids ...string) *KeggPathwayCreate {
+	kpc.mutation.AddOrthologyIDs(ids...)
+	return kpc
+}
+
+// AddOrthologies adds the "orthologies" edges to the KeggOrthlogy entity.
+func (kpc *KeggPathwayCreate) AddOrthologies(k ...*KeggOrthlogy) *KeggPathwayCreate {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return kpc.AddOrthologyIDs(ids...)
 }
 
 // Mutation returns the KeggPathwayMutation object of the builder.
@@ -104,6 +172,9 @@ func (kpc *KeggPathwayCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (kpc *KeggPathwayCreate) check() error {
+	if _, ok := kpc.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "KeggPathway.name"`)}
+	}
 	return nil
 }
 
@@ -141,6 +212,86 @@ func (kpc *KeggPathwayCreate) createSpec() (*KeggPathway, *sqlgraph.CreateSpec) 
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := kpc.mutation.Name(); ok {
+		_spec.SetField(keggpathway.FieldName, field.TypeString, value)
+		_node.Name = value
+	}
+	if nodes := kpc.mutation.RelatingMapIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   keggpathway.RelatingMapTable,
+			Columns: keggpathway.RelatingMapPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggpathway.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := kpc.mutation.RelatedMapIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.RelatedMapTable,
+			Columns: keggpathway.RelatedMapPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggpathway.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := kpc.mutation.ReactionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.ReactionsTable,
+			Columns: keggpathway.ReactionsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggreaction.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := kpc.mutation.OrthologiesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   keggpathway.OrthologiesTable,
+			Columns: keggpathway.OrthologiesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggorthlogy.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 
@@ -148,11 +299,17 @@ func (kpc *KeggPathwayCreate) createSpec() (*KeggPathway, *sqlgraph.CreateSpec) 
 // of the `INSERT` statement. For example:
 //
 //	client.KeggPathway.Create().
+//		SetName(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
 //			sql.ResolveWithNewValues(),
 //		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.KeggPathwayUpsert) {
+//			SetName(v+v).
+//		}).
 //		Exec(ctx)
 func (kpc *KeggPathwayCreate) OnConflict(opts ...sql.ConflictOption) *KeggPathwayUpsertOne {
 	kpc.conflict = opts
@@ -186,6 +343,18 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetName sets the "name" field.
+func (u *KeggPathwayUpsert) SetName(v string) *KeggPathwayUpsert {
+	u.Set(keggpathway.FieldName, v)
+	return u
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *KeggPathwayUpsert) UpdateName() *KeggPathwayUpsert {
+	u.SetExcluded(keggpathway.FieldName)
+	return u
+}
 
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
@@ -233,6 +402,20 @@ func (u *KeggPathwayUpsertOne) Update(set func(*KeggPathwayUpsert)) *KeggPathway
 		set(&KeggPathwayUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetName sets the "name" field.
+func (u *KeggPathwayUpsertOne) SetName(v string) *KeggPathwayUpsertOne {
+	return u.Update(func(s *KeggPathwayUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *KeggPathwayUpsertOne) UpdateName() *KeggPathwayUpsertOne {
+	return u.Update(func(s *KeggPathwayUpsert) {
+		s.UpdateName()
+	})
 }
 
 // Exec executes the query.
@@ -363,6 +546,11 @@ func (kpcb *KeggPathwayCreateBulk) ExecX(ctx context.Context) {
 //			// the was proposed for insertion.
 //			sql.ResolveWithNewValues(),
 //		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.KeggPathwayUpsert) {
+//			SetName(v+v).
+//		}).
 //		Exec(ctx)
 func (kpcb *KeggPathwayCreateBulk) OnConflict(opts ...sql.ConflictOption) *KeggPathwayUpsertBulk {
 	kpcb.conflict = opts
@@ -438,6 +626,20 @@ func (u *KeggPathwayUpsertBulk) Update(set func(*KeggPathwayUpsert)) *KeggPathwa
 		set(&KeggPathwayUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetName sets the "name" field.
+func (u *KeggPathwayUpsertBulk) SetName(v string) *KeggPathwayUpsertBulk {
+	return u.Update(func(s *KeggPathwayUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *KeggPathwayUpsertBulk) UpdateName() *KeggPathwayUpsertBulk {
+	return u.Update(func(s *KeggPathwayUpsert) {
+		s.UpdateName()
+	})
 }
 
 // Exec executes the query.

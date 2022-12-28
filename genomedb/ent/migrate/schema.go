@@ -128,6 +128,18 @@ var (
 			},
 		},
 	}
+	// KoGsColumns holds the columns for the "ko_gs" table.
+	KoGsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString},
+		{Name: "category", Type: field.TypeString},
+	}
+	// KoGsTable holds the schema information for the "ko_gs" table.
+	KoGsTable = &schema.Table{
+		Name:       "ko_gs",
+		Columns:    KoGsColumns,
+		PrimaryKey: []*schema.Column{KoGsColumns[0]},
+	}
 	// KeggCompoundsColumns holds the columns for the "kegg_compounds" table.
 	KeggCompoundsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString},
@@ -148,21 +160,21 @@ var (
 		Columns:    KeggModulesColumns,
 		PrimaryKey: []*schema.Column{KeggModulesColumns[0]},
 	}
-	// KeggOntologiesColumns holds the columns for the "kegg_ontologies" table.
-	KeggOntologiesColumns = []*schema.Column{
+	// KeggOrthlogiesColumns holds the columns for the "kegg_orthlogies" table.
+	KeggOrthlogiesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString},
-		{Name: "symbol", Type: field.TypeString},
 	}
-	// KeggOntologiesTable holds the schema information for the "kegg_ontologies" table.
-	KeggOntologiesTable = &schema.Table{
-		Name:       "kegg_ontologies",
-		Columns:    KeggOntologiesColumns,
-		PrimaryKey: []*schema.Column{KeggOntologiesColumns[0]},
+	// KeggOrthlogiesTable holds the schema information for the "kegg_orthlogies" table.
+	KeggOrthlogiesTable = &schema.Table{
+		Name:       "kegg_orthlogies",
+		Columns:    KeggOrthlogiesColumns,
+		PrimaryKey: []*schema.Column{KeggOrthlogiesColumns[0]},
 	}
 	// KeggPathwaysColumns holds the columns for the "kegg_pathways" table.
 	KeggPathwaysColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString},
 	}
 	// KeggPathwaysTable holds the schema information for the "kegg_pathways" table.
 	KeggPathwaysTable = &schema.Table{
@@ -172,13 +184,26 @@ var (
 	}
 	// KeggReactionsColumns holds the columns for the "kegg_reactions" table.
 	KeggReactionsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString},
 	}
 	// KeggReactionsTable holds the schema information for the "kegg_reactions" table.
 	KeggReactionsTable = &schema.Table{
 		Name:       "kegg_reactions",
 		Columns:    KeggReactionsColumns,
 		PrimaryKey: []*schema.Column{KeggReactionsColumns[0]},
+	}
+	// NomeclaturesColumns holds the columns for the "nomeclatures" table.
+	NomeclaturesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "synonyms", Type: field.TypeJSON},
+	}
+	// NomeclaturesTable holds the schema information for the "nomeclatures" table.
+	NomeclaturesTable = &schema.Table{
+		Name:       "nomeclatures",
+		Columns:    NomeclaturesColumns,
+		PrimaryKey: []*schema.Column{NomeclaturesColumns[0]},
 	}
 	// ScaffoldsColumns holds the columns for the "scaffolds" table.
 	ScaffoldsColumns = []*schema.Column{
@@ -234,6 +259,81 @@ var (
 			},
 		},
 	}
+	// KeggPathwayRelatedMapColumns holds the columns for the "kegg_pathway_related_map" table.
+	KeggPathwayRelatedMapColumns = []*schema.Column{
+		{Name: "kegg_pathway_id", Type: field.TypeString},
+		{Name: "relating_map_id", Type: field.TypeString},
+	}
+	// KeggPathwayRelatedMapTable holds the schema information for the "kegg_pathway_related_map" table.
+	KeggPathwayRelatedMapTable = &schema.Table{
+		Name:       "kegg_pathway_related_map",
+		Columns:    KeggPathwayRelatedMapColumns,
+		PrimaryKey: []*schema.Column{KeggPathwayRelatedMapColumns[0], KeggPathwayRelatedMapColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "kegg_pathway_related_map_kegg_pathway_id",
+				Columns:    []*schema.Column{KeggPathwayRelatedMapColumns[0]},
+				RefColumns: []*schema.Column{KeggPathwaysColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "kegg_pathway_related_map_relating_map_id",
+				Columns:    []*schema.Column{KeggPathwayRelatedMapColumns[1]},
+				RefColumns: []*schema.Column{KeggPathwaysColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// KeggPathwayReactionsColumns holds the columns for the "kegg_pathway_reactions" table.
+	KeggPathwayReactionsColumns = []*schema.Column{
+		{Name: "kegg_pathway_id", Type: field.TypeString},
+		{Name: "kegg_reaction_id", Type: field.TypeString},
+	}
+	// KeggPathwayReactionsTable holds the schema information for the "kegg_pathway_reactions" table.
+	KeggPathwayReactionsTable = &schema.Table{
+		Name:       "kegg_pathway_reactions",
+		Columns:    KeggPathwayReactionsColumns,
+		PrimaryKey: []*schema.Column{KeggPathwayReactionsColumns[0], KeggPathwayReactionsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "kegg_pathway_reactions_kegg_pathway_id",
+				Columns:    []*schema.Column{KeggPathwayReactionsColumns[0]},
+				RefColumns: []*schema.Column{KeggPathwaysColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "kegg_pathway_reactions_kegg_reaction_id",
+				Columns:    []*schema.Column{KeggPathwayReactionsColumns[1]},
+				RefColumns: []*schema.Column{KeggReactionsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// KeggPathwayOrthologiesColumns holds the columns for the "kegg_pathway_orthologies" table.
+	KeggPathwayOrthologiesColumns = []*schema.Column{
+		{Name: "kegg_pathway_id", Type: field.TypeString},
+		{Name: "kegg_orthlogy_id", Type: field.TypeString},
+	}
+	// KeggPathwayOrthologiesTable holds the schema information for the "kegg_pathway_orthologies" table.
+	KeggPathwayOrthologiesTable = &schema.Table{
+		Name:       "kegg_pathway_orthologies",
+		Columns:    KeggPathwayOrthologiesColumns,
+		PrimaryKey: []*schema.Column{KeggPathwayOrthologiesColumns[0], KeggPathwayOrthologiesColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "kegg_pathway_orthologies_kegg_pathway_id",
+				Columns:    []*schema.Column{KeggPathwayOrthologiesColumns[0]},
+				RefColumns: []*schema.Column{KeggPathwaysColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "kegg_pathway_orthologies_kegg_orthlogy_id",
+				Columns:    []*schema.Column{KeggPathwayOrthologiesColumns[1]},
+				RefColumns: []*schema.Column{KeggOrthlogiesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		DomainAnnotationsTable,
@@ -242,13 +342,18 @@ var (
 		GenomesTable,
 		GoTermsTable,
 		GoTermOnTranscriptsTable,
+		KoGsTable,
 		KeggCompoundsTable,
 		KeggModulesTable,
-		KeggOntologiesTable,
+		KeggOrthlogiesTable,
 		KeggPathwaysTable,
 		KeggReactionsTable,
+		NomeclaturesTable,
 		ScaffoldsTable,
 		TranscriptsTable,
+		KeggPathwayRelatedMapTable,
+		KeggPathwayReactionsTable,
+		KeggPathwayOrthologiesTable,
 	}
 )
 
@@ -261,4 +366,10 @@ func init() {
 	GoTermOnTranscriptsTable.ForeignKeys[1].RefTable = TranscriptsTable
 	ScaffoldsTable.ForeignKeys[0].RefTable = GenomesTable
 	TranscriptsTable.ForeignKeys[0].RefTable = GenesTable
+	KeggPathwayRelatedMapTable.ForeignKeys[0].RefTable = KeggPathwaysTable
+	KeggPathwayRelatedMapTable.ForeignKeys[1].RefTable = KeggPathwaysTable
+	KeggPathwayReactionsTable.ForeignKeys[0].RefTable = KeggPathwaysTable
+	KeggPathwayReactionsTable.ForeignKeys[1].RefTable = KeggReactionsTable
+	KeggPathwayOrthologiesTable.ForeignKeys[0].RefTable = KeggPathwaysTable
+	KeggPathwayOrthologiesTable.ForeignKeys[1].RefTable = KeggOrthlogiesTable
 }

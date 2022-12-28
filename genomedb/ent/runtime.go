@@ -5,6 +5,7 @@ package ent
 import (
 	"genomedb/ent/domainannotationtotranscript"
 	"genomedb/ent/genome"
+	"genomedb/ent/keggorthlogy"
 	"genomedb/ent/schema"
 	"genomedb/ent/transcript"
 )
@@ -43,6 +44,12 @@ func init() {
 			return nil
 		}
 	}()
+	keggorthlogyFields := schema.KeggOrthlogy{}.Fields()
+	_ = keggorthlogyFields
+	// keggorthlogyDescID is the schema descriptor for id field.
+	keggorthlogyDescID := keggorthlogyFields[0].Descriptor()
+	// keggorthlogy.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	keggorthlogy.IDValidator = keggorthlogyDescID.Validators[0].(func(string) error)
 	transcriptFields := schema.Transcript{}.Fields()
 	_ = transcriptFields
 	// transcriptDescStart is the schema descriptor for start field.

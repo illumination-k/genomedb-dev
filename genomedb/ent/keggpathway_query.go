@@ -4,8 +4,11 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
+	"genomedb/ent/keggorthlogy"
 	"genomedb/ent/keggpathway"
+	"genomedb/ent/keggreaction"
 	"genomedb/ent/predicate"
 	"math"
 
@@ -17,12 +20,16 @@ import (
 // KeggPathwayQuery is the builder for querying KeggPathway entities.
 type KeggPathwayQuery struct {
 	config
-	limit      *int
-	offset     *int
-	unique     *bool
-	order      []OrderFunc
-	fields     []string
-	predicates []predicate.KeggPathway
+	limit           *int
+	offset          *int
+	unique          *bool
+	order           []OrderFunc
+	fields          []string
+	predicates      []predicate.KeggPathway
+	withRelatingMap *KeggPathwayQuery
+	withRelatedMap  *KeggPathwayQuery
+	withReactions   *KeggReactionQuery
+	withOrthologies *KeggOrthlogyQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -57,6 +64,94 @@ func (kpq *KeggPathwayQuery) Unique(unique bool) *KeggPathwayQuery {
 func (kpq *KeggPathwayQuery) Order(o ...OrderFunc) *KeggPathwayQuery {
 	kpq.order = append(kpq.order, o...)
 	return kpq
+}
+
+// QueryRelatingMap chains the current query on the "relating_map" edge.
+func (kpq *KeggPathwayQuery) QueryRelatingMap() *KeggPathwayQuery {
+	query := &KeggPathwayQuery{config: kpq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := kpq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := kpq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(keggpathway.Table, keggpathway.FieldID, selector),
+			sqlgraph.To(keggpathway.Table, keggpathway.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, keggpathway.RelatingMapTable, keggpathway.RelatingMapPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(kpq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRelatedMap chains the current query on the "related_map" edge.
+func (kpq *KeggPathwayQuery) QueryRelatedMap() *KeggPathwayQuery {
+	query := &KeggPathwayQuery{config: kpq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := kpq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := kpq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(keggpathway.Table, keggpathway.FieldID, selector),
+			sqlgraph.To(keggpathway.Table, keggpathway.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, keggpathway.RelatedMapTable, keggpathway.RelatedMapPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(kpq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryReactions chains the current query on the "reactions" edge.
+func (kpq *KeggPathwayQuery) QueryReactions() *KeggReactionQuery {
+	query := &KeggReactionQuery{config: kpq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := kpq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := kpq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(keggpathway.Table, keggpathway.FieldID, selector),
+			sqlgraph.To(keggreaction.Table, keggreaction.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, keggpathway.ReactionsTable, keggpathway.ReactionsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(kpq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryOrthologies chains the current query on the "orthologies" edge.
+func (kpq *KeggPathwayQuery) QueryOrthologies() *KeggOrthlogyQuery {
+	query := &KeggOrthlogyQuery{config: kpq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := kpq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := kpq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(keggpathway.Table, keggpathway.FieldID, selector),
+			sqlgraph.To(keggorthlogy.Table, keggorthlogy.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, keggpathway.OrthologiesTable, keggpathway.OrthologiesPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(kpq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first KeggPathway entity from the query.
@@ -235,11 +330,15 @@ func (kpq *KeggPathwayQuery) Clone() *KeggPathwayQuery {
 		return nil
 	}
 	return &KeggPathwayQuery{
-		config:     kpq.config,
-		limit:      kpq.limit,
-		offset:     kpq.offset,
-		order:      append([]OrderFunc{}, kpq.order...),
-		predicates: append([]predicate.KeggPathway{}, kpq.predicates...),
+		config:          kpq.config,
+		limit:           kpq.limit,
+		offset:          kpq.offset,
+		order:           append([]OrderFunc{}, kpq.order...),
+		predicates:      append([]predicate.KeggPathway{}, kpq.predicates...),
+		withRelatingMap: kpq.withRelatingMap.Clone(),
+		withRelatedMap:  kpq.withRelatedMap.Clone(),
+		withReactions:   kpq.withReactions.Clone(),
+		withOrthologies: kpq.withOrthologies.Clone(),
 		// clone intermediate query.
 		sql:    kpq.sql.Clone(),
 		path:   kpq.path,
@@ -247,8 +346,64 @@ func (kpq *KeggPathwayQuery) Clone() *KeggPathwayQuery {
 	}
 }
 
+// WithRelatingMap tells the query-builder to eager-load the nodes that are connected to
+// the "relating_map" edge. The optional arguments are used to configure the query builder of the edge.
+func (kpq *KeggPathwayQuery) WithRelatingMap(opts ...func(*KeggPathwayQuery)) *KeggPathwayQuery {
+	query := &KeggPathwayQuery{config: kpq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	kpq.withRelatingMap = query
+	return kpq
+}
+
+// WithRelatedMap tells the query-builder to eager-load the nodes that are connected to
+// the "related_map" edge. The optional arguments are used to configure the query builder of the edge.
+func (kpq *KeggPathwayQuery) WithRelatedMap(opts ...func(*KeggPathwayQuery)) *KeggPathwayQuery {
+	query := &KeggPathwayQuery{config: kpq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	kpq.withRelatedMap = query
+	return kpq
+}
+
+// WithReactions tells the query-builder to eager-load the nodes that are connected to
+// the "reactions" edge. The optional arguments are used to configure the query builder of the edge.
+func (kpq *KeggPathwayQuery) WithReactions(opts ...func(*KeggReactionQuery)) *KeggPathwayQuery {
+	query := &KeggReactionQuery{config: kpq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	kpq.withReactions = query
+	return kpq
+}
+
+// WithOrthologies tells the query-builder to eager-load the nodes that are connected to
+// the "orthologies" edge. The optional arguments are used to configure the query builder of the edge.
+func (kpq *KeggPathwayQuery) WithOrthologies(opts ...func(*KeggOrthlogyQuery)) *KeggPathwayQuery {
+	query := &KeggOrthlogyQuery{config: kpq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	kpq.withOrthologies = query
+	return kpq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
+//
+// Example:
+//
+//	var v []struct {
+//		Name string `json:"name,omitempty"`
+//		Count int `json:"count,omitempty"`
+//	}
+//
+//	client.KeggPathway.Query().
+//		GroupBy(keggpathway.FieldName).
+//		Aggregate(ent.Count()).
+//		Scan(ctx, &v)
 func (kpq *KeggPathwayQuery) GroupBy(field string, fields ...string) *KeggPathwayGroupBy {
 	grbuild := &KeggPathwayGroupBy{config: kpq.config}
 	grbuild.fields = append([]string{field}, fields...)
@@ -265,6 +420,16 @@ func (kpq *KeggPathwayQuery) GroupBy(field string, fields ...string) *KeggPathwa
 
 // Select allows the selection one or more fields/columns for the given query,
 // instead of selecting all fields in the entity.
+//
+// Example:
+//
+//	var v []struct {
+//		Name string `json:"name,omitempty"`
+//	}
+//
+//	client.KeggPathway.Query().
+//		Select(keggpathway.FieldName).
+//		Scan(ctx, &v)
 func (kpq *KeggPathwayQuery) Select(fields ...string) *KeggPathwaySelect {
 	kpq.fields = append(kpq.fields, fields...)
 	selbuild := &KeggPathwaySelect{KeggPathwayQuery: kpq}
@@ -296,8 +461,14 @@ func (kpq *KeggPathwayQuery) prepareQuery(ctx context.Context) error {
 
 func (kpq *KeggPathwayQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*KeggPathway, error) {
 	var (
-		nodes = []*KeggPathway{}
-		_spec = kpq.querySpec()
+		nodes       = []*KeggPathway{}
+		_spec       = kpq.querySpec()
+		loadedTypes = [4]bool{
+			kpq.withRelatingMap != nil,
+			kpq.withRelatedMap != nil,
+			kpq.withReactions != nil,
+			kpq.withOrthologies != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*KeggPathway).scanValues(nil, columns)
@@ -305,6 +476,7 @@ func (kpq *KeggPathwayQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &KeggPathway{config: kpq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -316,7 +488,268 @@ func (kpq *KeggPathwayQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := kpq.withRelatingMap; query != nil {
+		if err := kpq.loadRelatingMap(ctx, query, nodes,
+			func(n *KeggPathway) { n.Edges.RelatingMap = []*KeggPathway{} },
+			func(n *KeggPathway, e *KeggPathway) { n.Edges.RelatingMap = append(n.Edges.RelatingMap, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := kpq.withRelatedMap; query != nil {
+		if err := kpq.loadRelatedMap(ctx, query, nodes,
+			func(n *KeggPathway) { n.Edges.RelatedMap = []*KeggPathway{} },
+			func(n *KeggPathway, e *KeggPathway) { n.Edges.RelatedMap = append(n.Edges.RelatedMap, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := kpq.withReactions; query != nil {
+		if err := kpq.loadReactions(ctx, query, nodes,
+			func(n *KeggPathway) { n.Edges.Reactions = []*KeggReaction{} },
+			func(n *KeggPathway, e *KeggReaction) { n.Edges.Reactions = append(n.Edges.Reactions, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := kpq.withOrthologies; query != nil {
+		if err := kpq.loadOrthologies(ctx, query, nodes,
+			func(n *KeggPathway) { n.Edges.Orthologies = []*KeggOrthlogy{} },
+			func(n *KeggPathway, e *KeggOrthlogy) { n.Edges.Orthologies = append(n.Edges.Orthologies, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (kpq *KeggPathwayQuery) loadRelatingMap(ctx context.Context, query *KeggPathwayQuery, nodes []*KeggPathway, init func(*KeggPathway), assign func(*KeggPathway, *KeggPathway)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[string]*KeggPathway)
+	nids := make(map[string]map[*KeggPathway]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(keggpathway.RelatingMapTable)
+		s.Join(joinT).On(s.C(keggpathway.FieldID), joinT.C(keggpathway.RelatingMapPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(keggpathway.RelatingMapPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(keggpathway.RelatingMapPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	neighbors, err := query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+		assign := spec.Assign
+		values := spec.ScanValues
+		spec.ScanValues = func(columns []string) ([]any, error) {
+			values, err := values(columns[1:])
+			if err != nil {
+				return nil, err
+			}
+			return append([]any{new(sql.NullString)}, values...), nil
+		}
+		spec.Assign = func(columns []string, values []any) error {
+			outValue := values[0].(*sql.NullString).String
+			inValue := values[1].(*sql.NullString).String
+			if nids[inValue] == nil {
+				nids[inValue] = map[*KeggPathway]struct{}{byID[outValue]: {}}
+				return assign(columns[1:], values[1:])
+			}
+			nids[inValue][byID[outValue]] = struct{}{}
+			return nil
+		}
+	})
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "relating_map" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (kpq *KeggPathwayQuery) loadRelatedMap(ctx context.Context, query *KeggPathwayQuery, nodes []*KeggPathway, init func(*KeggPathway), assign func(*KeggPathway, *KeggPathway)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[string]*KeggPathway)
+	nids := make(map[string]map[*KeggPathway]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(keggpathway.RelatedMapTable)
+		s.Join(joinT).On(s.C(keggpathway.FieldID), joinT.C(keggpathway.RelatedMapPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(keggpathway.RelatedMapPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(keggpathway.RelatedMapPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	neighbors, err := query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+		assign := spec.Assign
+		values := spec.ScanValues
+		spec.ScanValues = func(columns []string) ([]any, error) {
+			values, err := values(columns[1:])
+			if err != nil {
+				return nil, err
+			}
+			return append([]any{new(sql.NullString)}, values...), nil
+		}
+		spec.Assign = func(columns []string, values []any) error {
+			outValue := values[0].(*sql.NullString).String
+			inValue := values[1].(*sql.NullString).String
+			if nids[inValue] == nil {
+				nids[inValue] = map[*KeggPathway]struct{}{byID[outValue]: {}}
+				return assign(columns[1:], values[1:])
+			}
+			nids[inValue][byID[outValue]] = struct{}{}
+			return nil
+		}
+	})
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "related_map" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (kpq *KeggPathwayQuery) loadReactions(ctx context.Context, query *KeggReactionQuery, nodes []*KeggPathway, init func(*KeggPathway), assign func(*KeggPathway, *KeggReaction)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[string]*KeggPathway)
+	nids := make(map[string]map[*KeggPathway]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(keggpathway.ReactionsTable)
+		s.Join(joinT).On(s.C(keggreaction.FieldID), joinT.C(keggpathway.ReactionsPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(keggpathway.ReactionsPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(keggpathway.ReactionsPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	neighbors, err := query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+		assign := spec.Assign
+		values := spec.ScanValues
+		spec.ScanValues = func(columns []string) ([]any, error) {
+			values, err := values(columns[1:])
+			if err != nil {
+				return nil, err
+			}
+			return append([]any{new(sql.NullString)}, values...), nil
+		}
+		spec.Assign = func(columns []string, values []any) error {
+			outValue := values[0].(*sql.NullString).String
+			inValue := values[1].(*sql.NullString).String
+			if nids[inValue] == nil {
+				nids[inValue] = map[*KeggPathway]struct{}{byID[outValue]: {}}
+				return assign(columns[1:], values[1:])
+			}
+			nids[inValue][byID[outValue]] = struct{}{}
+			return nil
+		}
+	})
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "reactions" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (kpq *KeggPathwayQuery) loadOrthologies(ctx context.Context, query *KeggOrthlogyQuery, nodes []*KeggPathway, init func(*KeggPathway), assign func(*KeggPathway, *KeggOrthlogy)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[string]*KeggPathway)
+	nids := make(map[string]map[*KeggPathway]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(keggpathway.OrthologiesTable)
+		s.Join(joinT).On(s.C(keggorthlogy.FieldID), joinT.C(keggpathway.OrthologiesPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(keggpathway.OrthologiesPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(keggpathway.OrthologiesPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	neighbors, err := query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+		assign := spec.Assign
+		values := spec.ScanValues
+		spec.ScanValues = func(columns []string) ([]any, error) {
+			values, err := values(columns[1:])
+			if err != nil {
+				return nil, err
+			}
+			return append([]any{new(sql.NullString)}, values...), nil
+		}
+		spec.Assign = func(columns []string, values []any) error {
+			outValue := values[0].(*sql.NullString).String
+			inValue := values[1].(*sql.NullString).String
+			if nids[inValue] == nil {
+				nids[inValue] = map[*KeggPathway]struct{}{byID[outValue]: {}}
+				return assign(columns[1:], values[1:])
+			}
+			nids[inValue][byID[outValue]] = struct{}{}
+			return nil
+		}
+	})
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "orthologies" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
 }
 
 func (kpq *KeggPathwayQuery) sqlCount(ctx context.Context) (int, error) {

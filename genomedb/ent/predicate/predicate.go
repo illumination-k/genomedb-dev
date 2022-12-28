@@ -24,20 +24,26 @@ type GoTerm func(*sql.Selector)
 // GoTermOnTranscripts is the predicate function for gotermontranscripts builders.
 type GoTermOnTranscripts func(*sql.Selector)
 
+// KOG is the predicate function for kog builders.
+type KOG func(*sql.Selector)
+
 // KeggCompound is the predicate function for keggcompound builders.
 type KeggCompound func(*sql.Selector)
 
 // KeggModule is the predicate function for keggmodule builders.
 type KeggModule func(*sql.Selector)
 
-// KeggOntology is the predicate function for keggontology builders.
-type KeggOntology func(*sql.Selector)
+// KeggOrthlogy is the predicate function for keggorthlogy builders.
+type KeggOrthlogy func(*sql.Selector)
 
 // KeggPathway is the predicate function for keggpathway builders.
 type KeggPathway func(*sql.Selector)
 
 // KeggReaction is the predicate function for keggreaction builders.
 type KeggReaction func(*sql.Selector)
+
+// Nomeclature is the predicate function for nomeclature builders.
+type Nomeclature func(*sql.Selector)
 
 // Scaffold is the predicate function for scaffold builders.
 type Scaffold func(*sql.Selector)

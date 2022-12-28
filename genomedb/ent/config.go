@@ -30,11 +30,13 @@ type hooks struct {
 	Genome                       []ent.Hook
 	GoTerm                       []ent.Hook
 	GoTermOnTranscripts          []ent.Hook
+	KOG                          []ent.Hook
 	KeggCompound                 []ent.Hook
 	KeggModule                   []ent.Hook
-	KeggOntology                 []ent.Hook
+	KeggOrthlogy                 []ent.Hook
 	KeggPathway                  []ent.Hook
 	KeggReaction                 []ent.Hook
+	Nomeclature                  []ent.Hook
 	Scaffold                     []ent.Hook
 	Transcript                   []ent.Hook
 }

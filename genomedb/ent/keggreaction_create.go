@@ -6,8 +6,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"genomedb/ent/keggpathway"
 	"genomedb/ent/keggreaction"
 
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -19,6 +21,33 @@ type KeggReactionCreate struct {
 	mutation *KeggReactionMutation
 	hooks    []Hook
 	conflict []sql.ConflictOption
+}
+
+// SetName sets the "name" field.
+func (krc *KeggReactionCreate) SetName(s string) *KeggReactionCreate {
+	krc.mutation.SetName(s)
+	return krc
+}
+
+// SetID sets the "id" field.
+func (krc *KeggReactionCreate) SetID(s string) *KeggReactionCreate {
+	krc.mutation.SetID(s)
+	return krc
+}
+
+// AddPathwayIDs adds the "pathways" edge to the KeggPathway entity by IDs.
+func (krc *KeggReactionCreate) AddPathwayIDs(ids ...string) *KeggReactionCreate {
+	krc.mutation.AddPathwayIDs(ids...)
+	return krc
+}
+
+// AddPathways adds the "pathways" edges to the KeggPathway entity.
+func (krc *KeggReactionCreate) AddPathways(k ...*KeggPathway) *KeggReactionCreate {
+	ids := make([]string, len(k))
+	for i := range k {
+		ids[i] = k[i].ID
+	}
+	return krc.AddPathwayIDs(ids...)
 }
 
 // Mutation returns the KeggReactionMutation object of the builder.
@@ -97,6 +126,9 @@ func (krc *KeggReactionCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (krc *KeggReactionCreate) check() error {
+	if _, ok := krc.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "KeggReaction.name"`)}
+	}
 	return nil
 }
 
@@ -108,8 +140,13 @@ func (krc *KeggReactionCreate) sqlSave(ctx context.Context) (*KeggReaction, erro
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(string); ok {
+			_node.ID = id
+		} else {
+			return nil, fmt.Errorf("unexpected KeggReaction.ID type: %T", _spec.ID.Value)
+		}
+	}
 	return _node, nil
 }
 
@@ -119,12 +156,39 @@ func (krc *KeggReactionCreate) createSpec() (*KeggReaction, *sqlgraph.CreateSpec
 		_spec = &sqlgraph.CreateSpec{
 			Table: keggreaction.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: keggreaction.FieldID,
 			},
 		}
 	)
 	_spec.OnConflict = krc.conflict
+	if id, ok := krc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
+	if value, ok := krc.mutation.Name(); ok {
+		_spec.SetField(keggreaction.FieldName, field.TypeString, value)
+		_node.Name = value
+	}
+	if nodes := krc.mutation.PathwaysIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   keggreaction.PathwaysTable,
+			Columns: keggreaction.PathwaysPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: keggpathway.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 
@@ -132,11 +196,17 @@ func (krc *KeggReactionCreate) createSpec() (*KeggReaction, *sqlgraph.CreateSpec
 // of the `INSERT` statement. For example:
 //
 //	client.KeggReaction.Create().
+//		SetName(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
 //			sql.ResolveWithNewValues(),
 //		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.KeggReactionUpsert) {
+//			SetName(v+v).
+//		}).
 //		Exec(ctx)
 func (krc *KeggReactionCreate) OnConflict(opts ...sql.ConflictOption) *KeggReactionUpsertOne {
 	krc.conflict = opts
@@ -171,16 +241,36 @@ type (
 	}
 )
 
-// UpdateNewValues updates the mutable fields using the new values that were set on create.
+// SetName sets the "name" field.
+func (u *KeggReactionUpsert) SetName(v string) *KeggReactionUpsert {
+	u.Set(keggreaction.FieldName, v)
+	return u
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *KeggReactionUpsert) UpdateName() *KeggReactionUpsert {
+	u.SetExcluded(keggreaction.FieldName)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
 //	client.KeggReaction.Create().
 //		OnConflict(
 //			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(keggreaction.FieldID)
+//			}),
 //		).
 //		Exec(ctx)
 func (u *KeggReactionUpsertOne) UpdateNewValues() *KeggReactionUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(keggreaction.FieldID)
+		}
+	}))
 	return u
 }
 
@@ -211,6 +301,20 @@ func (u *KeggReactionUpsertOne) Update(set func(*KeggReactionUpsert)) *KeggReact
 	return u
 }
 
+// SetName sets the "name" field.
+func (u *KeggReactionUpsertOne) SetName(v string) *KeggReactionUpsertOne {
+	return u.Update(func(s *KeggReactionUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *KeggReactionUpsertOne) UpdateName() *KeggReactionUpsertOne {
+	return u.Update(func(s *KeggReactionUpsert) {
+		s.UpdateName()
+	})
+}
+
 // Exec executes the query.
 func (u *KeggReactionUpsertOne) Exec(ctx context.Context) error {
 	if len(u.create.conflict) == 0 {
@@ -227,7 +331,12 @@ func (u *KeggReactionUpsertOne) ExecX(ctx context.Context) {
 }
 
 // Exec executes the UPSERT query and returns the inserted/updated ID.
-func (u *KeggReactionUpsertOne) ID(ctx context.Context) (id int, err error) {
+func (u *KeggReactionUpsertOne) ID(ctx context.Context) (id string, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: KeggReactionUpsertOne.ID is not supported by MySQL driver. Use KeggReactionUpsertOne.Exec instead")
+	}
 	node, err := u.create.Save(ctx)
 	if err != nil {
 		return id, err
@@ -236,7 +345,7 @@ func (u *KeggReactionUpsertOne) ID(ctx context.Context) (id int, err error) {
 }
 
 // IDX is like ID, but panics if an error occurs.
-func (u *KeggReactionUpsertOne) IDX(ctx context.Context) int {
+func (u *KeggReactionUpsertOne) IDX(ctx context.Context) string {
 	id, err := u.ID(ctx)
 	if err != nil {
 		panic(err)
@@ -286,10 +395,6 @@ func (krcb *KeggReactionCreateBulk) Save(ctx context.Context) ([]*KeggReaction, 
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})
@@ -338,6 +443,11 @@ func (krcb *KeggReactionCreateBulk) ExecX(ctx context.Context) {
 //			// the was proposed for insertion.
 //			sql.ResolveWithNewValues(),
 //		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.KeggReactionUpsert) {
+//			SetName(v+v).
+//		}).
 //		Exec(ctx)
 func (krcb *KeggReactionCreateBulk) OnConflict(opts ...sql.ConflictOption) *KeggReactionUpsertBulk {
 	krcb.conflict = opts
@@ -371,10 +481,20 @@ type KeggReactionUpsertBulk struct {
 //	client.KeggReaction.Create().
 //		OnConflict(
 //			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(keggreaction.FieldID)
+//			}),
 //		).
 //		Exec(ctx)
 func (u *KeggReactionUpsertBulk) UpdateNewValues() *KeggReactionUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(keggreaction.FieldID)
+			}
+		}
+	}))
 	return u
 }
 
@@ -403,6 +523,20 @@ func (u *KeggReactionUpsertBulk) Update(set func(*KeggReactionUpsert)) *KeggReac
 		set(&KeggReactionUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetName sets the "name" field.
+func (u *KeggReactionUpsertBulk) SetName(v string) *KeggReactionUpsertBulk {
+	return u.Update(func(s *KeggReactionUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *KeggReactionUpsertBulk) UpdateName() *KeggReactionUpsertBulk {
+	return u.Update(func(s *KeggReactionUpsert) {
+		s.UpdateName()
+	})
 }
 
 // Exec executes the query.

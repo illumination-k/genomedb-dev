@@ -12,9 +12,65 @@ import (
 
 // KeggPathway is the model entity for the KeggPathway schema.
 type KeggPathway struct {
-	config
+	config `json:"-"`
 	// ID of the ent.
 	ID string `json:"id,omitempty"`
+	// Name holds the value of the "name" field.
+	Name string `json:"name,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the KeggPathwayQuery when eager-loading is set.
+	Edges KeggPathwayEdges `json:"edges"`
+}
+
+// KeggPathwayEdges holds the relations/edges for other nodes in the graph.
+type KeggPathwayEdges struct {
+	// RelatingMap holds the value of the relating_map edge.
+	RelatingMap []*KeggPathway `json:"relating_map,omitempty"`
+	// RelatedMap holds the value of the related_map edge.
+	RelatedMap []*KeggPathway `json:"related_map,omitempty"`
+	// Reactions holds the value of the reactions edge.
+	Reactions []*KeggReaction `json:"reactions,omitempty"`
+	// Orthologies holds the value of the orthologies edge.
+	Orthologies []*KeggOrthlogy `json:"orthologies,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [4]bool
+}
+
+// RelatingMapOrErr returns the RelatingMap value or an error if the edge
+// was not loaded in eager-loading.
+func (e KeggPathwayEdges) RelatingMapOrErr() ([]*KeggPathway, error) {
+	if e.loadedTypes[0] {
+		return e.RelatingMap, nil
+	}
+	return nil, &NotLoadedError{edge: "relating_map"}
+}
+
+// RelatedMapOrErr returns the RelatedMap value or an error if the edge
+// was not loaded in eager-loading.
+func (e KeggPathwayEdges) RelatedMapOrErr() ([]*KeggPathway, error) {
+	if e.loadedTypes[1] {
+		return e.RelatedMap, nil
+	}
+	return nil, &NotLoadedError{edge: "related_map"}
+}
+
+// ReactionsOrErr returns the Reactions value or an error if the edge
+// was not loaded in eager-loading.
+func (e KeggPathwayEdges) ReactionsOrErr() ([]*KeggReaction, error) {
+	if e.loadedTypes[2] {
+		return e.Reactions, nil
+	}
+	return nil, &NotLoadedError{edge: "reactions"}
+}
+
+// OrthologiesOrErr returns the Orthologies value or an error if the edge
+// was not loaded in eager-loading.
+func (e KeggPathwayEdges) OrthologiesOrErr() ([]*KeggOrthlogy, error) {
+	if e.loadedTypes[3] {
+		return e.Orthologies, nil
+	}
+	return nil, &NotLoadedError{edge: "orthologies"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -22,7 +78,7 @@ func (*KeggPathway) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case keggpathway.FieldID:
+		case keggpathway.FieldID, keggpathway.FieldName:
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type KeggPathway", columns[i])
@@ -45,9 +101,35 @@ func (kp *KeggPathway) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				kp.ID = value.String
 			}
+		case keggpathway.FieldName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field name", values[i])
+			} else if value.Valid {
+				kp.Name = value.String
+			}
 		}
 	}
 	return nil
+}
+
+// QueryRelatingMap queries the "relating_map" edge of the KeggPathway entity.
+func (kp *KeggPathway) QueryRelatingMap() *KeggPathwayQuery {
+	return (&KeggPathwayClient{config: kp.config}).QueryRelatingMap(kp)
+}
+
+// QueryRelatedMap queries the "related_map" edge of the KeggPathway entity.
+func (kp *KeggPathway) QueryRelatedMap() *KeggPathwayQuery {
+	return (&KeggPathwayClient{config: kp.config}).QueryRelatedMap(kp)
+}
+
+// QueryReactions queries the "reactions" edge of the KeggPathway entity.
+func (kp *KeggPathway) QueryReactions() *KeggReactionQuery {
+	return (&KeggPathwayClient{config: kp.config}).QueryReactions(kp)
+}
+
+// QueryOrthologies queries the "orthologies" edge of the KeggPathway entity.
+func (kp *KeggPathway) QueryOrthologies() *KeggOrthlogyQuery {
+	return (&KeggPathwayClient{config: kp.config}).QueryOrthologies(kp)
 }
 
 // Update returns a builder for updating this KeggPathway.
@@ -72,7 +154,9 @@ func (kp *KeggPathway) Unwrap() *KeggPathway {
 func (kp *KeggPathway) String() string {
 	var builder strings.Builder
 	builder.WriteString("KeggPathway(")
-	builder.WriteString(fmt.Sprintf("id=%v", kp.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", kp.ID))
+	builder.WriteString("name=")
+	builder.WriteString(kp.Name)
 	builder.WriteByte(')')
 	return builder.String()
 }

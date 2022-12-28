@@ -6,8 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"genomedb/ent/keggorthlogy"
 	"genomedb/ent/keggpathway"
-	"genomedb/ent/keggreaction"
 	"genomedb/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
@@ -15,92 +15,92 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// KeggReactionUpdate is the builder for updating KeggReaction entities.
-type KeggReactionUpdate struct {
+// KeggOrthlogyUpdate is the builder for updating KeggOrthlogy entities.
+type KeggOrthlogyUpdate struct {
 	config
 	hooks    []Hook
-	mutation *KeggReactionMutation
+	mutation *KeggOrthlogyMutation
 }
 
-// Where appends a list predicates to the KeggReactionUpdate builder.
-func (kru *KeggReactionUpdate) Where(ps ...predicate.KeggReaction) *KeggReactionUpdate {
-	kru.mutation.Where(ps...)
-	return kru
+// Where appends a list predicates to the KeggOrthlogyUpdate builder.
+func (kou *KeggOrthlogyUpdate) Where(ps ...predicate.KeggOrthlogy) *KeggOrthlogyUpdate {
+	kou.mutation.Where(ps...)
+	return kou
 }
 
 // SetName sets the "name" field.
-func (kru *KeggReactionUpdate) SetName(s string) *KeggReactionUpdate {
-	kru.mutation.SetName(s)
-	return kru
+func (kou *KeggOrthlogyUpdate) SetName(s string) *KeggOrthlogyUpdate {
+	kou.mutation.SetName(s)
+	return kou
 }
 
 // AddPathwayIDs adds the "pathways" edge to the KeggPathway entity by IDs.
-func (kru *KeggReactionUpdate) AddPathwayIDs(ids ...string) *KeggReactionUpdate {
-	kru.mutation.AddPathwayIDs(ids...)
-	return kru
+func (kou *KeggOrthlogyUpdate) AddPathwayIDs(ids ...string) *KeggOrthlogyUpdate {
+	kou.mutation.AddPathwayIDs(ids...)
+	return kou
 }
 
 // AddPathways adds the "pathways" edges to the KeggPathway entity.
-func (kru *KeggReactionUpdate) AddPathways(k ...*KeggPathway) *KeggReactionUpdate {
+func (kou *KeggOrthlogyUpdate) AddPathways(k ...*KeggPathway) *KeggOrthlogyUpdate {
 	ids := make([]string, len(k))
 	for i := range k {
 		ids[i] = k[i].ID
 	}
-	return kru.AddPathwayIDs(ids...)
+	return kou.AddPathwayIDs(ids...)
 }
 
-// Mutation returns the KeggReactionMutation object of the builder.
-func (kru *KeggReactionUpdate) Mutation() *KeggReactionMutation {
-	return kru.mutation
+// Mutation returns the KeggOrthlogyMutation object of the builder.
+func (kou *KeggOrthlogyUpdate) Mutation() *KeggOrthlogyMutation {
+	return kou.mutation
 }
 
 // ClearPathways clears all "pathways" edges to the KeggPathway entity.
-func (kru *KeggReactionUpdate) ClearPathways() *KeggReactionUpdate {
-	kru.mutation.ClearPathways()
-	return kru
+func (kou *KeggOrthlogyUpdate) ClearPathways() *KeggOrthlogyUpdate {
+	kou.mutation.ClearPathways()
+	return kou
 }
 
 // RemovePathwayIDs removes the "pathways" edge to KeggPathway entities by IDs.
-func (kru *KeggReactionUpdate) RemovePathwayIDs(ids ...string) *KeggReactionUpdate {
-	kru.mutation.RemovePathwayIDs(ids...)
-	return kru
+func (kou *KeggOrthlogyUpdate) RemovePathwayIDs(ids ...string) *KeggOrthlogyUpdate {
+	kou.mutation.RemovePathwayIDs(ids...)
+	return kou
 }
 
 // RemovePathways removes "pathways" edges to KeggPathway entities.
-func (kru *KeggReactionUpdate) RemovePathways(k ...*KeggPathway) *KeggReactionUpdate {
+func (kou *KeggOrthlogyUpdate) RemovePathways(k ...*KeggPathway) *KeggOrthlogyUpdate {
 	ids := make([]string, len(k))
 	for i := range k {
 		ids[i] = k[i].ID
 	}
-	return kru.RemovePathwayIDs(ids...)
+	return kou.RemovePathwayIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (kru *KeggReactionUpdate) Save(ctx context.Context) (int, error) {
+func (kou *KeggOrthlogyUpdate) Save(ctx context.Context) (int, error) {
 	var (
 		err      error
 		affected int
 	)
-	if len(kru.hooks) == 0 {
-		affected, err = kru.sqlSave(ctx)
+	if len(kou.hooks) == 0 {
+		affected, err = kou.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*KeggReactionMutation)
+			mutation, ok := m.(*KeggOrthlogyMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
 			}
-			kru.mutation = mutation
-			affected, err = kru.sqlSave(ctx)
+			kou.mutation = mutation
+			affected, err = kou.sqlSave(ctx)
 			mutation.done = true
 			return affected, err
 		})
-		for i := len(kru.hooks) - 1; i >= 0; i-- {
-			if kru.hooks[i] == nil {
+		for i := len(kou.hooks) - 1; i >= 0; i-- {
+			if kou.hooks[i] == nil {
 				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
 			}
-			mut = kru.hooks[i](mut)
+			mut = kou.hooks[i](mut)
 		}
-		if _, err := mut.Mutate(ctx, kru.mutation); err != nil {
+		if _, err := mut.Mutate(ctx, kou.mutation); err != nil {
 			return 0, err
 		}
 	}
@@ -108,8 +108,8 @@ func (kru *KeggReactionUpdate) Save(ctx context.Context) (int, error) {
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (kru *KeggReactionUpdate) SaveX(ctx context.Context) int {
-	affected, err := kru.Save(ctx)
+func (kou *KeggOrthlogyUpdate) SaveX(ctx context.Context) int {
+	affected, err := kou.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -117,45 +117,45 @@ func (kru *KeggReactionUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (kru *KeggReactionUpdate) Exec(ctx context.Context) error {
-	_, err := kru.Save(ctx)
+func (kou *KeggOrthlogyUpdate) Exec(ctx context.Context) error {
+	_, err := kou.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (kru *KeggReactionUpdate) ExecX(ctx context.Context) {
-	if err := kru.Exec(ctx); err != nil {
+func (kou *KeggOrthlogyUpdate) ExecX(ctx context.Context) {
+	if err := kou.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
-func (kru *KeggReactionUpdate) sqlSave(ctx context.Context) (n int, err error) {
+func (kou *KeggOrthlogyUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
-			Table:   keggreaction.Table,
-			Columns: keggreaction.Columns,
+			Table:   keggorthlogy.Table,
+			Columns: keggorthlogy.Columns,
 			ID: &sqlgraph.FieldSpec{
 				Type:   field.TypeString,
-				Column: keggreaction.FieldID,
+				Column: keggorthlogy.FieldID,
 			},
 		},
 	}
-	if ps := kru.mutation.predicates; len(ps) > 0 {
+	if ps := kou.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := kru.mutation.Name(); ok {
-		_spec.SetField(keggreaction.FieldName, field.TypeString, value)
+	if value, ok := kou.mutation.Name(); ok {
+		_spec.SetField(keggorthlogy.FieldName, field.TypeString, value)
 	}
-	if kru.mutation.PathwaysCleared() {
+	if kou.mutation.PathwaysCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   keggreaction.PathwaysTable,
-			Columns: keggreaction.PathwaysPrimaryKey,
+			Table:   keggorthlogy.PathwaysTable,
+			Columns: keggorthlogy.PathwaysPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -166,12 +166,12 @@ func (kru *KeggReactionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := kru.mutation.RemovedPathwaysIDs(); len(nodes) > 0 && !kru.mutation.PathwaysCleared() {
+	if nodes := kou.mutation.RemovedPathwaysIDs(); len(nodes) > 0 && !kou.mutation.PathwaysCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   keggreaction.PathwaysTable,
-			Columns: keggreaction.PathwaysPrimaryKey,
+			Table:   keggorthlogy.PathwaysTable,
+			Columns: keggorthlogy.PathwaysPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -185,12 +185,12 @@ func (kru *KeggReactionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := kru.mutation.PathwaysIDs(); len(nodes) > 0 {
+	if nodes := kou.mutation.PathwaysIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   keggreaction.PathwaysTable,
-			Columns: keggreaction.PathwaysPrimaryKey,
+			Table:   keggorthlogy.PathwaysTable,
+			Columns: keggorthlogy.PathwaysPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -204,9 +204,9 @@ func (kru *KeggReactionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, kru.driver, _spec); err != nil {
+	if n, err = sqlgraph.UpdateNodes(ctx, kou.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
-			err = &NotFoundError{keggreaction.Label}
+			err = &NotFoundError{keggorthlogy.Label}
 		} else if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -215,100 +215,100 @@ func (kru *KeggReactionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	return n, nil
 }
 
-// KeggReactionUpdateOne is the builder for updating a single KeggReaction entity.
-type KeggReactionUpdateOne struct {
+// KeggOrthlogyUpdateOne is the builder for updating a single KeggOrthlogy entity.
+type KeggOrthlogyUpdateOne struct {
 	config
 	fields   []string
 	hooks    []Hook
-	mutation *KeggReactionMutation
+	mutation *KeggOrthlogyMutation
 }
 
 // SetName sets the "name" field.
-func (kruo *KeggReactionUpdateOne) SetName(s string) *KeggReactionUpdateOne {
-	kruo.mutation.SetName(s)
-	return kruo
+func (kouo *KeggOrthlogyUpdateOne) SetName(s string) *KeggOrthlogyUpdateOne {
+	kouo.mutation.SetName(s)
+	return kouo
 }
 
 // AddPathwayIDs adds the "pathways" edge to the KeggPathway entity by IDs.
-func (kruo *KeggReactionUpdateOne) AddPathwayIDs(ids ...string) *KeggReactionUpdateOne {
-	kruo.mutation.AddPathwayIDs(ids...)
-	return kruo
+func (kouo *KeggOrthlogyUpdateOne) AddPathwayIDs(ids ...string) *KeggOrthlogyUpdateOne {
+	kouo.mutation.AddPathwayIDs(ids...)
+	return kouo
 }
 
 // AddPathways adds the "pathways" edges to the KeggPathway entity.
-func (kruo *KeggReactionUpdateOne) AddPathways(k ...*KeggPathway) *KeggReactionUpdateOne {
+func (kouo *KeggOrthlogyUpdateOne) AddPathways(k ...*KeggPathway) *KeggOrthlogyUpdateOne {
 	ids := make([]string, len(k))
 	for i := range k {
 		ids[i] = k[i].ID
 	}
-	return kruo.AddPathwayIDs(ids...)
+	return kouo.AddPathwayIDs(ids...)
 }
 
-// Mutation returns the KeggReactionMutation object of the builder.
-func (kruo *KeggReactionUpdateOne) Mutation() *KeggReactionMutation {
-	return kruo.mutation
+// Mutation returns the KeggOrthlogyMutation object of the builder.
+func (kouo *KeggOrthlogyUpdateOne) Mutation() *KeggOrthlogyMutation {
+	return kouo.mutation
 }
 
 // ClearPathways clears all "pathways" edges to the KeggPathway entity.
-func (kruo *KeggReactionUpdateOne) ClearPathways() *KeggReactionUpdateOne {
-	kruo.mutation.ClearPathways()
-	return kruo
+func (kouo *KeggOrthlogyUpdateOne) ClearPathways() *KeggOrthlogyUpdateOne {
+	kouo.mutation.ClearPathways()
+	return kouo
 }
 
 // RemovePathwayIDs removes the "pathways" edge to KeggPathway entities by IDs.
-func (kruo *KeggReactionUpdateOne) RemovePathwayIDs(ids ...string) *KeggReactionUpdateOne {
-	kruo.mutation.RemovePathwayIDs(ids...)
-	return kruo
+func (kouo *KeggOrthlogyUpdateOne) RemovePathwayIDs(ids ...string) *KeggOrthlogyUpdateOne {
+	kouo.mutation.RemovePathwayIDs(ids...)
+	return kouo
 }
 
 // RemovePathways removes "pathways" edges to KeggPathway entities.
-func (kruo *KeggReactionUpdateOne) RemovePathways(k ...*KeggPathway) *KeggReactionUpdateOne {
+func (kouo *KeggOrthlogyUpdateOne) RemovePathways(k ...*KeggPathway) *KeggOrthlogyUpdateOne {
 	ids := make([]string, len(k))
 	for i := range k {
 		ids[i] = k[i].ID
 	}
-	return kruo.RemovePathwayIDs(ids...)
+	return kouo.RemovePathwayIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (kruo *KeggReactionUpdateOne) Select(field string, fields ...string) *KeggReactionUpdateOne {
-	kruo.fields = append([]string{field}, fields...)
-	return kruo
+func (kouo *KeggOrthlogyUpdateOne) Select(field string, fields ...string) *KeggOrthlogyUpdateOne {
+	kouo.fields = append([]string{field}, fields...)
+	return kouo
 }
 
-// Save executes the query and returns the updated KeggReaction entity.
-func (kruo *KeggReactionUpdateOne) Save(ctx context.Context) (*KeggReaction, error) {
+// Save executes the query and returns the updated KeggOrthlogy entity.
+func (kouo *KeggOrthlogyUpdateOne) Save(ctx context.Context) (*KeggOrthlogy, error) {
 	var (
 		err  error
-		node *KeggReaction
+		node *KeggOrthlogy
 	)
-	if len(kruo.hooks) == 0 {
-		node, err = kruo.sqlSave(ctx)
+	if len(kouo.hooks) == 0 {
+		node, err = kouo.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*KeggReactionMutation)
+			mutation, ok := m.(*KeggOrthlogyMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
 			}
-			kruo.mutation = mutation
-			node, err = kruo.sqlSave(ctx)
+			kouo.mutation = mutation
+			node, err = kouo.sqlSave(ctx)
 			mutation.done = true
 			return node, err
 		})
-		for i := len(kruo.hooks) - 1; i >= 0; i-- {
-			if kruo.hooks[i] == nil {
+		for i := len(kouo.hooks) - 1; i >= 0; i-- {
+			if kouo.hooks[i] == nil {
 				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
 			}
-			mut = kruo.hooks[i](mut)
+			mut = kouo.hooks[i](mut)
 		}
-		v, err := mut.Mutate(ctx, kruo.mutation)
+		v, err := mut.Mutate(ctx, kouo.mutation)
 		if err != nil {
 			return nil, err
 		}
-		nv, ok := v.(*KeggReaction)
+		nv, ok := v.(*KeggOrthlogy)
 		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from KeggReactionMutation", v)
+			return nil, fmt.Errorf("unexpected node type %T returned from KeggOrthlogyMutation", v)
 		}
 		node = nv
 	}
@@ -316,8 +316,8 @@ func (kruo *KeggReactionUpdateOne) Save(ctx context.Context) (*KeggReaction, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (kruo *KeggReactionUpdateOne) SaveX(ctx context.Context) *KeggReaction {
-	node, err := kruo.Save(ctx)
+func (kouo *KeggOrthlogyUpdateOne) SaveX(ctx context.Context) *KeggOrthlogy {
+	node, err := kouo.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -325,62 +325,62 @@ func (kruo *KeggReactionUpdateOne) SaveX(ctx context.Context) *KeggReaction {
 }
 
 // Exec executes the query on the entity.
-func (kruo *KeggReactionUpdateOne) Exec(ctx context.Context) error {
-	_, err := kruo.Save(ctx)
+func (kouo *KeggOrthlogyUpdateOne) Exec(ctx context.Context) error {
+	_, err := kouo.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (kruo *KeggReactionUpdateOne) ExecX(ctx context.Context) {
-	if err := kruo.Exec(ctx); err != nil {
+func (kouo *KeggOrthlogyUpdateOne) ExecX(ctx context.Context) {
+	if err := kouo.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
-func (kruo *KeggReactionUpdateOne) sqlSave(ctx context.Context) (_node *KeggReaction, err error) {
+func (kouo *KeggOrthlogyUpdateOne) sqlSave(ctx context.Context) (_node *KeggOrthlogy, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
-			Table:   keggreaction.Table,
-			Columns: keggreaction.Columns,
+			Table:   keggorthlogy.Table,
+			Columns: keggorthlogy.Columns,
 			ID: &sqlgraph.FieldSpec{
 				Type:   field.TypeString,
-				Column: keggreaction.FieldID,
+				Column: keggorthlogy.FieldID,
 			},
 		},
 	}
-	id, ok := kruo.mutation.ID()
+	id, ok := kouo.mutation.ID()
 	if !ok {
-		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "KeggReaction.id" for update`)}
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "KeggOrthlogy.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := kruo.fields; len(fields) > 0 {
+	if fields := kouo.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, keggreaction.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, keggorthlogy.FieldID)
 		for _, f := range fields {
-			if !keggreaction.ValidColumn(f) {
+			if !keggorthlogy.ValidColumn(f) {
 				return nil, &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 			}
-			if f != keggreaction.FieldID {
+			if f != keggorthlogy.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, f)
 			}
 		}
 	}
-	if ps := kruo.mutation.predicates; len(ps) > 0 {
+	if ps := kouo.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := kruo.mutation.Name(); ok {
-		_spec.SetField(keggreaction.FieldName, field.TypeString, value)
+	if value, ok := kouo.mutation.Name(); ok {
+		_spec.SetField(keggorthlogy.FieldName, field.TypeString, value)
 	}
-	if kruo.mutation.PathwaysCleared() {
+	if kouo.mutation.PathwaysCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   keggreaction.PathwaysTable,
-			Columns: keggreaction.PathwaysPrimaryKey,
+			Table:   keggorthlogy.PathwaysTable,
+			Columns: keggorthlogy.PathwaysPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -391,12 +391,12 @@ func (kruo *KeggReactionUpdateOne) sqlSave(ctx context.Context) (_node *KeggReac
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := kruo.mutation.RemovedPathwaysIDs(); len(nodes) > 0 && !kruo.mutation.PathwaysCleared() {
+	if nodes := kouo.mutation.RemovedPathwaysIDs(); len(nodes) > 0 && !kouo.mutation.PathwaysCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   keggreaction.PathwaysTable,
-			Columns: keggreaction.PathwaysPrimaryKey,
+			Table:   keggorthlogy.PathwaysTable,
+			Columns: keggorthlogy.PathwaysPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -410,12 +410,12 @@ func (kruo *KeggReactionUpdateOne) sqlSave(ctx context.Context) (_node *KeggReac
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := kruo.mutation.PathwaysIDs(); len(nodes) > 0 {
+	if nodes := kouo.mutation.PathwaysIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   keggreaction.PathwaysTable,
-			Columns: keggreaction.PathwaysPrimaryKey,
+			Table:   keggorthlogy.PathwaysTable,
+			Columns: keggorthlogy.PathwaysPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -429,12 +429,12 @@ func (kruo *KeggReactionUpdateOne) sqlSave(ctx context.Context) (_node *KeggReac
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_node = &KeggReaction{config: kruo.config}
+	_node = &KeggOrthlogy{config: kouo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, kruo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, kouo.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
-			err = &NotFoundError{keggreaction.Label}
+			err = &NotFoundError{keggorthlogy.Label}
 		} else if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}

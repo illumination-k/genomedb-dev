@@ -5,7 +5,7 @@ package ent
 import (
 	"context"
 	"fmt"
-	"genomedb/ent/keggontology"
+	"genomedb/ent/keggorthlogy"
 	"genomedb/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
@@ -13,21 +13,21 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// KeggOntologyDelete is the builder for deleting a KeggOntology entity.
-type KeggOntologyDelete struct {
+// KeggOrthlogyDelete is the builder for deleting a KeggOrthlogy entity.
+type KeggOrthlogyDelete struct {
 	config
 	hooks    []Hook
-	mutation *KeggOntologyMutation
+	mutation *KeggOrthlogyMutation
 }
 
-// Where appends a list predicates to the KeggOntologyDelete builder.
-func (kod *KeggOntologyDelete) Where(ps ...predicate.KeggOntology) *KeggOntologyDelete {
+// Where appends a list predicates to the KeggOrthlogyDelete builder.
+func (kod *KeggOrthlogyDelete) Where(ps ...predicate.KeggOrthlogy) *KeggOrthlogyDelete {
 	kod.mutation.Where(ps...)
 	return kod
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (kod *KeggOntologyDelete) Exec(ctx context.Context) (int, error) {
+func (kod *KeggOrthlogyDelete) Exec(ctx context.Context) (int, error) {
 	var (
 		err      error
 		affected int
@@ -36,7 +36,7 @@ func (kod *KeggOntologyDelete) Exec(ctx context.Context) (int, error) {
 		affected, err = kod.sqlExec(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*KeggOntologyMutation)
+			mutation, ok := m.(*KeggOrthlogyMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
 			}
@@ -59,7 +59,7 @@ func (kod *KeggOntologyDelete) Exec(ctx context.Context) (int, error) {
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (kod *KeggOntologyDelete) ExecX(ctx context.Context) int {
+func (kod *KeggOrthlogyDelete) ExecX(ctx context.Context) int {
 	n, err := kod.Exec(ctx)
 	if err != nil {
 		panic(err)
@@ -67,13 +67,13 @@ func (kod *KeggOntologyDelete) ExecX(ctx context.Context) int {
 	return n
 }
 
-func (kod *KeggOntologyDelete) sqlExec(ctx context.Context) (int, error) {
+func (kod *KeggOrthlogyDelete) sqlExec(ctx context.Context) (int, error) {
 	_spec := &sqlgraph.DeleteSpec{
 		Node: &sqlgraph.NodeSpec{
-			Table: keggontology.Table,
+			Table: keggorthlogy.Table,
 			ID: &sqlgraph.FieldSpec{
 				Type:   field.TypeString,
-				Column: keggontology.FieldID,
+				Column: keggorthlogy.FieldID,
 			},
 		},
 	}
@@ -91,25 +91,25 @@ func (kod *KeggOntologyDelete) sqlExec(ctx context.Context) (int, error) {
 	return affected, err
 }
 
-// KeggOntologyDeleteOne is the builder for deleting a single KeggOntology entity.
-type KeggOntologyDeleteOne struct {
-	kod *KeggOntologyDelete
+// KeggOrthlogyDeleteOne is the builder for deleting a single KeggOrthlogy entity.
+type KeggOrthlogyDeleteOne struct {
+	kod *KeggOrthlogyDelete
 }
 
 // Exec executes the deletion query.
-func (kodo *KeggOntologyDeleteOne) Exec(ctx context.Context) error {
+func (kodo *KeggOrthlogyDeleteOne) Exec(ctx context.Context) error {
 	n, err := kodo.kod.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
 	case n == 0:
-		return &NotFoundError{keggontology.Label}
+		return &NotFoundError{keggorthlogy.Label}
 	default:
 		return nil
 	}
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (kodo *KeggOntologyDeleteOne) ExecX(ctx context.Context) {
+func (kodo *KeggOrthlogyDeleteOne) ExecX(ctx context.Context) {
 	kodo.kod.ExecX(ctx)
 }

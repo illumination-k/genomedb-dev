@@ -72,7 +72,7 @@ func (krd *KeggReactionDelete) sqlExec(ctx context.Context) (int, error) {
 		Node: &sqlgraph.NodeSpec{
 			Table: keggreaction.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: keggreaction.FieldID,
 			},
 		},
