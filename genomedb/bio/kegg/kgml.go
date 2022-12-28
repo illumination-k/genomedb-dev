@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-type Entry struct {
+type KGMLEntry struct {
 	ID       int
 	Names    []string
 	Type     string
@@ -13,7 +13,7 @@ type Entry struct {
 	Link     string
 }
 
-func (e *Entry) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+func (e *KGMLEntry) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	ee := struct {
 		ID       int    `xml:"id,attr"`
 		Names    string `xml:"name,attr"`
@@ -26,7 +26,7 @@ func (e *Entry) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 		return err
 	}
 
-	*e = Entry{ID: ee.ID, Names: strings.Split(ee.Names, " "), Type: ee.Type, Reaction: ee.Reaction, Link: ee.Link}
+	*e = KGMLEntry{ID: ee.ID, Names: strings.Split(ee.Names, " "), Type: ee.Type, Reaction: ee.Reaction, Link: ee.Link}
 
 	return nil
 }
@@ -53,7 +53,7 @@ type Product struct {
 	Name string `xml:"name,attr"`
 }
 
-type Reaction struct {
+type KGMLReaction struct {
 	ID        int          `xml:"id,attr"`
 	Name      string       `xml:"name,attr"`
 	Type      string       `xml:"type,attr"`
@@ -61,11 +61,11 @@ type Reaction struct {
 	Products  []*Product   `xml:"product"`
 }
 
-type KeggPathway struct {
-	XMLName   xml.Name    `xml:"pathway"`
-	Name      string      `xml:"name,attr"`
-	Title     string      `xml:"title,attr"`
-	Entries   []*Entry    `xml:"entry"`
-	Reactions []*Reaction `xml:"reaction"`
-	Relations []*Relation `xml:"relation"`
+type KGMLPathway struct {
+	XMLName   xml.Name        `xml:"pathway"`
+	Name      string          `xml:"name,attr"`
+	Title     string          `xml:"title,attr"`
+	Entries   []*KGMLEntry    `xml:"entry"`
+	Reactions []*KGMLReaction `xml:"reaction"`
+	Relations []*Relation     `xml:"relation"`
 }

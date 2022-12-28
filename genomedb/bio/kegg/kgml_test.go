@@ -1,3 +1,5 @@
+//go:build file
+
 package kegg_test
 
 import (
@@ -22,7 +24,7 @@ func TestKGMLParse(t *testing.T) {
 		t.Error(err)
 	}
 
-	var pathway kegg.KeggPathway
+	var pathway kegg.KGMLPathway
 
 	if err := xml.Unmarshal(content, &pathway); err != nil {
 		t.Error(err)
