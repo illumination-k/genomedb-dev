@@ -25,8 +25,10 @@ func (s *HashSet[T]) Remove(value T) {
 	delete((*s), value)
 }
 
-func (s *HashSet[T]) Add(value T) {
-	(*s)[value] = struct{}{}
+func (s *HashSet[T]) Add(value ...T) {
+	for _, v := range value {
+		(*s)[v] = struct{}{}
+	}
 }
 
 func (s HashSet[T]) Union(other HashSet[T]) HashSet[T] {
